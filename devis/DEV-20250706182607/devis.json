@@ -1,0 +1,63 @@
+{
+    "Societe": {
+        "RaisonSociale": "Gauthier Hue",
+        "siret": "809 841 141 00025",
+        "AdressePostale": "8 rue patou, 59800 LILLE",
+        "AdresseMail": "pro.archimeuble@gmail.com",
+        "Numero": "06 01 06 28 67"
+    },
+    "Client": {
+        "Nom": "Betrancourt",
+        "Prenom": "Corinne",
+        "Numero": "0675112115",
+        "Mail": "matcofe@icloud.com",
+        "AdressePostale": "route nationale Brebi\u00e8res",
+        "Image": ""
+    },
+    "Produits": [
+        {
+            "Description": "meuble sur mesure",
+            "prixht": 641.2801531780001,
+            "prixttc": 769.54,
+            "chaine": "M1(1500,350,150)C(chene_brun,chene_brun,chene_brun,chene_brun)EbFV3(T,T,T)",
+            "sous_produit": [
+                {
+                    "description": "Conception",
+                    "prixht": 70,
+                    "prixttc": 84
+                },
+                {
+                    "description": "Approvisionnement Bois",
+                    "prixht": 34.732555452000014,
+                    "prixttc": 41.679066542400015
+                },
+                {
+                    "description": "Quincaillerie",
+                    "prixht": 157.5,
+                    "prixttc": 189
+                },
+                {
+                    "description": "Decoupe",
+                    "prixht": 171.12088000000003,
+                    "prixttc": 205.34505600000003
+                },
+                {
+                    "description": "Transport",
+                    "prixht": 105,
+                    "prixttc": 126
+                },
+                {
+                    "description": "Pose",
+                    "prixht": 102.92671772600002,
+                    "prixttc": 123.51206127120003
+                }
+            ]
+        }
+    ],
+    "DevisInfo": {
+        "NumeroDevis": "DEV-20250706182607",
+        "DateDevis": "2025-07-06",
+        "DureeValidite": "45 jours",
+        "NomCommercial": "Gauthier Hue"
+    }
+}

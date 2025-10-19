@@ -1,0 +1,63 @@
+{
+    "Societe": {
+        "RaisonSociale": "Gauthier Hue",
+        "siret": "809 841 141 00025",
+        "AdressePostale": "8 rue patou, 59800 LILLE",
+        "AdresseMail": "pro.archimeuble@gmail.com",
+        "Numero": "06 01 06 28 67"
+    },
+    "Client": {
+        "Nom": ".",
+        "Prenom": "Stephanie",
+        "Numero": "0688416558",
+        "Mail": "a@a.fr",
+        "AdressePostale": "Arras",
+        "Image": ""
+    },
+    "Produits": [
+        {
+            "Description": "meuble sur mesure",
+            "prixht": 1051.5659455939197,
+            "prixttc": 1261.88,
+            "chaine": "M3(870,910,1140,2000)ESP2V2(FH[20,60,20](,D,),FH4)",
+            "sous_produit": [
+                {
+                    "description": "Conception",
+                    "prixht": 110.00000000000001,
+                    "prixttc": 132
+                },
+                {
+                    "description": "Approvisionnement Bois",
+                    "prixht": 161.4095106335381,
+                    "prixttc": 193.69141276024573
+                },
+                {
+                    "description": "Quincaillerie",
+                    "prixht": 110.00000000000001,
+                    "prixttc": 132
+                },
+                {
+                    "description": "Decoupe",
+                    "prixht": 282.9677864290749,
+                    "prixttc": 339.5613437148899
+                },
+                {
+                    "description": "Transport",
+                    "prixht": 165,
+                    "prixttc": 198
+                },
+                {
+                    "description": "Pose",
+                    "prixht": 222.1886485313065,
+                    "prixttc": 266.6263782375678
+                }
+            ]
+        }
+    ],
+    "DevisInfo": {
+        "NumeroDevis": "DEV-20250711122834",
+        "DateDevis": "2025-07-11",
+        "DureeValidite": "45 jours",
+        "NomCommercial": "Gauthier Hue"
+    }
+}

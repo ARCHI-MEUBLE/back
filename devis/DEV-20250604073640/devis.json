@@ -1,0 +1,23 @@
+{
+    "Societe": {
+        "RaisonSociale": "Vrai Bois SARL",
+        "siret": "922 270 889 00012",
+        "AdressePostale": "57 rue Fredinand Dreyfus, 78120 Rambouillet",
+        "AdresseMail": "contact@archimeuble.com",
+        "Numero": "07 81 57 85 89"
+    },
+    "Client": {
+        "Nom": "Fey",
+        "Prenom": "Guillaume",
+        "Numero": "0637703087",
+        "Mail": "guillaume.fey01@gmail.com",
+        "AdressePostale": "30 rue Gobin, Lille"
+    },
+    "Produits": [],
+    "DevisInfo": {
+        "NumeroDevis": "DEV-20250604073640",
+        "DateDevis": "2025-06-04",
+        "DureeValidite": "45 jours",
+        "NomCommercial": "Guy Bassot"
+    }
+}

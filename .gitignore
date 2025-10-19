@@ -1,57 +1,17 @@
 # Environnement virtuel Python
 .archimeuble/
-requirements_backup.txt
 
-# Fichiers Python
+# Fichiers Python compilés
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
+*.pyc
 
-# Fichiers de log
+# Fichier de log énorme
 log.txt
-*.log
-
-# Fichiers temporaires et de cache
-*.tmp
-*.temp
-nul
-
-# Fichiers générés par l'application
-meuble.glb
-meublen.glb
-meublenp.glb
-meublep.glb
-meuble*.png
-devis.json
-
-# Uploads et fichiers utilisateurs
-uploads/*
-!uploads/.gitkeep
-pieces/*
-!pieces/.gitkeep
-devis/*
-!devis/.gitkeep
 
 # Fichiers IDE
 .idea/
 .vscode/
-*.swp
-*.swo
-*~
 
 # OS
 .DS_Store
 Thumbs.db
-desktop.ini
-
-# PHP local server
-php_local/
-
-# Dossier CRM - données sensibles
-crm/*.json
-!crm/.gitkeep
-
-# Note: Les uploads actuels dans crm/uploads/ sont inclus dans le premier commit
-# comme données de test, mais les futurs uploads ne seront pas versionnés

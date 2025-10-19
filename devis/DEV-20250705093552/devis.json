@@ -1,0 +1,101 @@
+{
+    "Societe": {
+        "RaisonSociale": "Gauthier Hue",
+        "siret": "809 841 141 00025",
+        "AdressePostale": "8 rue patou, 59800 LILLE",
+        "AdresseMail": "pro.archimeuble@gmail.com",
+        "Numero": "06 01 06 28 67"
+    },
+    "Client": {
+        "Nom": "Cazarre",
+        "Prenom": "Ulysse",
+        "Numero": "0601062867",
+        "Mail": "test@gmail.com",
+        "AdressePostale": "RUE NATIONAL",
+        "Image": ""
+    },
+    "Produits": [
+        {
+            "Description": "meuble sur mesure",
+            "prixht": 4667.85439953835,
+            "prixttc": 5601.43,
+            "chaine": "M1(3900,580,2250)C(vert_opale,vert_opale,vert_opale,vert_opale)VI4(SEH[85,15](P2RH[45,55](F,DF),PF),SEH[85,15](P2RH[22,30,45](F,FH2(T,T),FD),FP),SEH[85,15](P2RH[22,30,45](F,FH2(T,T),FD),FP),SEH[85,15](P2RH[45,55](F,FD),FP))",
+            "sous_produit": [
+                {
+                    "description": "Conception",
+                    "prixht": 120,
+                    "prixttc": 144
+                },
+                {
+                    "description": "Approvisionnement Bois",
+                    "prixht": 862.9177135286587,
+                    "prixttc": 1035.5012562343904
+                },
+                {
+                    "description": "Quincaillerie",
+                    "prixht": 1080,
+                    "prixttc": 1296
+                },
+                {
+                    "description": "Decoupe",
+                    "prixht": 1328.9852194969073,
+                    "prixttc": 1594.7822633962887
+                },
+                {
+                    "description": "Transport",
+                    "prixht": 180,
+                    "prixttc": 216
+                },
+                {
+                    "description": "Pose",
+                    "prixht": 1095.951466512783,
+                    "prixttc": 1315.1417598153396
+                }
+            ]
+        },
+        {
+            "Description": "meuble sur mesure",
+            "prixht": 4667.85439953835,
+            "prixttc": 5601.43,
+            "chaine": "M1(3900,580,2250)C(vert_opale,vert_opale,vert_opale,vert_opale)VI4(SEH[85,15](P2RH[45,55](F,DF),PF),SEH[85,15](P2RH[22,30,45](F,FH2(T,T),FD),FP),SEH[85,15](P2RH[22,30,45](F,FH2(T,T),FD),FP),SEH[85,15](P2RH[45,55](F,FD),FP))",
+            "sous_produit": [
+                {
+                    "description": "Conception",
+                    "prixht": 120,
+                    "prixttc": 144
+                },
+                {
+                    "description": "Approvisionnement Bois",
+                    "prixht": 862.9177135286587,
+                    "prixttc": 1035.5012562343904
+                },
+                {
+                    "description": "Quincaillerie",
+                    "prixht": 1080,
+                    "prixttc": 1296
+                },
+                {
+                    "description": "Decoupe",
+                    "prixht": 1328.9852194969073,
+                    "prixttc": 1594.7822633962887
+                },
+                {
+                    "description": "Transport",
+                    "prixht": 180,
+                    "prixttc": 216
+                },
+                {
+                    "description": "Pose",
+                    "prixht": 1095.951466512783,
+                    "prixttc": 1315.1417598153396
+                }
+            ]
+        }
+    ],
+    "DevisInfo": {
+        "NumeroDevis": "DEV-20250705093552",
+        "DateDevis": "2025-07-05",
+        "DureeValidite": "45 jours",
+        "NomCommercial": "Gauthier Hue"
+    }
+}

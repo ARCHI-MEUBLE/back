@@ -1,0 +1,64 @@
+{
+    "Societe": {
+        "RaisonSociale": "Vrai Bois SARL",
+        "siret": "922 270 889 00012",
+        "AdressePostale": "57 rue Fredinand Dreyfus, 78120 Rambouillet",
+        "AdresseMail": "contact@archimeuble.com",
+        "Numero": "07 81 57 85 89"
+    },
+    "Client": {
+        "Nom": "Hue",
+        "Prenom": "Gauthier",
+        "Numero": "0601062867",
+        "Mail": "gauthier1hue@gmail.com",
+        "AdressePostale": "8 rue patou",
+        "Image": ""
+    },
+    "Produits": [
+        {
+            "Description": "decoupe",
+            "prixht": 50,
+            "prixttc": 60,
+            "chaine": "M3(1000,450,1000,1500)VI3(PESD,PESH3,ghdH5(T,T,T,T,T))",
+            "sous_produit": [
+                {
+                    "description": "Conception",
+                    "prixht": 150,
+                    "prixttc": 180
+                },
+                {
+                    "description": "Approvisionnement Bois",
+                    "prixht": 160.86694067247015,
+                    "prixttc": 193.04032880696417
+                },
+                {
+                    "description": "Quincaillerie",
+                    "prixht": 712.5,
+                    "prixttc": 855
+                },
+                {
+                    "description": "Decoupe",
+                    "prixht": 615.4931854066796,
+                    "prixttc": 738.5918224880155
+                },
+                {
+                    "description": "Transport",
+                    "prixht": 225,
+                    "prixttc": 270
+                },
+                {
+                    "description": "Pose",
+                    "prixht": 388.18006303957486,
+                    "prixttc": 465.8160756474898
+                }
+            ],
+            "image": ".\/presta.png"
+        }
+    ],
+    "DevisInfo": {
+        "NumeroDevis": "DEV-20250521083912",
+        "DateDevis": "2025-05-21",
+        "DureeValidite": "45 jours",
+        "NomCommercial": "Guy Bassot"
+    }
+}

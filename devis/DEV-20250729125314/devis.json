@@ -1,0 +1,24 @@
+{
+    "Societe": {
+        "RaisonSociale": "Gauthier Hue",
+        "siret": "809 841 141 00025",
+        "AdressePostale": "8 rue patou, 59800 LILLE",
+        "AdresseMail": "pro.archimeuble@gmail.com",
+        "Numero": "06 01 06 28 67"
+    },
+    "Client": {
+        "Nom": ".",
+        "Prenom": ".",
+        "Numero": ".",
+        "Mail": "devis@gmail.com",
+        "AdressePostale": ".",
+        "Image": ""
+    },
+    "Produits": [],
+    "DevisInfo": {
+        "NumeroDevis": "DEV-20250729125314",
+        "DateDevis": "2025-07-29",
+        "DureeValidite": "45 jours",
+        "NomCommercial": "Gauthier Hue"
+    }
+}

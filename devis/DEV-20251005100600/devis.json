@@ -1,0 +1,63 @@
+{
+    "Societe": {
+        "RaisonSociale": "Gauthier Hue",
+        "siret": "809 841 141 00025",
+        "AdressePostale": "8 rue patou, 59800 LILLE",
+        "AdresseMail": "pro.archimeuble@gmail.com",
+        "Numero": "06 01 06 28 67"
+    },
+    "Client": {
+        "Nom": "projet",
+        "Prenom": "yes",
+        "Numero": ".",
+        "Mail": "pro.@yes.com",
+        "AdressePostale": "junia",
+        "Image": ""
+    },
+    "Produits": [
+        {
+            "Description": "meuble sur mesure",
+            "prixht": 6582.031481539514,
+            "prixttc": 7898.44,
+            "chaine": "M1(3500,550,2200)VI[550,550,550,550,1300](FPEbH7,FPEbH[30,120,70](,,H2),FPEbH[30,120,70](,,H2),FPEbH7,HI[1000,1200](VI2(FHI4(T,T,T,T)RREb,FHI4(T,T,T,T)RREb),AI[20,80](,dghbH[700,250,250](FV[1000,300](,H3),FV[1000,300],FV[1000,300]))))",
+            "sous_produit": [
+                {
+                    "description": "Conception",
+                    "prixht": 160,
+                    "prixttc": 192
+                },
+                {
+                    "description": "Approvisionnement Bois",
+                    "prixht": 979.5644609237767,
+                    "prixttc": 1175.477353108532
+                },
+                {
+                    "description": "Quincaillerie",
+                    "prixht": 1280,
+                    "prixttc": 1536
+                },
+                {
+                    "description": "Decoupe",
+                    "prixht": 2288.4565267692324,
+                    "prixttc": 2746.147832123079
+                },
+                {
+                    "description": "Transport",
+                    "prixht": 240,
+                    "prixttc": 288
+                },
+                {
+                    "description": "Pose",
+                    "prixht": 1634.0104938465047,
+                    "prixttc": 1960.8125926158054
+                }
+            ]
+        }
+    ],
+    "DevisInfo": {
+        "NumeroDevis": "DEV-20251005100600",
+        "DateDevis": "2025-10-05",
+        "DureeValidite": "45 jours",
+        "NomCommercial": "Gauthier Hue"
+    }
+}
