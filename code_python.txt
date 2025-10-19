@@ -1,0 +1,471 @@
+
+
+def process(sequence,zone,textures=textures) : # cette fonction sert à parser un sequence de caractère pour modeliser un meuble 
+    #l'objet zone est ammenée à évoluer suite aux opération faites dessus cela repésente une zone d'espace 
+    # l'objet Listplanches permet d'accumuler les planches qui résultent des différentes opérations
+    
+    #Cette fonction décode la sequence et exécute des fonctions plus bas niveaux qui vont crééer des planche.
+    # La methode "envelopper" permet de creer des planches prise sur le bord de la zone, le long d'un label donné. Le label peut etre h (haut), b (bas), g(gauche), d (droite), f (fond), a (avant)
+    # La méthode "cloisonner" permet de séparer une zone en sous-zones et de crééer des planches qui vont les séparer. Cette  séparation se fait selon 3 axes : "avant" "horizontal" et "verticale"
+    # La methode "couper" permet de séparer une zone en sous-zone sans creer de nouvelle planche
+    sequence=sequence+"   "
+    Listplanches=[]
+    i=0
+    while i<len(sequence) :  #boucle de lecrture des caractères
+        char=sequence[i]
+        if char=="M": # "M"+"chiffre" permet la création d'une zone. Il faut obligatoirement initialiser le meuble par une création de zone 
+            print("M")
+            i=i+1
+            char=sequence[i]
+            if char=="0" : #ne jamais utiliser car très dangereux
+                i=i+1
+                seq1,seq2,seq3,seq4,seq5,seq6=subsequence(sequence[i:])
+                i=i+len(seq1)+len(seq2)+len(seq3)+len(seq4)+len(seq5)+len(seq6)+6
+                zone=M0(seq1,seq2,seq3,seq4,seq5,seq6)
+            if char=="1":# permet de faire un meuble rectangulaire avec 3 valeur en mm (largeur, profondeur,haueteur) Exemple : M1(1500,344,2000)
+                i=i+1
+                seq1,seq2,seq3=subsequence(sequence[i:])
+                i=i+len(seq1)+len(seq2)+len(seq3)+3
+                zone=M0(seq1,seq2,seq3,seq3,seq3,seq3)
+            if char=="2": # permet de faire un meuble sous mansarde avec 4 valeur en mm (largeur, profondeur,petite hauteur, grande hauteur) Exemple : M2(1500,344,1200,2000)
+                i=i+1
+                seq1,seq2,seq3,seq4=subsequence(sequence[i:])
+                i=i+len(seq1)+len(seq2)+len(seq3)+len(seq4)+4
+                zone=M0(seq1,seq2,seq3,seq4,seq3,seq4)
+            if char=="3": # permet de faire un meuble sous escalier avec 4 valeur en mm (largeur, profondeur,petite hauteur, grande hauteur) Exemple : M3(1500,344,1200,2000)
+                i=i+1
+                seq1,seq2,seq3,seq4=subsequence(sequence[i:])
+                i=i+len(seq1)+len(seq2)+len(seq3)+len(seq4)+4
+                zone=M0(seq1,seq2,seq3,seq3,seq4,seq4)
+            if char=="4": #ne pas utiliser car trop dangereux 
+                i=i+1
+                seq1,seq2,seq3,seq4=subsequence(sequence[i:])
+                i=i+len(seq1)+len(seq2)+len(seq3)+len(seq4)+4
+                zone=M4(seq1,seq2,seq3,seq4)
+            if char=="5": #permet de faire un meuble d'angle avec 3 valeur en mm (longeur1, longeur2,hauteur). Exemple M5(500,400,600)
+                i=i+1
+                seq1,seq2,seq3=subsequence(sequence[i:])
+                i=i+len(seq1)+len(seq2)+len(seq3)+3
+                zone=M5(seq1,seq2,seq3)
+        elif char=="E" : # E comme enveloppe : créer une enveloppe externe au meuble 
+            print("E")
+            planches,zone=zone.envelopper(label="d",epaisseur=19,texture=textures["exterieur"])
+            Listplanches=Listplanches+planches
+            planches,zone=zone.envelopper(label="g",epaisseur=19,texture=textures["exterieur"])
+            Listplanches=Listplanches+planches
+            planches,zone=zone.envelopper(label="h",epaisseur=19,texture=textures["exterieur"])
+            Listplanches=Listplanches+planches
+        elif char=="F" : # F permet d'ajouter une planche de fond
+            print("F")
+            planches,zone=zone.envelopper(label="f",epaisseur=19,texture=textures["exterieur"])
+            Listplanches=Listplanches+planches
+
+    
+        elif char=="V": # V permet de faire une séparation verticale
+            print("V")
+            i=i+1
+            char=sequence[i]
+            if char=="I": #si on ajoute I la séparartion devient invisible : il n'y a pas création de planche 
+                print("I")
+                i=i+1
+                char=sequence[i]
+
+                if char=="L": # si on ajoute L on passe en mode longueur. Le mode par défaut reste le mode proportions 
+                    
+                    mode="longueurs"
+                    i=i+1
+                    char=sequence[i]
+                else : 
+                    mode="proportions"
+                
+
+                if char=="(": #si on a des parenthèses directes, on divise juste en 2
+                    
+                    zones=zone.couper(dir="verticale")
+                    meublehaut,meublebas=zones[0],zones[1]
+                    seq1,seq2=subsequence(sequence[i:])
+                    i=i+len(seq1)+len(seq2)+2
+                    Listplanches=Listplanches+process(seq1,meublebas,textures)
+                    Listplanches=Listplanches+process(seq2,meublehaut,textures)
+                elif char=="[": #si on a des crochets, on indique des proportion ou des longeurs (si on est en mode longeur )
+                    Lseq=subsequence(sequence[i:])
+                    i=i+1
+                    sommelen=sum([len(seq) for seq in Lseq])
+                    i=i+sommelen+len(Lseq)
+                    Lseq=[int(seq) for seq in Lseq]
+                    zones=zone.couper(dir="verticale",mode=mode , longueurs=np.array(Lseq) , prop=np.array(Lseq))
+                    Lmeubles=zones
+
+                elif char.isdigit(): # si c'est un chriffre n on divise en n part égales
+                    k=int(char)
+                    prop=np.ones(k)
+                    zones=zone.couper(dir="verticale",prop=prop)
+                    Lmeubles=zones
+                    i=i+1
+                
+                char=sequence[i]  
+                if char=="(": # si on descide de préciser ce qu'on veut dans chaque sous zone on peut les indiquer après 
+                    Lseq=subsequence(sequence[i:])
+                    i=i+1
+                    for j, seq in enumerate(Lseq)  : # on execute les sous séquence sur les sous meuble de gauche à droite 
+                        i=i+len(seq)+1
+                        Listplanches=Listplanches+process(seq,Lmeubles[j],textures)
+
+
+
+            else :  # meme chose qu'en haut mais on va crééer des planche 
+                epaisseur=19
+                if char=="L":
+                    
+                    mode="longueurs"
+                    i=i+1
+                    char=sequence[i]
+                else : 
+                    mode="proportions"
+                
+
+                if char=="(":
+                    
+                    zones,planches=zone.cloisonner(dir="verticale",epaisseur=epaisseur,texture=textures["interieur"])
+                    meublehaut,meublebas,planche=zones[0],zones[1],planches[0]
+                    seq1,seq2=subsequence(sequence[i:])
+                    i=i+len(seq1)+len(seq2)+2
+                    if epaisseur>1 :
+                        Listplanches.append(planche)
+                    Listplanches=Listplanches+process(seq1,meublebas,textures)
+                    Listplanches=Listplanches+process(seq2,meublehaut,textures)
+                elif char=="[":
+                    Lseq=subsequence(sequence[i:])
+                    i=i+1
+                    sommelen=sum([len(seq) for seq in Lseq])
+                    i=i+sommelen+len(Lseq)
+                    Lseq=[int(seq) for seq in Lseq]
+                    zones,planches=zone.cloisonner(dir="verticale",mode=mode , longueurs=np.array(Lseq) , prop=np.array(Lseq),epaisseur=epaisseur,texture=textures["interieur"])
+                    planches,Lmeubles=planches,zones
+                    if epaisseur>1 :
+                        Listplanches=Listplanches+planches
+                elif char.isdigit():
+                    k=int(char)
+                    prop=np.ones(k)
+                    zones,planches=zone.cloisonner(dir="verticale",prop=prop,epaisseur=epaisseur,texture=textures["interieur"])
+                    planches,Lmeubles=planches,zones
+                    if epaisseur>1 :
+                        Listplanches=Listplanches+planches
+                    i=i+1
+                
+                char=sequence[i]  
+                if char=="(":
+                    Lseq=subsequence(sequence[i:])
+                    i=i+1
+                    for j, seq in enumerate(Lseq)  :
+                        i=i+len(seq)+1
+                        Listplanches=Listplanches+process(seq,Lmeubles[j],textures)
+        elif char=="H":  # H permet de faire des séparation horizontale. En ajoutant "I" à la suite du H, on fait des séparations invisibles. Si on rajoute un "L" on passen en mode longueur, le mode par defaut étant la proportion 
+            print("H")
+            i=i+1
+            char=sequence[i]
+            if char=="I":
+                print("I")
+                i=i+1
+                char=sequence[i]
+
+                if char=="L":
+                    
+                    mode="longueurs"
+                    i=i+1
+                    char=sequence[i]
+                else : 
+                    mode="proportions"
+                
+
+                if char=="(":
+                    
+                    zones=zone.couper(dir="horizontale")
+                    meublehaut,meublebas=zones[0],zones[1]
+                    seq1,seq2=subsequence(sequence[i:])
+                    i=i+len(seq1)+len(seq2)+2
+                    Listplanches=Listplanches+process(seq1,meublebas,textures)
+                    Listplanches=Listplanches+process(seq2,meublehaut,textures)
+                elif char=="[":
+                    Lseq=subsequence(sequence[i:])
+                    i=i+1
+                    sommelen=sum([len(seq) for seq in Lseq])
+                    i=i+sommelen+len(Lseq)
+                    Lseq=[int(seq) for seq in Lseq]
+                    zones=zone.couper(dir="horizontale",mode=mode , longueurs=np.array(Lseq) , prop=np.array(Lseq))
+                    Lmeubles=zones
+
+                elif char.isdigit():
+                    k=int(char)
+                    prop=np.ones(k)
+                    zones=zone.couper(dir="horizontale",prop=prop)
+                    Lmeubles=zones
+                    i=i+1
+                
+                char=sequence[i]  
+                if char=="(":
+                    Lseq=subsequence(sequence[i:])
+                    i=i+1
+                    for j, seq in enumerate(Lseq)  :  # On exécute les sous meubles sur les sous zones de bas en Haut 
+                        i=i+len(seq)+1
+                        Listplanches=Listplanches+process(seq,Lmeubles[j],textures)
+
+
+
+            else : 
+                epaisseur=19
+                if char=="L":
+                    
+                    mode="longueurs"
+                    i=i+1
+                    char=sequence[i]
+                else : 
+                    mode="proportions"
+                
+
+                if char=="(":
+                    
+                    zones,planches=zone.cloisonner(dir="horizontale",epaisseur=epaisseur,texture=textures["interieur"])
+                    meublehaut,meublebas,planche=zones[0],zones[1],planches[0]
+                    seq1,seq2=subsequence(sequence[i:])
+                    i=i+len(seq1)+len(seq2)+2
+                    if epaisseur>1 :
+                        Listplanches.append(planche)
+                    Listplanches=Listplanches+process(seq1,meublebas,textures)
+                    Listplanches=Listplanches+process(seq2,meublehaut,textures)
+                elif char=="[":
+                    Lseq=subsequence(sequence[i:])
+                    i=i+1
+                    sommelen=sum([len(seq) for seq in Lseq])
+                    i=i+sommelen+len(Lseq)
+                    Lseq=[int(seq) for seq in Lseq]
+                    zones,planches=zone.cloisonner(dir="horizontale",mode=mode , longueurs=np.array(Lseq) , prop=np.array(Lseq),epaisseur=epaisseur,texture=textures["interieur"])
+                    planches,Lmeubles=planches,zones
+                    if epaisseur>1 :
+                        Listplanches=Listplanches+planches
+                elif char.isdigit():
+                    k=int(char)
+                    prop=np.ones(k)
+                    zones,planches=zone.cloisonner(dir="horizontale",prop=prop,epaisseur=epaisseur,texture=textures["interieur"])
+                    planches,Lmeubles=planches,zones
+                    if epaisseur>1 :
+                        Listplanches=Listplanches+planches
+                    i=i+1
+                
+                char=sequence[i]  
+                if char=="(":
+                    Lseq=subsequence(sequence[i:])
+                    i=i+1
+                    for j, seq in enumerate(Lseq)  : 
+                        i=i+len(seq)+1
+                        Listplanches=Listplanches+process(seq,Lmeubles[j],textures)
+        elif char=="P": # P permet d'ajouter une porte elle peut être encastre si on la fait après les planches adjacentes (exemple EP) ou bien en applique si on la fait avant (exemple PE)
+            print("P")
+
+
+            planches,zone=zone.envelopper(label="a",epaisseur=19.1,texture=textures["exterieur"])
+            planche=planches[0]
+            _,planche=planche.envelopper(label="g",epaisseur=3)
+            _,planche=planche.envelopper(label="d",epaisseur=3)
+            _,planche=planche.envelopper(label="h",epaisseur=3)
+            _,planche=planche.envelopper(label="b",epaisseur=3)
+            _,planche=planche.envelopper(label="a",epaisseur=1)
+
+            planche.bloc="porte"
+            
+            planche.face_usine=[face for face in planche.listface if face.label=="f"][0]
+            Listplanches.append(planche)
+
+  
+
+        elif char=="A": #A marche sur le même principe que H et V mais il y a peu de cas où c'est pertinant de faire une division selon l'axe d'ouverture du meuble 
+            print("A")
+            i=i+1
+            char=sequence[i]
+            if char=="I":
+                print("I")
+                i=i+1
+                char=sequence[i]
+
+                if char=="L":
+                    
+                    mode="longueurs"
+                    i=i+1
+                    char=sequence[i]
+                else : 
+                    mode="proportions"
+                
+
+                if char=="(":
+                    
+                    zones=zone.couper(dir="avant")
+                    meublehaut,meublebas=zones[0],zones[1]
+                    seq1,seq2=subsequence(sequence[i:])
+                    i=i+len(seq1)+len(seq2)+2
+                    Listplanches=Listplanches+process(seq1,meublebas,textures)
+                    Listplanches=Listplanches+process(seq2,meublehaut,textures)
+                elif char=="[":
+                    Lseq=subsequence(sequence[i:])
+                    i=i+1
+                    sommelen=sum([len(seq) for seq in Lseq])
+                    i=i+sommelen+len(Lseq)
+                    Lseq=[int(seq) for seq in Lseq]
+                    zones=zone.couper(dir="avant",mode=mode , longueurs=np.array(Lseq) , prop=np.array(Lseq))
+                    Lmeubles=zones
+
+                elif char.isdigit():
+                    k=int(char)
+                    prop=np.ones(k)
+                    zones=zone.couper(dir="avant",prop=prop)
+                    Lmeubles=zones
+                    i=i+1
+                
+                char=sequence[i]  
+                if char=="(":
+                    Lseq=subsequence(sequence[i:])
+                    i=i+1
+                    for j, seq in enumerate(Lseq)  :
+                        i=i+len(seq)+1
+                        Listplanches=Listplanches+process(seq,Lmeubles[j],textures)
+
+
+
+            else : 
+                epaisseur=19
+                if char=="L":
+                    
+                    mode="longueurs"
+                    i=i+1
+                    char=sequence[i]
+                else : 
+                    mode="proportions"
+                
+
+                if char=="(":
+                    
+                    zones,planches=zone.cloisonner(dir="avant",epaisseur=epaisseur,texture=textures["interieur"])
+                    meublehaut,meublebas,planche=zones[0],zones[1],planches[0]
+                    seq1,seq2=subsequence(sequence[i:])
+                    i=i+len(seq1)+len(seq2)+2
+                    if epaisseur>1 :
+                        Listplanches.append(planche)
+                    Listplanches=Listplanches+process(seq1,meublebas,textures)
+                    Listplanches=Listplanches+process(seq2,meublehaut,textures)
+                elif char=="[":
+                    Lseq=subsequence(sequence[i:])
+                    i=i+1
+                    sommelen=sum([len(seq) for seq in Lseq])
+                    i=i+sommelen+len(Lseq)
+                    Lseq=[int(seq) for seq in Lseq]
+                    zones,planches=zone.cloisonner(dir="avant",mode=mode , longueurs=np.array(Lseq) , prop=np.array(Lseq),epaisseur=epaisseur,texture=textures["interieur"])
+                    planches,Lmeubles=planches,zones
+                    if epaisseur>1 :
+                        Listplanches=Listplanches+planches
+                elif char.isdigit():
+                    k=int(char)
+                    prop=np.ones(k)
+                    zones,planches=zone.cloisonner(dir="avant",prop=prop,epaisseur=epaisseur,texture=textures["interieur"])
+                    planches,Lmeubles=planches,zones
+                    if epaisseur>1 :
+                        Listplanches=Listplanches+planches
+                    i=i+1
+                
+                char=sequence[i]  
+                if char=="(":
+                    Lseq=subsequence(sequence[i:])
+                    i=i+1
+                    for j, seq in enumerate(Lseq)  :
+                        i=i+len(seq)+1
+                        Listplanches=Listplanches+process(seq,Lmeubles[j],textures)
+        elif char=="S":  # S permet de faire un socle en bas du meuble il faut toujours faire un socle en bas du meuble 
+
+            print("S")
+            zones,planches=zone.cloisonner(dir="horizontale",mode="longueurs" , longueurs=np.array([50]) ,epaisseur=19,texture=textures["interieur"])
+            planches[0].bloc="socle"
+            Listplanches=Listplanches+planches
+            zonebas,zone = zones
+            planches,zonebas=zonebas.envelopper(label="a",epaisseur=19,texture=textures["interieur"])
+            planche=planches[0]
+            planche.bloc="socle"
+            Listplanches.append(planche)
+
+            i=i+1
+            char=sequence[i]
+            if char == "2" :
+                
+                planches,zonebas=zonebas.envelopper(label="f",epaisseur=19,texture=textures["interieur"])
+                planche=planches[0]
+                planche.bloc="socle"
+                Listplanches.append(planche)
+            else :
+                i=i-1
+                char=sequence[i]
+        elif char=="R": # simple retrait. Peut donner un coté esthétique. A utiliser avec parcimonie 
+            print("R")
+            _,zone=zone.envelopper(label="a",epaisseur=19)    
+        elif char=="T": # T défini un tiroir dans la zone courante 
+            print("T")
+            planches,zone=zone.envelopper(label="g",epaisseur=3)
+            planches,zone=zone.envelopper(label="d",epaisseur=3)
+            planches,zone=zone.envelopper(label="h",epaisseur=3)
+            planches,zone=zone.envelopper(label="b",epaisseur=3)
+            planches,zone=zone.envelopper(label="f",epaisseur=19)
+
+            planches,zone=zone.envelopper(label="a",epaisseur=19,texture=textures["exterieur"])
+            planche=planches[0]
+            planche.bloc="tiroir"
+            Listplanches.append(planche)
+            planches,zone=zone.envelopper(label="g",epaisseur=8.5)
+            planches,zone=zone.envelopper(label="d",epaisseur=8.5)
+
+            planches,zone=zone.envelopper(label="g",epaisseur=19,texture=textures["interieur"])
+            planche=planches[0]
+            planche.bloc="tiroir"
+            Listplanches.append(planche)
+            planches,zone=zone.envelopper(label="d",epaisseur=19,texture=textures["interieur"])
+            planche=planches[0]
+            planche.bloc="tiroir"
+            Listplanches.append(planche)
+            planches,zone=zone.envelopper(label="f",epaisseur=19,texture=textures["interieur"])
+            planche=planches[0]
+            planche.bloc="tiroir"
+            Listplanches.append(planche)
+            planches,zone=zone.envelopper(label="b",epaisseur=19,texture=textures["interieur"])
+            planche=planches[0]
+            planche.bloc="tiroir"
+            Listplanches.append(planche)
+        elif char =="r":
+            zone.rotation()
+        elif char=="h": # h planche en haut 
+            print("h")
+            planches,zone=zone.envelopper(label="h",epaisseur=19,texture=textures["exterieur"])
+            
+            Listplanches=Listplanches+planches
+        elif char=="d": # d planche à droite 
+            print("d")
+            planches,zone=zone.envelopper(label="d",epaisseur=19,texture=textures["exterieur"])
+            Listplanches=Listplanches+planches
+        elif char=="g": # g planche à gauche 
+            print("g")
+            planches,zone=zone.envelopper(label="g",epaisseur=19,texture=textures["exterieur"])
+            Listplanches=Listplanches+planches
+        elif char=="b": # b planche en bas 
+            print("b")
+            planches,zone=zone.envelopper(label="b",epaisseur=19,texture=textures["exterieur"])
+            Listplanches=Listplanches+planches
+        elif char=="a": # a planche avant (attention ne pas utiliser n'importe comment )
+            print("a")
+            planches,zone=zone.envelopper(label="a",epaisseur=19,texture=textures["exterieur"])
+            Listplanches=Listplanches+planches
+        elif char=="C": # laisser les couleur tel quel pour le moment 
+            print("C")
+            i=i+1
+            char=sequence[i]
+            if char=="(":
+                seq1,seq2,seq3,seq4=subsequence(sequence[i:])
+                i=i+len(seq1)+len(seq2)+len(seq3)+len(seq4)+4
+                textures={"exterieur": seq1,"interieur":seq2,"porte":seq3,"tiroir":seq4}
+        i=i+1
+
+
+    return Listplanches

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exemple de chargeur GLB Three.js avec lumière dynamique</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
+  <style>
+      body { margin: 0; }
+      canvas { display: block; }
+      #controls { position: absolute; top: 10px; left: 10px; z-index: 10; background-color: rgba(255, 255, 255, 0.7); padding: 10px; }
+      label { display: block; margin: 5px; }
+      input { width: 200px; }
+      #loadButton { position: absolute; top: 380px; left: 10px; z-index: 10; background-color: rgba(255, 255, 255, 0.7); padding: 10px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="viewer"></div>
+  <div id="controls">
+    <label>Position de la lumière (X) :</label>
+    <input type="range" id="lightX" min="-10" max="10" step="0.1" value="5">
+    <label>Position de la lumière (Y) :</label>
+    <input type="range" id="lightY" min="-10" max="10" step="0.1" value="5">
+    <label>Position de la lumière (Z) :</label>
+    <input type="range" id="lightZ" min="-10" max="10" step="0.1" value="5">
+    <label>Intensité de la lumière directionnelle :</label>
+    <input type="range" id="lightIntensity" min="0" max="10" step="0.1" value="1">
+    <label>Roughness du modèle :</label>
+    <input type="range" id="roughness" min="0" max="1" step="0.01" value="0.8">
+    <label>Metalness du modèle :</label>
+    <input type="range" id="metalness" min="0" max="1" step="0.01" value="0.2">
+    <label>Intensité de la lumière ambiante :</label>
+    <input type="range" id="ambientLightIntensity" min="0" max="2" step="0.1" value="0.6">
+  </div>
+
+  <!-- Button to toggle models -->
+  <div id="loadButton" onclick="toggleModel()">Charger meublep.glb</div>
+
+  <script>
+    // Créer une scène 3D
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(20, window.innerWidth / window.innerHeight, 0.1, 1000); // Réduire l'effet de perspective avec un FOV de 50
+    const renderer = new THREE.WebGLRenderer({ antialias: true }); // Activer l'anti-aliasing pour un rendu plus lisse
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.getElementById('viewer').appendChild(renderer.domElement);
+    scene.background = new THREE.Color(0xdcdcdc); // Fond gris clair
+
+    // Activer les ombres sur le renderer
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    // Ajouter une lumière ambiante (atmosphérique)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); // Lumière douce
+    scene.add(ambientLight);
+
+    // Ajouter une lumière directionnelle avec ombre
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(5, 5, 5).normalize();
+    directionalLight.castShadow = true; // La lumière émet des ombres
+    scene.add(directionalLight);
+
+    // Créer le sol gris foncé
+    const geometry = new THREE.PlaneGeometry(1000, 1000); // Grande surface plane
+    const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x333333, opacity: 1, transparent: false }); // Couleur gris foncé
+    const floor = new THREE.Mesh(geometry, floorMaterial);
+    floor.rotation.x = -Math.PI / 2; // Rotation du sol
+    floor.position.y = 0; // Abaisser le sol
+    floor.receiveShadow = true; // Le sol reçoit des ombres
+    scene.add(floor);
+
+    // Créer un mur vertical avec une couleur gris clair
+    const wallGeometry = new THREE.PlaneGeometry(1000, 1000); // Grande surface plane
+    const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc, opacity: 1, transparent: false }); // Couleur gris clair
+    const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+    wall.rotation.z = Math.PI / 2; // Rotation pour rendre le mur vertical (placer le mur à 90° de l'axe Z)
+    wall.position.set(0, 0, 0); // Positionner le mur (par exemple, à 500 sur l'axe Z)
+    wall.receiveShadow = true; // Le mur reçoit des ombres
+    wall.castShadow = true; // Le mur émet des ombres (si d'autres objets sont devant)
+    scene.add(wall);
+
+    // GLTF Loader pour charger le modèle
+    const loader = new THREE.GLTFLoader();
+    let model = null; // Variable pour stocker le modèle
+    let currentModel = 'meuble.glb'; // Le modèle actuellement chargé
+
+    // Fonction pour charger un modèle GLB
+    function loadModel(modelPath) {
+      if (model) {
+        scene.remove(model); // Retirer le modèle précédent
+      }
+
+      loader.load(modelPath, function(gltf) {
+        model = gltf.scene; // Récupérer la scène du modèle GLB
+        model.traverse(function(child) {
+          if (child.isMesh) {
+            child.castShadow = true; // Le modèle émet des ombres
+            child.receiveShadow = true; // Le modèle reçoit des ombres
+            child.material.metalness = 0.2; // Change metalness
+            child.material.roughness = 0.8;  // Change roughness
+          }
+        });
+        model.position.set(0, 0, 0); // Positionner le modèle
+        model.scale.set(1, 1, 1); // Échelle du modèle
+        scene.add(model); // Ajouter le modèle à la scène
+      }, undefined, function(error) {
+        console.error('Erreur lors du chargement du modèle:', error);
+      });
+    }
+
+    // Charger le premier modèle au début
+    loadModel(currentModel);
+
+    // Ajouter des contrôles pour interagir avec la scène
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.25;
+    controls.enableZoom = true;
+
+    camera.position.set(0, 2, 10); // Positionner la caméra
+
+
+
+    const animate = function() {
+      requestAnimationFrame(animate);
+      controls.update(); // Mise à jour des contrôles
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    // Gestion des redimensionnements de la fenêtre
+    window.addEventListener('resize', function() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Mise à jour des paramètres de la lumière et du modèle via les curseurs
+    document.getElementById('lightX').addEventListener('input', function(event) {
+      directionalLight.position.x = parseFloat(event.target.value);
+    });
+    document.getElementById('lightY').addEventListener('input', function(event) {
+      directionalLight.position.y = parseFloat(event.target.value);
+    });
+    document.getElementById('lightZ').addEventListener('input', function(event) {
+      directionalLight.position.z = parseFloat(event.target.value);
+    });
+    document.getElementById('lightIntensity').addEventListener('input', function(event) {
+      directionalLight.intensity = parseFloat(event.target.value);
+    });
+    document.getElementById('roughness').addEventListener('input', function(event) {
+      if (model) {
+        model.traverse(function(child) {
+          if (child.isMesh) {
+            child.material.roughness = parseFloat(event.target.value);
+          }
+        });
+      }
+    });
+    document.getElementById('metalness').addEventListener('input', function(event) {
+      if (model) {
+        model.traverse(function(child) {
+          if (child.isMesh) {
+            child.material.metalness = parseFloat(event.target.value);
+          }
+        });
+      }
+    });
+
+    // Mise à jour de l'intensité de la lumière ambiante via le curseur
+    document.getElementById('ambientLightIntensity').addEventListener('input', function(event) {
+      ambientLight.intensity = parseFloat(event.target.value);
+    });
+
+    // Fonction pour alterner entre les modèles
+    function toggleModel() {
+      currentModel = (currentModel === 'meuble.glb') ? 'meublep.glb' : 'meuble.glb';
+      loadModel(currentModel);
+      document.getElementById('loadButton').textContent = (currentModel === 'meuble.glb') ? 'Charger meublep.glb' : 'Charger meuble.glb';
+    }
+  </script>
+</body>
+</html>
+

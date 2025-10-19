@@ -1,0 +1,38 @@
+{
+    "Description": "meuble sur mesure",
+    "prixht": 1544.3817486112503,
+    "prixttc": 1853.26,
+    "chaine": "M1(1000,800,1000)EbFH(V2(T,),T)",
+    "sous_produit": [
+        {
+            "description": "Conception",
+            "prixht": 150.0,
+            "prixttc": 180.0
+        },
+        {
+            "description": "Approvisionnement Bois",
+            "prixht": 183.08823240750002,
+            "prixttc": 219.70587888900002
+        },
+        {
+            "description": "Quincaillerie",
+            "prixht": 225.0,
+            "prixttc": 270.0
+        },
+        {
+            "description": "Decoupe",
+            "prixht": 446.4996000000001,
+            "prixttc": 535.7995200000001
+        },
+        {
+            "description": "Transport",
+            "prixht": 225.0,
+            "prixttc": 270.0
+        },
+        {
+            "description": "Pose",
+            "prixht": 314.79391620375003,
+            "prixttc": 377.7526994445
+        }
+    ]
+}

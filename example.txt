@@ -1,0 +1,10 @@
+code 1 : M3(3400,300,2470,3995)HI[20,20,25](HI2(VI5(SPhg,SPgh,SPgh,SPgh,SPdgh),VI[40,20,40](gdh,h,gdh)),HI[80,20](VI[15,15,40,15,15](gd,d,dhP,d,d),VI[15,15,20,20,15,15](gd,,d,,d,d)),HI3(VI[20,20,20](ghb,ghb,dhb),gh,gh))
+code 2 : M2(3240,680,100,1060)EV3(H[25,25](P,P),PH2,PH2)
+code 3 : M3(2100,100,700,2300)C(mdf,mdf,mdf,mdf)VI2(P2E,P2E)
+code 4 : M3(1900,700,1000,2700)C(mdf,mdf,mdf,mdf)VI[1,2,1](ghPFSH7,ghP2FSH[2,2,8,2,1](T,T,D,,),gP)
+code 5 : M3(680,900,1100,1700)C(chene,chene,chene,chene)EFV2(PSH[80,20](D,),Tg)
+code 6: M3(2500,850,390,2300)ESRV4(PH[79,10,10](,,),PH[80,20](D,),PH3(,,),P)
+code 7 : M2(1000,500,600,1200)EV3(FPSH2(,),FPSH[40,20,40](,T,),FPSH2(D,))
+code 8 : M1(1690,382,2500)ERSV[1,1](H[10,80,10](F,FD,F),H[10,10,10,10,60](FT,FT,FT,FT,FD))
+code 9 : M3(2415,1374,3000,733)C(chene,chene,chene,chene)HI[100,40](VI[8,2](RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRhdgV[6,4](H6,H[80,20](D,)),dhPFH6),)
+code 1
