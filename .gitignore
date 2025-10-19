@@ -52,3 +52,6 @@ php_local/
 # Dossier CRM - données sensibles
 crm/*.json
 !crm/.gitkeep
+
+# Note: Les uploads actuels dans crm/uploads/ sont inclus dans le premier commit
+# comme données de test, mais les futurs uploads ne seront pas versionnés
