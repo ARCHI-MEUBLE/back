@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p backend/config backend/core backend/models backend/api)",
+      "Bash(php backend/config/init_db.php)",
+      "Bash(php -m)",
+      "Bash(php -v)",
+      "Bash(where sqlite3)",
+      "Bash(sqlite3 backend/database.db \"CREATE TABLE IF NOT EXISTS templates (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    name TEXT NOT NULL,\n    prompt TEXT NOT NULL,\n    base_price REAL NOT NULL,\n    image_url TEXT NOT NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP\n);\n\nCREATE TABLE IF NOT EXISTS configurations (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    user_session TEXT NOT NULL,\n    prompt TEXT NOT NULL,\n    price REAL NOT NULL,\n    glb_url TEXT,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP\n);\n\nINSERT INTO templates (name, prompt, base_price, image_url) VALUES\n(''Meuble TV Scandinave'', ''M1(1700,500,730)EFH3(F,T,F)'', 899.00, ''/frontend/assets/images/meuble-scandinave.jpg''),\n(''Meuble TV Moderne'', ''M1(2000,400,600)EFH2(T,T)'', 1099.00, ''/frontend/assets/images/meuble-moderne.jpg''),\n(''Meuble TV Compact'', ''M1(1200,350,650)EFH4(F,F,T,F)'', 699.00, ''/frontend/assets/images/meuble-compact.jpg'');\")",
+      "Bash(sqlite3 backend/database.db \"SELECT name, base_price FROM templates;\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
