@@ -37,6 +37,12 @@ class Router {
             return;
         }
 
+        // Route : Test viewer
+        if ($path === 'test-viewer.html' || $path === 'test-viewer') {
+            $this->serveFrontendPage('test-viewer.html');
+            return;
+        }
+
         // Routes API
         if (strpos($path, 'api/') === 0) {
             $this->handleAPI($path);
