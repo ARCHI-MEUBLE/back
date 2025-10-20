@@ -1,0 +1,149 @@
+{
+  "info": {
+    "name": "ArchiMeuble API",
+    "description": "Collection de tests pour l'API ArchiMeuble",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Templates - GET All",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/api/templates",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["api", "templates"]
+        }
+      }
+    },
+    {
+      "name": "Generate - Valid Prompt",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"prompt\": \"M1(1700,500,730)EF\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/generate",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["api", "generate"]
+        }
+      }
+    },
+    {
+      "name": "Generate - Injection Attack (Blocked)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"prompt\": \"M1(1700,500,730); rm -rf /\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/generate",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["api", "generate"]
+        }
+      }
+    },
+    {
+      "name": "Generate - Invalid Format",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"prompt\": \"INVALID\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/generate",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["api", "generate"]
+        }
+      }
+    },
+    {
+      "name": "Configurations - Create",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_session\": \"session_test_123\",\n  \"prompt\": \"M1(1700,500,730)EFH3(F,T,F)\",\n  \"price\": 899.00,\n  \"glb_url\": \"/frontend/assets/models/meuble_test.glb\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/configurations",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["api", "configurations"]
+        }
+      }
+    },
+    {
+      "name": "Configurations - GET All",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/api/configurations",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["api", "configurations"]
+        }
+      }
+    },
+    {
+      "name": "Configurations - GET By Session",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/api/configurations?session=session_test_123",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["api", "configurations"],
+          "query": [
+            {
+              "key": "session",
+              "value": "session_test_123"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -57,7 +57,7 @@ try {
 
         // Si une session est fournie
         } elseif (isset($_GET['session'])) {
-            $session = filter_var($_GET['session'], FILTER_SANITIZE_STRING);
+            $session = htmlspecialchars($_GET['session'], ENT_QUOTES, 'UTF-8');
 
             $configs = $configModel->getBySession($session);
 

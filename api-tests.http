@@ -1,0 +1,98 @@
+### ArchiMeuble - Tests API
+### Auteur: Ilyes
+### Date: 2025-10-20
+
+### 1. GET Templates - Récupérer tous les meubles
+GET http://localhost:8000/api/templates
+Accept: application/json
+
+###
+
+### 2. GET Template by ID
+GET http://localhost:8000/api/templates?id=1
+Accept: application/json
+
+###
+
+### 3. POST Generate - Prompt valide
+POST http://localhost:8000/api/generate
+Content-Type: application/json
+
+{
+  "prompt": "M1(1700,500,730)EF"
+}
+
+###
+
+### 4. POST Generate - Prompt complet avec modules
+POST http://localhost:8000/api/generate
+Content-Type: application/json
+
+{
+  "prompt": "M1(1700,500,730)EFH3(F,T,F)"
+}
+
+###
+
+### 5. POST Generate - Test sécurité (injection bloquée)
+POST http://localhost:8000/api/generate
+Content-Type: application/json
+
+{
+  "prompt": "M1(1700,500,730); rm -rf /"
+}
+
+###
+
+### 6. POST Generate - Format invalide
+POST http://localhost:8000/api/generate
+Content-Type: application/json
+
+{
+  "prompt": "INVALID"
+}
+
+###
+
+### 7. POST Generate - Prompt manquant
+POST http://localhost:8000/api/generate
+Content-Type: application/json
+
+{}
+
+###
+
+### 8. POST Configuration - Créer une config
+POST http://localhost:8000/api/configurations
+Content-Type: application/json
+
+{
+  "user_session": "session_phpstorm_123",
+  "prompt": "M1(1700,500,730)EFH3(F,T,F)",
+  "price": 899.00,
+  "glb_url": "/frontend/assets/models/meuble_test.glb"
+}
+
+###
+
+### 9. GET Configurations - Toutes
+GET http://localhost:8000/api/configurations
+Accept: application/json
+
+###
+
+### 10. GET Configurations - Par session
+GET http://localhost:8000/api/configurations?session=session_phpstorm_123
+Accept: application/json
+
+###
+
+### 11. Test endpoint (debug)
+POST http://localhost:8000/api/test
+Content-Type: application/json
+
+{
+  "prompt": "M1(1700,500,730)EF"
+}
+
+###
