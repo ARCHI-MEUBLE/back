@@ -1,0 +1,177 @@
+<?php
+/**
+ * ArchiMeuble - Endpoint des modèles de meubles
+ * GET /api/models - Récupérer tous les modèles
+ * GET /api/models?id={id} - Récupérer un modèle spécifique
+ * POST /api/models - Créer un nouveau modèle (admin uniquement)
+ * PUT /api/models/{id} - Modifier un modèle (admin uniquement)
+ * DELETE /api/models/{id} - Supprimer un modèle (admin uniquement)
+ *
+ * Date : 2025-10-21
+ */
+
+require_once __DIR__ . '/../core/Database.php';
+require_once __DIR__ . '/../core/Session.php';
+require_once __DIR__ . '/../models/Model.php';
+
+// Headers CORS
+header('Access-Control-Allow-Origin: http://localhost:3000');
+header('Access-Control-Allow-Credentials: true');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Content-Type: application/json');
+
+// Gérer les requêtes OPTIONS (preflight)
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+$session = Session::getInstance();
+$model = new Model();
+
+$method = $_SERVER['REQUEST_METHOD'];
+
+/**
+ * Vérifie si l'utilisateur est admin
+ */
+function isAdmin() {
+    global $session;
+    return $session->has('is_admin') && $session->get('is_admin') === true;
+}
+
+/**
+ * GET /api/models
+ */
+if ($method === 'GET') {
+    // Récupérer un modèle spécifique ou tous les modèles
+    if (isset($_GET['id'])) {
+        $modelData = $model->getById($_GET['id']);
+        if ($modelData) {
+            http_response_code(200);
+            echo json_encode($modelData);
+        } else {
+            http_response_code(404);
+            echo json_encode(['error' => 'Modèle non trouvé']);
+        }
+    } else {
+        $models = $model->getAll();
+        http_response_code(200);
+        echo json_encode($models);
+    }
+    exit;
+}
+
+/**
+ * POST /api/models - Créer un nouveau modèle (admin uniquement)
+ */
+if ($method === 'POST') {
+    if (!isAdmin()) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Accès non autorisé']);
+        exit;
+    }
+
+    $input = json_decode(file_get_contents('php://input'), true);
+
+    if (!isset($input['name']) || !isset($input['prompt'])) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Nom et prompt requis']);
+        exit;
+    }
+
+    $modelId = $model->create(
+        $input['name'],
+        $input['description'] ?? null,
+        $input['prompt'],
+        $input['base_price'] ?? null,
+        $input['image_path'] ?? null
+    );
+
+    if ($modelId) {
+        http_response_code(201);
+        echo json_encode([
+            'success' => true,
+            'id' => $modelId
+        ]);
+    } else {
+        http_response_code(500);
+        echo json_encode(['error' => 'Erreur lors de la création du modèle']);
+    }
+    exit;
+}
+
+/**
+ * PUT /api/models - Modifier un modèle (admin uniquement)
+ */
+if ($method === 'PUT') {
+    if (!isAdmin()) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Accès non autorisé']);
+        exit;
+    }
+
+    $input = json_decode(file_get_contents('php://input'), true);
+
+    if (!isset($input['id'])) {
+        http_response_code(400);
+        echo json_encode(['error' => 'ID du modèle requis']);
+        exit;
+    }
+
+    $updateData = [];
+    $allowedFields = ['name', 'description', 'prompt', 'base_price', 'image_path'];
+
+    foreach ($allowedFields as $field) {
+        if (isset($input[$field])) {
+            $updateData[$field] = $input[$field];
+        }
+    }
+
+    if (empty($updateData)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Aucune donnée à mettre à jour']);
+        exit;
+    }
+
+    if ($model->update($input['id'], $updateData)) {
+        http_response_code(200);
+        echo json_encode(['success' => true]);
+    } else {
+        http_response_code(500);
+        echo json_encode(['error' => 'Erreur lors de la mise à jour du modèle']);
+    }
+    exit;
+}
+
+/**
+ * DELETE /api/models - Supprimer un modèle (admin uniquement)
+ */
+if ($method === 'DELETE') {
+    if (!isAdmin()) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Accès non autorisé']);
+        exit;
+    }
+
+    $input = json_decode(file_get_contents('php://input'), true);
+
+    if (!isset($input['id'])) {
+        http_response_code(400);
+        echo json_encode(['error' => 'ID du modèle requis']);
+        exit;
+    }
+
+    if ($model->delete($input['id'])) {
+        http_response_code(200);
+        echo json_encode(['success' => true]);
+    } else {
+        http_response_code(500);
+        echo json_encode(['error' => 'Erreur lors de la suppression du modèle']);
+    }
+    exit;
+}
+
+// Méthode non supportée
+http_response_code(405);
+echo json_encode(['error' => 'Méthode non autorisée']);

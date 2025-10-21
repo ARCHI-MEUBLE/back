@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArchiMeuble - Configurateur de Meubles TV sur Mesure</title>
+    <meta name="description" content="Créez votre meuble TV personnalisé en quelques clics">
+    <link rel="stylesheet" href="/frontend/css/main.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <a href="/">ArchiMeuble</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/" class="active">Accueil</a></li>
+                <li><a href="/configurator">Configurer</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Configurez votre meuble TV sur mesure</h1>
+            <p>Des meubles uniques adaptés à votre espace et votre style</p>
+            <a href="/configurator" class="btn btn-primary">Commencer la configuration</a>
+        </div>
+    </section>
+
+    <!-- Catalog Section -->
+    <section class="catalog">
+        <div class="container">
+            <h2 class="section-title">Nos modèles populaires</h2>
+            <p class="section-subtitle">Choisissez un modèle et personnalisez-le selon vos besoins</p>
+
+            <!-- Grid de cartes (chargé dynamiquement par catalog.js) -->
+            <div id="catalog-grid" class="catalog-grid">
+                <!-- Les cartes seront injectées ici par JavaScript -->
+                <div class="loading">Chargement des meubles...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>ArchiMeuble</h3>
+                    <p>Votre meuble sur mesure, configuré en ligne</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <p>Email: contact@archimeuble.fr</p>
+                    <p>Tél: 01 23 45 67 89</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Liens</h4>
+                    <ul>
+                        <li><a href="/">Accueil</a></li>
+                        <li><a href="/configurator">Configurateur</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 ArchiMeuble. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Script pour charger le catalogue -->
+    <script src="/frontend/js/catalog.js"></script>
+</body>
+</html>

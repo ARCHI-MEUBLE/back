@@ -1,0 +1,58 @@
+Instructions 
+
+Toutes les cotes sont en mm
+Types de meubles 
+
+3 types de meubles :
+
+M1 (largeur profondeur hauteur (+ autre hauteur si il y a)
+M2(largeur profondeur hauteur (+ autre hauteur si il y a)
+M3(largeur profondeur hauteur (+ autre hauteur si il y a)
+
+Couleur du meuble 
+C : couleur C(extérieur, intérieur, porte tiroir)
+Ex : C (chene, hetre, bleu, blanc)
+
+4 possibilités : 
+
+
+blanc (en minuscule)
+chene
+hetre 
+bleu 
+
+
+Enveloppe autour du meuble
+E il enveloppe le meuble, droite gauche haut
+Juste après le E je peux mettre dgh en minuscule (droite gauche haut, pour faire les enveloppes de manières sélectives
+
+Fond du meuble :
+F : Met un fond
+
+Retrait
+R : retrait à l’avant du meuble de 19mm
+
+Socle
+S : Fait un socle en bas du meuble en cours (de la zone que je travaille)
+
+Porte
+P : Porte et ensuite j’hérite du meuble derrière la porte ex : PH4 = porte et derrière porte 4 étagères
+P2 : Porte double battant
+
+Ajout d’étagères ou séparation horizontale
+H : Soit utilisé seul ex H(,) = division en 2 parties égales si je ne précise pas mais je peux aussi préciser en mettant un chiffre derrière le H ex : H4
+H[2,5,3] = proportionne les étagères, je peux l’utiliser seul ou lui assigner des instruction ex : H[2,5,3](T,T,T) 3 étagères et chaque étagères à des tiroirs
+
+Si je mets un H + proportions ça marche, je ne dois pas mettre de H3 + proportions je dois mettre H[proportions dans les crochets mais pas H3[proportions dans les crochets]]
+
+Ajout de séparation verticale visibles ou invisibles
+V pour verticales, fonctionne comme le H
+
+Tiroirs
+T: Tiroirs
+
+
+
+
+
+

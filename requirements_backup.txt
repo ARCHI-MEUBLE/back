@@ -1,0 +1,11 @@
+# Dependencies for procedure.py
+numpy
+pyvista
+vtk
+trimesh
+ezdxf
+Pillow
+svgwrite
+scipy
+networkx
+svgpathtools

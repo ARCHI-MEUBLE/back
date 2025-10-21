@@ -1,0 +1,63 @@
+{
+    "Societe": {
+        "RaisonSociale": "Gauthier Hue",
+        "siret": "809 841 141 00025",
+        "AdressePostale": "8 rue patou, 59800 LILLE",
+        "AdresseMail": "pro.archimeuble@gmail.com",
+        "Numero": "06 01 06 28 67"
+    },
+    "Client": {
+        "Nom": "Taine",
+        "Prenom": "H\u00e9l\u00e8ne",
+        "Numero": "0673858407",
+        "Mail": "helene.taine@gmail.com",
+        "AdressePostale": "3  rue des castor , baincthun",
+        "Image": ""
+    },
+    "Produits": [
+        {
+            "Description": "meuble sur mesure",
+            "prixht": 1660.5569375750001,
+            "prixttc": 1992.67,
+            "chaine": "M1(2090,450,1950)HI[32,68](VI[35,65](EbFVI2(HI3(T,T,T),HI3(T,T,T)),),b)",
+            "sous_produit": [
+                {
+                    "description": "Conception",
+                    "prixht": 125,
+                    "prixttc": 150
+                },
+                {
+                    "description": "Approvisionnement Bois",
+                    "prixht": 80.83362505,
+                    "prixttc": 97.00035005999999
+                },
+                {
+                    "description": "Quincaillerie",
+                    "prixht": 562.5,
+                    "prixttc": 675
+                },
+                {
+                    "description": "Decoupe",
+                    "prixht": 442.8710000000001,
+                    "prixttc": 531.4452000000001
+                },
+                {
+                    "description": "Transport",
+                    "prixht": 187.5,
+                    "prixttc": 225
+                },
+                {
+                    "description": "Pose",
+                    "prixht": 261.852312525,
+                    "prixttc": 314.22277503
+                }
+            ]
+        }
+    ],
+    "DevisInfo": {
+        "NumeroDevis": "DEV-20250908154515",
+        "DateDevis": "2025-09-08",
+        "DureeValidite": "45 jours",
+        "NomCommercial": "Gauthier Hue"
+    }
+}

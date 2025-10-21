@@ -1,0 +1,26 @@
+# Environnement virtuel Python
+.archimeuble/
+
+# Fichiers Python compilés
+__pycache__/
+*.pyc
+
+# Fichier de log énorme
+log.txt
+
+# Fichiers IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node / Next.js
+node_modules/
+.next/
+dist/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.claude

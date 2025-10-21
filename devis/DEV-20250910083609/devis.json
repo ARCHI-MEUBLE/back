@@ -1,0 +1,63 @@
+{
+    "Societe": {
+        "RaisonSociale": "Gauthier Hue",
+        "siret": "809 841 141 00025",
+        "AdressePostale": "8 rue patou, 59800 LILLE",
+        "AdresseMail": "pro.archimeuble@gmail.com",
+        "Numero": "06 01 06 28 67"
+    },
+    "Client": {
+        "Nom": "Taine",
+        "Prenom": "H\u00e9l\u00e8ne",
+        "Numero": "0673858407",
+        "Mail": "helene.taine@gmail.com",
+        "AdressePostale": "3  rue des castor , baincthun",
+        "Image": ""
+    },
+    "Produits": [
+        {
+            "Description": "meuble sur mesure",
+            "prixht": 3082.0247499682396,
+            "prixttc": 3698.43,
+            "chaine": "M1(2090,450,1950)HI[32,68](VI2(FghbP2dV2(H2,H2),FdhbP2gV2(H2,H2)),bAI[85,15](EH2(V2(FH2(V2,V2),FH2(V2,V2)),V2(FH2(V2,V2),FH2( V2,V2))),))",
+            "sous_produit": [
+                {
+                    "description": "Conception",
+                    "prixht": 183,
+                    "prixttc": 219.6
+                },
+                {
+                    "description": "Approvisionnement Bois",
+                    "prixht": 398.6094410454932,
+                    "prixttc": 478.3313292545918
+                },
+                {
+                    "description": "Quincaillerie",
+                    "prixht": 366,
+                    "prixttc": 439.2
+                },
+                {
+                    "description": "Decoupe",
+                    "prixht": 1107.0737255999998,
+                    "prixttc": 1328.4884707199997
+                },
+                {
+                    "description": "Transport",
+                    "prixht": 274.5,
+                    "prixttc": 329.4
+                },
+                {
+                    "description": "Pose",
+                    "prixht": 752.8415833227465,
+                    "prixttc": 903.4098999872957
+                }
+            ]
+        }
+    ],
+    "DevisInfo": {
+        "NumeroDevis": "DEV-20250910083609",
+        "DateDevis": "2025-09-10",
+        "DureeValidite": "45 jours",
+        "NomCommercial": "Gauthier Hue"
+    }
+}
