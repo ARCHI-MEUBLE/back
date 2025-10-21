@@ -60,8 +60,9 @@ try {
 
     // VALIDATION 1 : Regex pour valider le format du prompt
     // Format attendu : M[1-5](largeur,profondeur,hauteur[,modules])MODULES(params)
-    // Exemple : M1(1700,500,730)EFH3(F,T,F)
-    $promptPattern = '/^M[1-5]\(\d+,\d+,\d+(,\d+)?\)[A-Z0-9\(\),]*$/';
+    // Exemple : M1(1700,500,730)EFH3(F,T,F) ou M1(1400,500,800)EbFSH3(VL[30,70],P,T)
+    // Accepte : lettres, chiffres, parenthèses, virgules, crochets
+    $promptPattern = '/^M[1-5]\(\d+,\d+,\d+(,\d+)?\)[A-Za-z0-9\(\),\[\]]+$/';
 
     if (!preg_match($promptPattern, $prompt)) {
         http_response_code(400);
@@ -108,7 +109,8 @@ try {
     }
 
     // Chemin vers le script Python (normaliser les slashes)
-    $pythonScript = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'python' . DIRECTORY_SEPARATOR . 'procedure.py';
+    // Utiliser le vrai script de Gauthier
+    $pythonScript = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'python' . DIRECTORY_SEPARATOR . 'procedure_real.py';
 
     // Vérifier que le script Python existe
     if (!file_exists($pythonScript)) {
@@ -116,9 +118,17 @@ try {
     }
 
     // Construire la commande Python de manière sécurisée
-    // Utiliser escapeshellarg pour éviter l'injection de commandes
+    // Utiliser le Python d'Anaconda qui a toutes les dépendances
+    $pythonExe = 'F:\\ANACONDA\\python.exe';
+
+    // Si Python Anaconda n'existe pas, utiliser python par défaut
+    if (!file_exists($pythonExe)) {
+        $pythonExe = 'python';
+    }
+
     $command = sprintf(
-        'python "%s" %s %s 2>&1',
+        '"%s" "%s" %s %s 2>&1',
+        $pythonExe,
         $pythonScript,
         escapeshellarg($prompt),
         escapeshellarg($outputPath)

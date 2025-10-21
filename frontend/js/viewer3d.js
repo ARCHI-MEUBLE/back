@@ -82,23 +82,25 @@ function showError(message) {
  * Charge un modèle par défaut (optionnel)
  */
 function loadDefaultModel() {
-    // Si un modèle GLB par défaut existe, le charger
-    const defaultModelUrl = '/frontend/assets/models/default.glb';
+    // Pas de modèle par défaut au chargement
+    // L'utilisateur doit modifier un paramètre pour générer le meuble
+    hideLoading();
 
-    // Vérifier si le fichier existe avant de le charger
-    fetch(defaultModelUrl, { method: 'HEAD' })
-        .then(response => {
-            if (response.ok) {
-                updateModel(defaultModelUrl);
-            } else {
-                // Pas de modèle par défaut, afficher un message
-                hideLoading();
-            }
-        })
-        .catch(() => {
-            // Ignorer l'erreur, pas de modèle par défaut
-            hideLoading();
-        });
+    // Message dans la zone viewer
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) {
+        loadingOverlay.innerHTML = `
+            <div style="text-align: center; padding: 40px;">
+                <div style="font-size: 64px; margin-bottom: 24px;">🛋️</div>
+                <p style="font-size: 18px; font-weight: 600; color: #2C2C2C; margin-bottom: 8px;">
+                    Configurez votre meuble
+                </p>
+                <p style="font-size: 14px; color: #6B6B6B;">
+                    Modifiez les paramètres pour voir le rendu 3D
+                </p>
+            </div>
+        `;
+    }
 }
 
 /**
