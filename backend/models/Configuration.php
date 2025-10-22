@@ -17,19 +17,21 @@ class Configuration {
 
     /**
      * Crée une nouvelle configuration
-     * @param string $userSession
-     * @param string $prompt
+     * @param string|null $userId
+     * @param int|null $templateId
+     * @param string $configString
      * @param float $price
      * @param string|null $glbUrl
      * @return int|false ID de la configuration créée ou false en cas d'erreur
      */
-    public function create($userSession, $prompt, $price, $glbUrl = null) {
-        $query = "INSERT INTO configurations (user_session, prompt, price, glb_url)
-                  VALUES (:user_session, :prompt, :price, :glb_url)";
+    public function create($userId, $templateId, $configString, $price, $glbUrl = null) {
+        $query = "INSERT INTO configurations (user_id, template_id, config_string, price, glb_url)
+                  VALUES (:user_id, :template_id, :config_string, :price, :glb_url)";
 
         $success = $this->db->execute($query, [
-            'user_session' => $userSession,
-            'prompt' => $prompt,
+            'user_id' => $userId,
+            'template_id' => $templateId,
+            'config_string' => $configString,
             'price' => $price,
             'glb_url' => $glbUrl
         ]);
@@ -42,7 +44,10 @@ class Configuration {
      * @return array
      */
     public function getAll() {
-        $query = "SELECT * FROM configurations ORDER BY created_at DESC";
+        $query = "SELECT c.*, t.name as template_name, t.image_url as template_image
+                  FROM configurations c
+                  LEFT JOIN templates t ON c.template_id = t.id
+                  ORDER BY c.created_at DESC";
         return $this->db->query($query);
     }
 
@@ -52,18 +57,25 @@ class Configuration {
      * @return array|null
      */
     public function getById($id) {
-        $query = "SELECT * FROM configurations WHERE id = :id";
+        $query = "SELECT c.*, t.name as template_name, t.image_url as template_image
+                  FROM configurations c
+                  LEFT JOIN templates t ON c.template_id = t.id
+                  WHERE c.id = :id";
         return $this->db->queryOne($query, ['id' => $id]);
     }
 
     /**
-     * Récupère toutes les configurations d'une session utilisateur
-     * @param string $userSession
+     * Récupère toutes les configurations d'un utilisateur
+     * @param string $userId
      * @return array
      */
-    public function getBySession($userSession) {
-        $query = "SELECT * FROM configurations WHERE user_session = :user_session ORDER BY created_at DESC";
-        return $this->db->query($query, ['user_session' => $userSession]);
+    public function getByUserId($userId) {
+        $query = "SELECT c.*, t.name as template_name, t.image_url as template_image
+                  FROM configurations c
+                  LEFT JOIN templates t ON c.template_id = t.id
+                  WHERE c.user_id = :user_id
+                  ORDER BY c.created_at DESC";
+        return $this->db->query($query, ['user_id' => $userId]);
     }
 
     /**
@@ -110,13 +122,13 @@ class Configuration {
     }
 
     /**
-     * Supprime toutes les configurations d'une session
-     * @param string $userSession
+     * Supprime toutes les configurations d'un utilisateur
+     * @param string $userId
      * @return bool
      */
-    public function deleteBySession($userSession) {
-        $query = "DELETE FROM configurations WHERE user_session = :user_session";
-        return $this->db->execute($query, ['user_session' => $userSession]);
+    public function deleteByUserId($userId) {
+        $query = "DELETE FROM configurations WHERE user_id = :user_id";
+        return $this->db->execute($query, ['user_id' => $userId]);
     }
 
     /**
@@ -130,13 +142,13 @@ class Configuration {
     }
 
     /**
-     * Compte le nombre de configurations pour une session
-     * @param string $userSession
+     * Compte le nombre de configurations pour un utilisateur
+     * @param string $userId
      * @return int
      */
-    public function countBySession($userSession) {
-        $query = "SELECT COUNT(*) as total FROM configurations WHERE user_session = :user_session";
-        $result = $this->db->queryOne($query, ['user_session' => $userSession]);
+    public function countByUserId($userId) {
+        $query = "SELECT COUNT(*) as total FROM configurations WHERE user_id = :user_id";
+        $result = $this->db->queryOne($query, ['user_id' => $userId]);
         return $result ? (int)$result['total'] : 0;
     }
 }

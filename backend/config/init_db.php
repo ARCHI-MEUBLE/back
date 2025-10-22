@@ -20,11 +20,36 @@ try {
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     echo "Connexion à la base de données établie.\n";
 
+    // Créer la table users
+    $createUsersTable = "
+        CREATE TABLE IF NOT EXISTS users (
+            id TEXT PRIMARY KEY,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            name TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ";
+    $pdo->exec($createUsersTable);
+    echo "Table 'users' créée.\n";
+
+    // Créer la table admins
+    $createAdminsTable = "
+        CREATE TABLE IF NOT EXISTS admins (
+            email TEXT PRIMARY KEY,
+            password_hash TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ";
+    $pdo->exec($createAdminsTable);
+    echo "Table 'admins' créée.\n";
+
     // Créer la table templates
     $createTemplatesTable = "
         CREATE TABLE IF NOT EXISTS templates (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
+            description TEXT,
             prompt TEXT NOT NULL,
             base_price REAL NOT NULL,
             image_url TEXT NOT NULL,
@@ -38,22 +63,34 @@ try {
     $createConfigurationsTable = "
         CREATE TABLE IF NOT EXISTS configurations (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_session TEXT NOT NULL,
-            prompt TEXT NOT NULL,
+            user_id TEXT,
+            template_id INTEGER,
+            config_string TEXT NOT NULL,
             price REAL NOT NULL,
             glb_url TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            FOREIGN KEY (template_id) REFERENCES templates(id)
         )
     ";
     $pdo->exec($createConfigurationsTable);
     echo "Table 'configurations' créée.\n";
 
+    // Insérer un admin par défaut (email: admin@archimeuble.fr, password: admin123)
+    $adminPasswordHash = password_hash('admin123', PASSWORD_BCRYPT);
+    $insertAdmin = "
+        INSERT INTO admins (email, password_hash) VALUES
+        ('admin@archimeuble.fr', '$adminPasswordHash')
+    ";
+    $pdo->exec($insertAdmin);
+    echo "Admin par défaut créé (email: admin@archimeuble.fr, password: admin123).\n";
+
     // Insérer les 3 meubles TV
     $insertTemplates = "
-        INSERT INTO templates (name, prompt, base_price, image_url) VALUES
-        ('Meuble TV Scandinave', 'M1(1700,500,730)EFH3(F,T,F)', 899.00, '/frontend/assets/images/meuble-scandinave.jpg'),
-        ('Meuble TV Moderne', 'M1(2000,400,600)EFH2(T,T)', 1099.00, '/frontend/assets/images/meuble-moderne.jpg'),
-        ('Meuble TV Compact', 'M1(1200,350,650)EFH4(F,F,T,F)', 699.00, '/frontend/assets/images/meuble-compact.jpg')
+        INSERT INTO templates (name, description, prompt, base_price, image_url) VALUES
+        ('Meuble TV Scandinave', 'Design épuré et fonctionnel inspiré du style scandinave', 'M1(1700,500,730)EFH3(F,T,F)', 899.00, 'meuble1.png'),
+        ('Meuble TV Moderne', 'Lignes contemporaines avec finitions élégantes', 'M1(2000,400,600)EFH2(T,T)', 1099.00, 'meuble2.png'),
+        ('Meuble TV Compact', 'Solution compacte et pratique pour petits espaces', 'M1(1200,350,650)EFH4(F,F,T,F)', 699.00, 'meuble3.png')
     ";
     $pdo->exec($insertTemplates);
     echo "3 meubles TV insérés avec succès.\n";

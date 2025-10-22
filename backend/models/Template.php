@@ -47,17 +47,19 @@ class Template {
     /**
      * Crée un nouveau template
      * @param string $name
+     * @param string|null $description
      * @param string $prompt
      * @param float $basePrice
      * @param string $imageUrl
      * @return bool
      */
-    public function create($name, $prompt, $basePrice, $imageUrl) {
-        $query = "INSERT INTO templates (name, prompt, base_price, image_url)
-                  VALUES (:name, :prompt, :base_price, :image_url)";
+    public function create($name, $description, $prompt, $basePrice, $imageUrl) {
+        $query = "INSERT INTO templates (name, description, prompt, base_price, image_url)
+                  VALUES (:name, :description, :prompt, :base_price, :image_url)";
 
         return $this->db->execute($query, [
             'name' => $name,
+            'description' => $description,
             'prompt' => $prompt,
             'base_price' => $basePrice,
             'image_url' => $imageUrl

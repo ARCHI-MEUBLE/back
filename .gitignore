@@ -1,3 +1,8 @@
+# Variables d'environnement
+.env
+.env.local
+.env.*.local
+
 # Environnement virtuel Python
 .archimeuble/
 

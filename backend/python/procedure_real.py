@@ -294,11 +294,14 @@ class Texture:
         return f"Texture({self.nom}, {self.ref}, {self.epaisseur}mm, {self.longueur}x{self.largeur}, {self.prix_m2_ht}/m2)"
 
 # Charger les données JSON depuis un fichier local
-json_file = "./textures/panneau.json"  # Remplace par le chemin de ton fichier JSON
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+json_file = os.path.join(script_dir, "textures", "panneau.json")
 
 try:
     with open(json_file, "r", encoding="utf-8") as file:
-        data = json.load(file)
+        json_data = json.load(file)
+        data = json_data.get("panneaux", [])
 except FileNotFoundError:
     print(f"Erreur : le fichier {json_file} est introuvable.")
     data = []
@@ -845,8 +848,9 @@ class Zone: # l'objet zone défini un volume et des caractéristiques supplémen
 
             x0=texture.longueur
             y0=texture.largeur
-            
-            texture_image = Image.open("./textures/"+self.texture.nom+".png")
+
+            texture_path = os.path.join(script_dir, "textures", self.texture.nom + ".png")
+            texture_image = Image.open(texture_path)
             width, height = texture_image.size
             xcrop=width*x/x0
             ycrop=height*y/y0
@@ -1103,9 +1107,9 @@ def subsequence(sequence):# touve les sous sequences entre parentheses
             return subs
         i=i+1
 
-textures={"exterieur": textures_dict["blanc_premium"],"interieur": textures_dict["blanc_premium"],"porte": textures_dict["chene_brun"],"tiroir": textures_dict["chene_brun"]}
+textures={"exterieur": textures_dict["Blanc Premium"],"interieur": textures_dict["Blanc Premium"],"porte": textures_dict["Chêne Brun"],"tiroir": textures_dict["Chêne Brun"]}
 
-print(textures_dict["chene_brun"].epaisseur)
+print(textures_dict["Chêne Brun"].epaisseur)
 
 def process(sequence,zone,textures=textures) : # cette fonction sert à parser un sequence de caractère pour modeliser un meuble 
     #l'objet zone est ammenée à évoluer suite aux opération faites dessus cela repésente une zone d'espace 
@@ -1702,16 +1706,18 @@ def process(sequence,zone,textures=textures) : # cette fonction sert à parser u
 # %%
 ## execution
 
-# Récupérer les arguments : prompt et output_path
+# Récupérer les arguments : prompt, output_path et --closed
 if len(sys.argv) < 2:
-    print("[ERROR] Usage: python procedure_real.py <prompt> [output_path]", file=sys.stderr)
+    print("[ERROR] Usage: python procedure_real.py <prompt> [output_path] [--closed]", file=sys.stderr)
     sys.exit(1)
 
 chaine = sys.argv[1]  # Le prompt M1(...)
 output_path = sys.argv[2] if len(sys.argv) > 2 else "./meuble.glb"  # Chemin de sortie
+closed_mode = "--closed" in sys.argv  # Mode fermé (tiroirs et portes fermés)
 
 print(f"[INFO] Génération du meuble avec prompt: {chaine}")
-print(f"[INFO] Fichier de sortie: {output_path}") 
+print(f"[INFO] Fichier de sortie: {output_path}")
+print(f"[INFO] Mode fermé: {closed_mode}") 
 
 #chaine=retirer_espaces(chaine)
 planches=process(chaine,1,textures) 
@@ -1731,16 +1737,37 @@ for i, planche in enumerate(planches) :
     planche.texturer()
 
 
-for planche in planches :
-    if planche.bloc=="tiroir":
-        planche.mesh.vertices += -300*planche.normala
+# Appliquer le mode fermé ou ouvert selon le paramètre
+if closed_mode:
+    # Mode FERMÉ : Tout fermé (portes fermées visibles + tiroirs fermés)
+    # Les tiroirs restent en position par défaut (fermés)
+    # Les portes sont incluses et fermées
+    mesh1=trimesh.util.concatenate([planche.mesh for planche in planches])
+    mesh1.vertices = mesh1.vertices/1000
+    mesh1.export(output_path, file_type="glb")
+    print(f"[SUCCESS] Fichier GLB généré (FERMÉ - portes fermées, tiroirs fermés): {output_path}")
+else:
+    # Mode OUVERT : Ouvrir les tiroirs et les portes
+    # Ouvrir les tiroirs en les déplaçant de -300mm vers l'avant
+    for planche in planches :
+        if planche.bloc=="tiroir":
+            planche.mesh.vertices += -300*planche.normala
 
+    # Ouvrir les portes en les faisant pivoter de 90 degrés (rotation autour de l'axe de la charnière)
+    # Pour les portes gauches (porteg) : rotation vers la gauche
+    # Pour les portes droites (ported) : rotation vers la droite
+    for planche in planches :
+        if planche.bloc=="porteg" or planche.bloc=="ported" or planche.bloc=="portec":
+            # Déplacer légèrement les portes vers l'extérieur pour simuler l'ouverture
+            planche.mesh.vertices += -200*planche.normala
 
-mesh1=trimesh.util.concatenate([planche.mesh for planche in planches if planche.bloc!= "porteg" and planche.bloc!= "ported" and planche.bloc!= "portec"])
-mesh1.vertices = mesh1.vertices/1000
-mesh1.export(output_path, file_type="glb")
-print(f"[SUCCESS] Fichier GLB généré: {output_path}")
+    mesh1=trimesh.util.concatenate([planche.mesh for planche in planches])
+    mesh1.vertices = mesh1.vertices/1000
+    mesh1.export(output_path, file_type="glb")
+    print(f"[SUCCESS] Fichier GLB généré (OUVERT - portes ouvertes, tiroirs ouverts): {output_path}")
 
+# Arrêter ici - pas besoin de générer les SVG/DXF pour le moment
+sys.exit(0)
 
 for planche in planches :
     if planche.bloc=="tiroir":
@@ -2098,14 +2125,16 @@ for planches_index, planches in enumerate(groupes):
 # Ajouter des métadonnées pour clarifier les unités
 doc.header['$MENU'] = "Toutes les unités sont en mètres"
 
-doc.saveas("./pieces/piece_general.dxf")
+pieces_dir = os.path.join(script_dir, "pieces")
+os.makedirs(pieces_dir, exist_ok=True)
+doc.saveas(os.path.join(pieces_dir, "piece_general.dxf"))
 
 # %%
 #generation de SVG
 
 def generate_svg(groupes):
     i="general"
-    dwg = svgwrite.Drawing("./pieces/piece_"+str(i)+".svg", profile='tiny')
+    dwg = svgwrite.Drawing(os.path.join(pieces_dir, f"piece_{i}.svg"), profile='tiny')
     # Définir les calques en utilisant des groupes SVG
 
     panneau_group = dwg.add(dwg.g(id=f'panneau', fill='none'))
