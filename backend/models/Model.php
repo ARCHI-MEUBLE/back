@@ -49,25 +49,25 @@ class Model {
      * @param string $name
      * @param string|null $description
      * @param string $prompt
-     * @param float|null $basePrice
-     * @param string|null $imagePath
+     * @param float|null $price
+     * @param string|null $imageUrl
      * @return int|false ID du modèle créé ou false en cas d'erreur
      */
-    public function create($name, $description, $prompt, $basePrice = null, $imagePath = null) {
+    public function create($name, $description, $prompt, $price = null, $imageUrl = null) {
         // Utiliser une requête qui retourne l'ID dans le même appel
-        $query = "INSERT INTO models (name, description, prompt, base_price, image_path)
-                  VALUES (:name, :description, :prompt, :base_price, :image_path)
+        $query = "INSERT INTO models (name, description, prompt, price, image_url)
+                  VALUES (:name, :description, :prompt, :price, :image_url)
                   RETURNING id";
 
         error_log("SQL Query: " . $query);
-        error_log("SQL Params: name=$name, description=$description, prompt=$prompt, base_price=$basePrice, image_path=$imagePath");
+        error_log("SQL Params: name=$name, description=$description, prompt=$prompt, price=$price, image_url=$imageUrl");
 
         $result = $this->db->queryOne($query, [
             'name' => $name,
             'description' => $description,
             'prompt' => $prompt,
-            'base_price' => $basePrice,
-            'image_path' => $imagePath
+            'price' => $price,
+            'image_url' => $imageUrl
         ]);
 
         if (!$result) {
@@ -88,7 +88,7 @@ class Model {
         $fields = [];
         $params = ['id' => $id];
 
-        $allowedFields = ['name', 'description', 'prompt', 'base_price', 'image_path'];
+        $allowedFields = ['name', 'description', 'prompt', 'price', 'image_url'];
 
         foreach ($data as $key => $value) {
             if (in_array($key, $allowedFields)) {
@@ -100,6 +100,9 @@ class Model {
         if (empty($fields)) {
             return false;
         }
+
+        // Ajouter updated_at
+        $fields[] = "updated_at = CURRENT_TIMESTAMP";
 
         $query = "UPDATE models SET " . implode(', ', $fields) . " WHERE id = :id";
         return $this->db->execute($query, $params);

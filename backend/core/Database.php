@@ -1,7 +1,7 @@
 <?php
 /**
  * ArchiMeuble - Classe Database (Singleton)
- * Utilise sqlite3.exe directement via shell_exec
+ * Utilise PDO SQLite (compatible Docker)
  * Auteur : Collins
  * Date : 2025-10-20
  */
@@ -9,17 +9,37 @@
 class Database {
     private static $instance = null;
     private $dbPath;
-    private $sqlite3Command = 'F:\\ANACONDA\\Library\\bin\\sqlite3.exe';
+    private $pdo;
 
     /**
      * Constructeur privé pour empêcher l'instanciation directe
      */
     private function __construct() {
-        // Utiliser la base de données unifiée partagée avec le frontend
-        $this->dbPath = __DIR__ . '/../../database/archimeuble.db';
+        // Vérifier si on est dans Docker ou en local
+        // Dans Docker: /app/database/archimeuble.db
+        // En local: ../database/archimeuble.db (depuis back/)
+        $dbPath = getenv('DB_PATH');
+
+        if (!$dbPath) {
+            // Chemin local relatif
+            $dbPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'database' . DIRECTORY_SEPARATOR . 'archimeuble.db';
+        }
+
+        $this->dbPath = $dbPath;
 
         if (!file_exists($this->dbPath)) {
-            die("Erreur : Base de données introuvable à : " . $this->dbPath);
+            error_log("Erreur : Base de données introuvable à : " . $this->dbPath);
+            throw new Exception("Base de données introuvable à : " . $this->dbPath);
+        }
+
+        // Créer la connexion PDO
+        try {
+            $this->pdo = new PDO('sqlite:' . $this->dbPath);
+            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Erreur de connexion PDO : " . $e->getMessage());
+            throw new Exception("Erreur de connexion à la base de données");
         }
     }
 
@@ -47,58 +67,11 @@ class Database {
     }
 
     /**
-     * Échappe une valeur pour SQLite
-     * @param mixed $value
-     * @return string
+     * Retourne l'instance PDO
+     * @return PDO
      */
-    private function escape($value) {
-        if ($value === null) {
-            return 'NULL';
-        }
-        // Remplacer les apostrophes simples par deux apostrophes
-        return "'" . str_replace("'", "''", $value) . "'";
-    }
-
-    /**
-     * Remplace les paramètres nommés par leurs valeurs
-     * @param string $query
-     * @param array $params
-     * @return string
-     */
-    private function bindParams($query, $params) {
-        foreach ($params as $key => $value) {
-            $placeholder = ':' . $key;
-            $escapedValue = $this->escape($value);
-            $query = str_replace($placeholder, $escapedValue, $query);
-        }
-        return $query;
-    }
-
-    /**
-     * Exécute une requête SQL via sqlite3.exe
-     * @param string $query
-     * @return string
-     */
-    private function executeSQL($query) {
-        // Supprimer les retours à la ligne et espaces multiples
-        $query = preg_replace('/\s+/', ' ', trim($query));
-
-        // Échapper les guillemets pour le shell
-        $query = str_replace('"', '""', $query);
-
-        // Construire la commande
-        $command = sprintf(
-            '"%s" "%s" ".mode json" ".once stdout" "%s"',
-            $this->sqlite3Command,
-            $this->dbPath,
-            $query
-        );
-
-        // Exécuter la commande
-        $output = shell_exec($command . ' 2>&1');
-
-        // Ne pas convertir null en chaîne vide pour pouvoir distinguer succès/échec
-        return $output;
+    public function getPDO() {
+        return $this->pdo;
     }
 
     /**
@@ -109,14 +82,10 @@ class Database {
      */
     public function query($query, $params = []) {
         try {
-            $query = $this->bindParams($query, $params);
-            $output = $this->executeSQL($query);
-
-            // Parser le JSON retourné
-            $result = json_decode($output, true);
-
-            return is_array($result) ? $result : [];
-        } catch (Exception $e) {
+            $stmt = $this->pdo->prepare($query);
+            $stmt->execute($params);
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
             error_log("Erreur de requête : " . $e->getMessage());
             return [];
         }
@@ -141,18 +110,9 @@ class Database {
      */
     public function execute($query, $params = []) {
         try {
-            $query = $this->bindParams($query, $params);
-            error_log("Final SQL Query: " . $query);
-            $output = $this->executeSQL($query);
-            error_log("SQL Output: " . ($output ?? 'NULL'));
-
-            // Si pas d'erreur, c'est OK
-            // Pour INSERT/UPDATE/DELETE, SQLite ne retourne rien (null ou vide) si succès
-            // Seulement en cas d'erreur il y aura "Error:" dans la sortie
-            $hasError = $output !== null && $output !== '' && str_contains($output, 'Error:');
-            error_log("Has error: " . ($hasError ? 'yes' : 'no'));
-            return !$hasError;
-        } catch (Exception $e) {
+            $stmt = $this->pdo->prepare($query);
+            return $stmt->execute($params);
+        } catch (PDOException $e) {
             error_log("Erreur d'exécution : " . $e->getMessage());
             return false;
         }
@@ -163,7 +123,6 @@ class Database {
      * @return int
      */
     public function lastInsertId() {
-        $result = $this->queryOne("SELECT last_insert_rowid() as id");
-        return $result ? (int)$result['id'] : 0;
+        return (int)$this->pdo->lastInsertId();
     }
 }

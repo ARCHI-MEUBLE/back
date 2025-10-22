@@ -1,0 +1,42 @@
+# Fichiers de développement
+.git
+.gitignore
+.env
+.env.local
+*.md
+README.md
+
+# Node modules (si présents)
+node_modules
+
+# Fichiers temporaires
+*.log
+*.tmp
+*.swp
+*.swo
+*~
+
+# Fichiers de test
+tests/
+*.test.php
+http-client.env.json
+api-tests.http
+
+# Fichiers générés
+devis/
+uploads/
+pieces/
+
+# Fichiers spécifiques Windows
+Thumbs.db
+desktop.ini
+
+# Fichiers IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Cache PHP
+.phpunit.cache
+vendor/
+composer.lock

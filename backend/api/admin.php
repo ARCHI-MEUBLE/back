@@ -1,11 +1,11 @@
 <?php
 /**
  * ArchiMeuble - Endpoint d'authentification administrateur
- * POST /api/admin-auth/login - Connexion admin
- * POST /api/admin-auth/logout - Déconnexion admin
- * GET /api/admin-auth/session - Vérifier la session admin
+ * POST /api/admin/login - Connexion admin
+ * POST /api/admin/logout - Déconnexion admin
+ * GET /api/admin/session - Vérifier la session admin
  *
- * Date : 2025-10-21
+ * Date : 2025-10-22
  */
 
 require_once __DIR__ . '/../core/Database.php';
@@ -27,7 +27,7 @@ $pathParts = explode('/', trim($requestUri, '/'));
 $action = end($pathParts);
 
 /**
- * POST /api/admin-auth/login
+ * POST /api/admin/login
  */
 if ($method === 'POST' && $action === 'login') {
     $input = json_decode(file_get_contents('php://input'), true);
@@ -60,7 +60,7 @@ if ($method === 'POST' && $action === 'login') {
 }
 
 /**
- * POST /api/admin-auth/logout
+ * POST /api/admin/logout
  */
 if ($method === 'POST' && $action === 'logout') {
     $session->destroy();
@@ -70,7 +70,7 @@ if ($method === 'POST' && $action === 'logout') {
 }
 
 /**
- * GET /api/admin-auth/session
+ * GET /api/admin/session
  */
 if ($method === 'GET' && $action === 'session') {
     if ($session->has('is_admin') && $session->get('is_admin') === true) {

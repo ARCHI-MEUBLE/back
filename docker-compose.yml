@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # Service principal : Backend PHP + Python
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: archimeuble-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # Monter le code source du backend (hot reload en développement)
+      - .:/app
+      # Monter le dossier models du frontend
+      - ../front/public/models:/app/models
+    environment:
+      - DB_PATH=/app/database/archimeuble.db
+      - PYTHON_PATH=/opt/venv/bin/python3
+      - FRONTEND_URL=http://localhost:3000
+      - OUTPUT_DIR=/app/models
+    working_dir: /app
+    command: /bin/bash -c "/usr/local/bin/init_db.sh && php -S 0.0.0.0:8000 router.php"
+    networks:
+      - archimeuble-network
+    restart: unless-stopped
+
+  # Service d'initialisation de la base de données (optionnel, à lancer une fois)
+  db-init:
+    image: nouchka/sqlite3:latest
+    container_name: archimeuble-db-init
+    volumes:
+      - ../database:/db
+    command: sh -c "cd /db && if [ ! -f archimeuble.db ]; then sqlite3 archimeuble.db < init_db.sql && echo '✓ Database initialized'; else echo '✓ Database already exists'; fi"
+    networks:
+      - archimeuble-network
+    profiles:
+      - init  # Ce service ne démarre qu'avec: docker-compose --profile init up
+
+networks:
+  archimeuble-network:
+    driver: bridge

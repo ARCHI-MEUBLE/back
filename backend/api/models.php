@@ -12,20 +12,11 @@
 
 require_once __DIR__ . '/../core/Database.php';
 require_once __DIR__ . '/../core/Session.php';
+require_once __DIR__ . '/../core/Cors.php';
 require_once __DIR__ . '/../models/Model.php';
 
-// Headers CORS
-header('Access-Control-Allow-Origin: http://localhost:3000');
-header('Access-Control-Allow-Credentials: true');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Content-Type: application/json');
-
-// Gérer les requêtes OPTIONS (preflight)
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+// Activer CORS
+Cors::enable();
 
 $session = Session::getInstance();
 $model = new Model();
@@ -88,17 +79,24 @@ if ($method === 'POST') {
         exit;
     }
 
+    // Validation : le prompt doit contenir la lettre "b" (base/planche du bas)
+    if (strpos($input['prompt'], 'b') === false) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Le prompt doit contenir "b" (planche de base obligatoire)']);
+        exit;
+    }
+
     // Support des deux formats : camelCase et snake_case
-    $imagePath = $input['imagePath'] ?? $input['image_path'] ?? null;
-    $basePrice = $input['basePrice'] ?? $input['base_price'] ?? null;
+    $imageUrl = $input['imageUrl'] ?? $input['image_url'] ?? $input['imagePath'] ?? $input['image_path'] ?? null;
+    $price = $input['price'] ?? $input['basePrice'] ?? $input['base_price'] ?? null;
 
     try {
         $modelId = $model->create(
             $input['name'],
             $input['description'] ?? null,
             $input['prompt'],
-            $basePrice,
-            $imagePath
+            $price,
+            $imageUrl
         );
 
         if ($modelId) {
@@ -116,8 +114,8 @@ if ($method === 'POST') {
                     'name' => $input['name'],
                     'description' => $input['description'] ?? null,
                     'prompt' => $input['prompt'],
-                    'basePrice' => $basePrice,
-                    'imagePath' => $imagePath
+                    'price' => $price,
+                    'imageUrl' => $imageUrl
                 ]
             ]);
         }
@@ -150,15 +148,25 @@ if ($method === 'PUT') {
         exit;
     }
 
+    // Validation : si le prompt est modifié, il doit contenir "b"
+    if (isset($input['prompt']) && strpos($input['prompt'], 'b') === false) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Le prompt doit contenir "b" (planche de base obligatoire)']);
+        exit;
+    }
+
     $updateData = [];
-    $allowedFields = ['name', 'description', 'prompt', 'base_price', 'image_path'];
+    $allowedFields = ['name', 'description', 'prompt', 'price', 'image_url'];
 
     // Convertir camelCase en snake_case si nécessaire
+    if (isset($input['imageUrl'])) {
+        $input['image_url'] = $input['imageUrl'];
+    }
     if (isset($input['imagePath'])) {
-        $input['image_path'] = $input['imagePath'];
+        $input['image_url'] = $input['imagePath'];
     }
     if (isset($input['basePrice'])) {
-        $input['base_price'] = $input['basePrice'];
+        $input['price'] = $input['basePrice'];
     }
 
     foreach ($allowedFields as $field) {

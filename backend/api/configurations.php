@@ -6,18 +6,9 @@
  * Date : 2025-10-20
  */
 
-// Headers CORS et JSON
-header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: http://localhost:3000');
-header('Access-Control-Allow-Credentials: true');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-
-// Gérer les requêtes OPTIONS (preflight)
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
+// Activer CORS
+require_once __DIR__ . '/../core/Cors.php';
+Cors::enable();
 
 require_once __DIR__ . '/../models/Configuration.php';
 

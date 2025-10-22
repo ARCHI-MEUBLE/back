@@ -6,18 +6,9 @@
  * Date : 2025-10-20
  */
 
-// Headers CORS et JSON
-header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: http://localhost:3000');
-header('Access-Control-Allow-Credentials: true');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-
-// Gérer les requêtes OPTIONS (preflight)
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
+// Activer CORS
+require_once __DIR__ . '/../core/Cors.php';
+Cors::enable();
 
 // Vérifier que c'est une requête POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -58,6 +49,7 @@ try {
     }
 
     $prompt = trim($data['prompt']);
+    $closed = isset($data['closed']) && $data['closed'] === true;
 
     // VALIDATION 1 : Regex pour valider le format du prompt
     // Format attendu : M[1-5](largeur,profondeur,hauteur[,modules])MODULES(params)
@@ -99,7 +91,10 @@ try {
 
     // Générer un nom de fichier unique
     $filename = 'meuble_' . uniqid() . '.glb';
-    $outputDir = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'front' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'models' . DIRECTORY_SEPARATOR;
+
+    // Utiliser OUTPUT_DIR si défini (Docker), sinon utiliser le chemin relatif
+    $outputDir = getenv('OUTPUT_DIR') ?: dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'front' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'models';
+    $outputDir = rtrim($outputDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
     $outputPath = $outputDir . $filename;
 
     // Créer le dossier si inexistant
@@ -119,20 +114,29 @@ try {
     }
 
     // Construire la commande Python de manière sécurisée
-    // Utiliser le Python d'Anaconda qui a toutes les dépendances
-    $pythonExe = 'F:\\ANACONDA\\python.exe';
+    // Utiliser PYTHON_PATH si défini (Docker), sinon essayer Anaconda puis python par défaut
+    $pythonExe = getenv('PYTHON_PATH');
 
-    // Si Python Anaconda n'existe pas, utiliser python par défaut
-    if (!file_exists($pythonExe)) {
-        $pythonExe = 'python';
+    if (!$pythonExe || !file_exists($pythonExe)) {
+        // Essayer Anaconda en local
+        $pythonExe = 'F:\\ANACONDA\\python.exe';
+
+        // Si Anaconda n'existe pas, utiliser python par défaut
+        if (!file_exists($pythonExe)) {
+            $pythonExe = 'python3';
+        }
     }
 
+    // Ajouter --closed si demandé
+    $closedFlag = $closed ? '--closed' : '';
+
     $command = sprintf(
-        '"%s" "%s" %s %s 2>&1',
+        '"%s" "%s" %s %s %s 2>&1',
         $pythonExe,
         $pythonScript,
         escapeshellarg($prompt),
-        escapeshellarg($outputPath)
+        escapeshellarg($outputPath),
+        $closedFlag
     );
 
     // Exécuter la commande Python

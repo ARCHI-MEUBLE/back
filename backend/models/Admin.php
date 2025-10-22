@@ -20,7 +20,7 @@ class Admin {
      * @return array
      */
     public function getAll() {
-        $query = "SELECT email, created_at FROM admins ORDER BY created_at DESC";
+        $query = "SELECT id, username, email, created_at FROM admins ORDER BY created_at DESC";
         return $this->db->query($query);
     }
 
@@ -30,8 +30,8 @@ class Admin {
      * @return array|null
      */
     public function getByEmail($email) {
-        $query = "SELECT * FROM admins WHERE email = :email";
-        return $this->db->queryOne($query, ['email' => $email]);
+        $query = "SELECT * FROM admins WHERE email = :email OR username = :username";
+        return $this->db->queryOne($query, ['email' => $email, 'username' => $email]);
     }
 
     /**
@@ -48,6 +48,25 @@ class Admin {
             'email' => $email,
             'password_hash' => $passwordHash
         ]);
+    }
+
+    /**
+     * Met à jour un admin
+     * @param int $id
+     * @param array $data
+     * @return bool
+     */
+    public function update($id, $data) {
+        $fields = [];
+        $params = ['id' => $id];
+
+        foreach ($data as $key => $value) {
+            $fields[] = "$key = :$key";
+            $params[$key] = $value;
+        }
+
+        $query = "UPDATE admins SET " . implode(', ', $fields) . " WHERE id = :id";
+        return $this->db->execute($query, $params);
     }
 
     /**
@@ -94,9 +113,9 @@ class Admin {
     public function verifyCredentials($email, $password) {
         $admin = $this->getByEmail($email);
 
-        if ($admin && password_verify($password, $admin['password_hash'])) {
+        if ($admin && password_verify($password, $admin['password'])) {
             // Retourner l'admin sans le hash du mot de passe
-            unset($admin['password_hash']);
+            unset($admin['password']);
             return $admin;
         }
 

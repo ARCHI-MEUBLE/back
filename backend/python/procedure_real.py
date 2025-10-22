@@ -1706,16 +1706,18 @@ def process(sequence,zone,textures=textures) : # cette fonction sert à parser u
 # %%
 ## execution
 
-# Récupérer les arguments : prompt et output_path
+# Récupérer les arguments : prompt, output_path et --closed
 if len(sys.argv) < 2:
-    print("[ERROR] Usage: python procedure_real.py <prompt> [output_path]", file=sys.stderr)
+    print("[ERROR] Usage: python procedure_real.py <prompt> [output_path] [--closed]", file=sys.stderr)
     sys.exit(1)
 
 chaine = sys.argv[1]  # Le prompt M1(...)
 output_path = sys.argv[2] if len(sys.argv) > 2 else "./meuble.glb"  # Chemin de sortie
+closed_mode = "--closed" in sys.argv  # Mode fermé (tiroirs et portes fermés)
 
 print(f"[INFO] Génération du meuble avec prompt: {chaine}")
-print(f"[INFO] Fichier de sortie: {output_path}") 
+print(f"[INFO] Fichier de sortie: {output_path}")
+print(f"[INFO] Mode fermé: {closed_mode}") 
 
 #chaine=retirer_espaces(chaine)
 planches=process(chaine,1,textures) 
@@ -1735,15 +1737,34 @@ for i, planche in enumerate(planches) :
     planche.texturer()
 
 
-for planche in planches :
-    if planche.bloc=="tiroir":
-        planche.mesh.vertices += -300*planche.normala
+# Appliquer le mode fermé ou ouvert selon le paramètre
+if closed_mode:
+    # Mode FERMÉ : Tout fermé (portes fermées visibles + tiroirs fermés)
+    # Les tiroirs restent en position par défaut (fermés)
+    # Les portes sont incluses et fermées
+    mesh1=trimesh.util.concatenate([planche.mesh for planche in planches])
+    mesh1.vertices = mesh1.vertices/1000
+    mesh1.export(output_path, file_type="glb")
+    print(f"[SUCCESS] Fichier GLB généré (FERMÉ - portes fermées, tiroirs fermés): {output_path}")
+else:
+    # Mode OUVERT : Ouvrir les tiroirs et les portes
+    # Ouvrir les tiroirs en les déplaçant de -300mm vers l'avant
+    for planche in planches :
+        if planche.bloc=="tiroir":
+            planche.mesh.vertices += -300*planche.normala
 
+    # Ouvrir les portes en les faisant pivoter de 90 degrés (rotation autour de l'axe de la charnière)
+    # Pour les portes gauches (porteg) : rotation vers la gauche
+    # Pour les portes droites (ported) : rotation vers la droite
+    for planche in planches :
+        if planche.bloc=="porteg" or planche.bloc=="ported" or planche.bloc=="portec":
+            # Déplacer légèrement les portes vers l'extérieur pour simuler l'ouverture
+            planche.mesh.vertices += -200*planche.normala
 
-mesh1=trimesh.util.concatenate([planche.mesh for planche in planches if planche.bloc!= "porteg" and planche.bloc!= "ported" and planche.bloc!= "portec"])
-mesh1.vertices = mesh1.vertices/1000
-mesh1.export(output_path, file_type="glb")
-print(f"[SUCCESS] Fichier GLB généré: {output_path}")
+    mesh1=trimesh.util.concatenate([planche.mesh for planche in planches])
+    mesh1.vertices = mesh1.vertices/1000
+    mesh1.export(output_path, file_type="glb")
+    print(f"[SUCCESS] Fichier GLB généré (OUVERT - portes ouvertes, tiroirs ouverts): {output_path}")
 
 # Arrêter ici - pas besoin de générer les SVG/DXF pour le moment
 sys.exit(0)
