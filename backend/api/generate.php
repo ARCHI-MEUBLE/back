@@ -99,7 +99,7 @@ try {
 
     // Générer un nom de fichier unique
     $filename = 'meuble_' . uniqid() . '.glb';
-    $outputDir = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'frontend' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'models' . DIRECTORY_SEPARATOR;
+    $outputDir = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'front' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'models' . DIRECTORY_SEPARATOR;
     $outputPath = $outputDir . $filename;
 
     // Créer le dossier si inexistant
@@ -161,7 +161,7 @@ try {
     }
 
     // Succès : retourner l'URL du fichier GLB
-    $glbUrl = '/frontend/assets/models/' . $filename;
+    $glbUrl = '/models/' . $filename;
 
     http_response_code(201);
     echo json_encode([

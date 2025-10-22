@@ -80,6 +80,9 @@ class Database {
      * @return string
      */
     private function executeSQL($query) {
+        // Supprimer les retours à la ligne et espaces multiples
+        $query = preg_replace('/\s+/', ' ', trim($query));
+
         // Échapper les guillemets pour le shell
         $query = str_replace('"', '""', $query);
 
@@ -94,7 +97,8 @@ class Database {
         // Exécuter la commande
         $output = shell_exec($command . ' 2>&1');
 
-        return $output ?: '';
+        // Ne pas convertir null en chaîne vide pour pouvoir distinguer succès/échec
+        return $output;
     }
 
     /**
@@ -138,10 +142,16 @@ class Database {
     public function execute($query, $params = []) {
         try {
             $query = $this->bindParams($query, $params);
+            error_log("Final SQL Query: " . $query);
             $output = $this->executeSQL($query);
+            error_log("SQL Output: " . ($output ?? 'NULL'));
 
             // Si pas d'erreur, c'est OK
-            return strpos($output, 'Error:') === false;
+            // Pour INSERT/UPDATE/DELETE, SQLite ne retourne rien (null ou vide) si succès
+            // Seulement en cas d'erreur il y aura "Error:" dans la sortie
+            $hasError = $output !== null && $output !== '' && str_contains($output, 'Error:');
+            error_log("Has error: " . ($hasError ? 'yes' : 'no'));
+            return !$hasError;
         } catch (Exception $e) {
             error_log("Erreur d'exécution : " . $e->getMessage());
             return false;

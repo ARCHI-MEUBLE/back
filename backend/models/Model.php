@@ -54,10 +54,15 @@ class Model {
      * @return int|false ID du modèle créé ou false en cas d'erreur
      */
     public function create($name, $description, $prompt, $basePrice = null, $imagePath = null) {
+        // Utiliser une requête qui retourne l'ID dans le même appel
         $query = "INSERT INTO models (name, description, prompt, base_price, image_path)
-                  VALUES (:name, :description, :prompt, :base_price, :image_path)";
+                  VALUES (:name, :description, :prompt, :base_price, :image_path)
+                  RETURNING id";
 
-        $success = $this->db->execute($query, [
+        error_log("SQL Query: " . $query);
+        error_log("SQL Params: name=$name, description=$description, prompt=$prompt, base_price=$basePrice, image_path=$imagePath");
+
+        $result = $this->db->queryOne($query, [
             'name' => $name,
             'description' => $description,
             'prompt' => $prompt,
@@ -65,7 +70,12 @@ class Model {
             'image_path' => $imagePath
         ]);
 
-        return $success ? $this->db->lastInsertId() : false;
+        if (!$result) {
+            error_log("SQL Error: Failed to insert model");
+            return false;
+        }
+
+        return (int)$result['id'];
     }
 
     /**

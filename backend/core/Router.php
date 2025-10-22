@@ -19,6 +19,9 @@ class Router {
      * @param string $requestUri
      */
     public function route($requestUri) {
+        // Log de la requête
+        error_log("[" . date('Y-m-d H:i:s') . "] " . $_SERVER['REQUEST_METHOD'] . " " . $requestUri);
+
         // Enlever les paramètres de query string
         $path = parse_url($requestUri, PHP_URL_PATH);
 
@@ -147,7 +150,14 @@ class Router {
 
         if (file_exists($filePath) && is_file($filePath)) {
             $contentType = $this->getContentType($path);
+
+            // Headers CORS pour tous les fichiers statiques
+            header('Access-Control-Allow-Origin: http://localhost:3000');
+            header('Access-Control-Allow-Credentials: true');
+            header('Access-Control-Allow-Methods: GET, OPTIONS');
+            header('Access-Control-Allow-Headers: Content-Type');
             header('Content-Type: ' . $contentType);
+
             readfile($filePath);
         } else {
             $this->send404("Fichier non trouvé : $path");

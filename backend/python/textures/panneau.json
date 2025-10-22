@@ -1,0 +1,34 @@
+{
+  "panneaux": [
+    {
+      "nom": "Blanc Premium",
+      "ref": "blanc_premium",
+      "epaisseur": 19,
+      "longueur": 2800,
+      "largeur": 2070,
+      "prix_m2_ht": 85,
+      "surface_panneau": 5.796,
+      "prix_panneau_ht": 492.66
+    },
+    {
+      "nom": "Chêne Brun",
+      "ref": "chene_brun",
+      "epaisseur": 19,
+      "longueur": 2800,
+      "largeur": 2070,
+      "prix_m2_ht": 95,
+      "surface_panneau": 5.796,
+      "prix_panneau_ht": 550.62
+    },
+    {
+      "nom": "Noir Mat",
+      "ref": "noir_mat",
+      "epaisseur": 19,
+      "longueur": 2800,
+      "largeur": 2070,
+      "prix_m2_ht": 90,
+      "surface_panneau": 5.796,
+      "prix_panneau_ht": 521.64
+    }
+  ]
+}

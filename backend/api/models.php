@@ -37,7 +37,15 @@ $method = $_SERVER['REQUEST_METHOD'];
  */
 function isAdmin() {
     global $session;
-    return $session->has('is_admin') && $session->get('is_admin') === true;
+    $isAdmin = $session->has('is_admin') && $session->get('is_admin') === true;
+
+    // Log pour debug
+    error_log("Session ID: " . $session->getId());
+    error_log("is_admin: " . ($session->has('is_admin') ? 'true' : 'false'));
+    error_log("is_admin value: " . ($session->get('is_admin') ? 'true' : 'false'));
+    error_log("Result: " . ($isAdmin ? 'true' : 'false'));
+
+    return $isAdmin;
 }
 
 /**
@@ -57,7 +65,7 @@ if ($method === 'GET') {
     } else {
         $models = $model->getAll();
         http_response_code(200);
-        echo json_encode($models);
+        echo json_encode(['models' => $models]);
     }
     exit;
 }
@@ -80,23 +88,46 @@ if ($method === 'POST') {
         exit;
     }
 
-    $modelId = $model->create(
-        $input['name'],
-        $input['description'] ?? null,
-        $input['prompt'],
-        $input['base_price'] ?? null,
-        $input['image_path'] ?? null
-    );
+    // Support des deux formats : camelCase et snake_case
+    $imagePath = $input['imagePath'] ?? $input['image_path'] ?? null;
+    $basePrice = $input['basePrice'] ?? $input['base_price'] ?? null;
 
-    if ($modelId) {
-        http_response_code(201);
-        echo json_encode([
-            'success' => true,
-            'id' => $modelId
-        ]);
-    } else {
+    try {
+        $modelId = $model->create(
+            $input['name'],
+            $input['description'] ?? null,
+            $input['prompt'],
+            $basePrice,
+            $imagePath
+        );
+
+        if ($modelId) {
+            $createdModel = $model->getById($modelId);
+            http_response_code(201);
+            echo json_encode([
+                'success' => true,
+                'model' => $createdModel
+            ]);
+        } else {
+            http_response_code(500);
+            echo json_encode([
+                'error' => 'Erreur lors de la création du modèle',
+                'debug' => [
+                    'name' => $input['name'],
+                    'description' => $input['description'] ?? null,
+                    'prompt' => $input['prompt'],
+                    'basePrice' => $basePrice,
+                    'imagePath' => $imagePath
+                ]
+            ]);
+        }
+    } catch (Exception $e) {
         http_response_code(500);
-        echo json_encode(['error' => 'Erreur lors de la création du modèle']);
+        echo json_encode([
+            'error' => 'Exception lors de la création du modèle',
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
     }
     exit;
 }
@@ -122,6 +153,14 @@ if ($method === 'PUT') {
     $updateData = [];
     $allowedFields = ['name', 'description', 'prompt', 'base_price', 'image_path'];
 
+    // Convertir camelCase en snake_case si nécessaire
+    if (isset($input['imagePath'])) {
+        $input['image_path'] = $input['imagePath'];
+    }
+    if (isset($input['basePrice'])) {
+        $input['base_price'] = $input['basePrice'];
+    }
+
     foreach ($allowedFields as $field) {
         if (isset($input[$field])) {
             $updateData[$field] = $input[$field];
@@ -135,8 +174,12 @@ if ($method === 'PUT') {
     }
 
     if ($model->update($input['id'], $updateData)) {
+        $updatedModel = $model->getById($input['id']);
         http_response_code(200);
-        echo json_encode(['success' => true]);
+        echo json_encode([
+            'success' => true,
+            'model' => $updatedModel
+        ]);
     } else {
         http_response_code(500);
         echo json_encode(['error' => 'Erreur lors de la mise à jour du modèle']);
