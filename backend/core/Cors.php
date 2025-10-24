@@ -29,7 +29,14 @@ class Cors {
         }
 
         // Vérifier si l'origine est autorisée
-        if (in_array($origin, $allowedOrigins)) {
+        $isAllowed = in_array($origin, $allowedOrigins);
+
+        // Autoriser tous les domaines Vercel (.vercel.app)
+        if (!$isAllowed && preg_match('/^https:\/\/.*\.vercel\.app$/', $origin)) {
+            $isAllowed = true;
+        }
+
+        if ($isAllowed) {
             header('Access-Control-Allow-Origin: ' . $origin);
         } else {
             // En développement, autoriser localhost par défaut
