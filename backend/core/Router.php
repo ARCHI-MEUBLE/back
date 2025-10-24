@@ -40,6 +40,12 @@ class Router {
             return;
         }
 
+        // Route temporaire : Créer un admin (à supprimer après utilisation)
+        if ($path === 'create-admin-temp') {
+            require $this->baseDir . '/create_admin_temp.php';
+            return;
+        }
+
         // Route : Configurateur
         if ($path === 'configurator' || $path === 'configurator.html') {
             $this->serveFrontendPage('configurator.html');
