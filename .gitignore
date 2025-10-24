@@ -29,3 +29,17 @@ package-lock.json
 yarn.lock
 pnpm-lock.yaml
 .claude
+
+# Base de données SQLite
+database/*.db
+database/*.db-journal
+database/*.db-wal
+database/*.db-shm
+
+# Fichiers générés
+uploads/
+devis/*.json
+devis/*.pdf
+pieces/
+models/*.glb
+models/*.gltf
