@@ -20,7 +20,7 @@ class Admin {
      * @return array
      */
     public function getAll() {
-        $query = "SELECT id, username, email, created_at FROM admins ORDER BY created_at DESC";
+        $query = "SELECT email, created_at FROM admins ORDER BY created_at DESC";
         return $this->db->query($query);
     }
 
@@ -30,8 +30,8 @@ class Admin {
      * @return array|null
      */
     public function getByEmail($email) {
-        $query = "SELECT * FROM admins WHERE email = :email OR username = :username";
-        return $this->db->queryOne($query, ['email' => $email, 'username' => $email]);
+        $query = "SELECT * FROM admins WHERE email = :email";
+        return $this->db->queryOne($query, ['email' => $email]);
     }
 
     /**
@@ -113,9 +113,9 @@ class Admin {
     public function verifyCredentials($email, $password) {
         $admin = $this->getByEmail($email);
 
-        if ($admin && password_verify($password, $admin['password'])) {
+        if ($admin && password_verify($password, $admin['password_hash'])) {
             // Retourner l'admin sans le hash du mot de passe
-            unset($admin['password']);
+            unset($admin['password_hash']);
             return $admin;
         }
 

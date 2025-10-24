@@ -24,8 +24,8 @@ $passwordHash = password_hash($password, PASSWORD_BCRYPT);
 
 try {
     // Insérer le nouvel admin
-    $stmt = $pdo->prepare("INSERT INTO admins (username, password, email) VALUES (?, ?, ?)");
-    $stmt->execute([$username, $passwordHash, $email]);
+    $stmt = $pdo->prepare("INSERT OR REPLACE INTO admins (email, password_hash) VALUES (?, ?)");
+    $stmt->execute([$email, $passwordHash]);
 
     echo "✅ Nouvel administrateur créé avec succès!\n";
     echo "Username: $username\n";
