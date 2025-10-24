@@ -139,10 +139,20 @@ try {
         $closedFlag
     );
 
+    // Log de la commande pour debug
+    error_log("Commande Python: $command");
+    error_log("Output dir: $outputDir");
+    error_log("Output path: $outputPath");
+
     // Exécuter la commande Python
     $output = [];
     $returnCode = 0;
     exec($command, $output, $returnCode);
+
+    // Log de sortie pour debug
+    $outputText = implode("\n", $output);
+    error_log("Python output: $outputText");
+    error_log("Python return code: $returnCode");
 
     // Vérifier le code de retour
     if ($returnCode !== 0) {
@@ -154,14 +164,30 @@ try {
         echo json_encode([
             'success' => false,
             'error' => 'Erreur lors de la génération du meuble 3D',
-            'details' => $errorMessage
+            'details' => $errorMessage,
+            'debug_command' => $command,
+            'debug_output_dir' => $outputDir,
+            'debug_python_exe' => $pythonExe
         ]);
         exit();
     }
 
     // Vérifier que le fichier GLB a été créé
     if (!file_exists($outputPath)) {
-        throw new Exception("Le fichier GLB n'a pas été généré");
+        error_log("Fichier GLB non trouvé: $outputPath");
+        error_log("Contenu du dossier: " . implode(", ", scandir($outputDir)));
+
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Le fichier GLB n\'a pas été généré',
+            'debug_output_path' => $outputPath,
+            'debug_dir_exists' => is_dir($outputDir),
+            'debug_dir_writable' => is_writable($outputDir),
+            'debug_dir_contents' => scandir($outputDir),
+            'debug_python_output' => $outputText
+        ]);
+        exit();
     }
 
     // Succès : retourner l'URL du fichier GLB
