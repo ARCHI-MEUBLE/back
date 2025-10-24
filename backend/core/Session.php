@@ -15,6 +15,16 @@ class Session {
     private function __construct() {
         // Démarrer la session si elle n'est pas déjà démarrée
         if (session_status() === PHP_SESSION_NONE) {
+            // Configurer les paramètres de cookie pour le cross-domain (Vercel <-> Railway)
+            session_set_cookie_params([
+                'lifetime' => 86400 * 7, // 7 jours
+                'path' => '/',
+                'domain' => '', // Pas de domaine spécifique
+                'secure' => true, // HTTPS uniquement
+                'httponly' => true, // Protection XSS
+                'samesite' => 'None' // Autoriser cross-domain
+            ]);
+
             session_start();
         }
     }
