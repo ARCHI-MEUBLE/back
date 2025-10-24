@@ -26,6 +26,10 @@ api-tests.http
 devis/
 uploads/
 pieces/
+database/*.db
+database/*.db-journal
+database/*.db-wal
+database/*.db-shm
 
 # Fichiers spécifiques Windows
 Thumbs.db
