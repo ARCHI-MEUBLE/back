@@ -12,8 +12,7 @@ RUN apt-get update && apt-get install -y \
     git \
     libosmesa6 \
     libosmesa6-dev \
-    libgl1-mesa-glx \
-    libgl1-mesa-dev \
+    libgl1-mesa-dri \
     xvfb \
     && docker-php-ext-install pdo pdo_sqlite \
     && rm -rf /var/lib/apt/lists/*
