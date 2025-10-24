@@ -10,12 +10,24 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-venv \
     git \
+    libosmesa6 \
+    libosmesa6-dev \
+    libgl1-mesa-glx \
+    libgl1-mesa-dev \
+    xvfb \
     && docker-php-ext-install pdo pdo_sqlite \
     && rm -rf /var/lib/apt/lists/*
 
 # Créer un environnement virtuel Python
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
+
+# Variables d'environnement pour PyVista en mode headless (sans écran)
+ENV PYVISTA_OFF_SCREEN=true
+ENV PYVISTA_USE_IPYVTK=false
+ENV VTK_SILENCE_GET_VOID_POINTER_WARNINGS=1
+ENV MESA_GL_VERSION_OVERRIDE=3.3
+ENV DISPLAY=:99
 
 # Copier requirements.txt et installer les dépendances Python
 COPY requirements.txt /tmp/requirements.txt
