@@ -28,9 +28,15 @@ class Router {
         // Nettoyer le path
         $path = trim($path, '/');
 
-        // Route : Page d'accueil
-        if ($path === '' || $path === 'index.html') {
-            $this->serveFrontendPage('index.html');
+        // Route : Health check / API root
+        if ($path === '' || $path === 'health') {
+            $this->sendJSON([
+                'success' => true,
+                'service' => 'ArchiMeuble Backend API',
+                'version' => '1.0.0',
+                'status' => 'healthy',
+                'timestamp' => date('Y-m-d H:i:s')
+            ]);
             return;
         }
 
