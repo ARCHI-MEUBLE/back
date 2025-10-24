@@ -157,12 +157,42 @@ class Router {
         if (file_exists($filePath) && is_file($filePath)) {
             $contentType = $this->getContentType($path);
 
-            // Headers CORS pour tous les fichiers statiques
-            header('Access-Control-Allow-Origin: http://localhost:3000');
-            header('Access-Control-Allow-Credentials: true');
+            // Headers CORS dynamiques pour tous les fichiers statiques
+            $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+            $allowedOrigins = [
+                'http://localhost:3000',
+                'http://localhost:3001',
+                'http://127.0.0.1:3000',
+                'http://127.0.0.1:3001',
+            ];
+
+            // Ajouter FRONTEND_URL depuis .env
+            $envFrontendUrl = getenv('FRONTEND_URL');
+            if ($envFrontendUrl) {
+                $allowedOrigins[] = $envFrontendUrl;
+            }
+
+            // Vérifier si l'origine est autorisée ou si c'est un domaine Vercel
+            $isAllowed = in_array($origin, $allowedOrigins);
+            if (!$isAllowed && preg_match('/^https:\/\/.*\.vercel\.app$/', $origin)) {
+                $isAllowed = true;
+            }
+
+            if ($isAllowed) {
+                header('Access-Control-Allow-Origin: ' . $origin);
+            } else {
+                header('Access-Control-Allow-Origin: *'); // Fallback: autoriser tout le monde pour les fichiers statiques
+            }
+
             header('Access-Control-Allow-Methods: GET, OPTIONS');
             header('Access-Control-Allow-Headers: Content-Type');
             header('Content-Type: ' . $contentType);
+
+            // Gérer OPTIONS preflight
+            if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+                http_response_code(204);
+                exit;
+            }
 
             readfile($filePath);
         } else {
