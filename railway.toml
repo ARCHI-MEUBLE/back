@@ -6,20 +6,3 @@ dockerfilePath = "Dockerfile"
 startCommand = "/bin/bash -c '/usr/local/bin/init_db.sh && php -S 0.0.0.0:8000 router.php'"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
-healthcheckPath = "/health"
-healthcheckTimeout = 100
-
-[[deploy.environmentVariables]]
-name = "DB_PATH"
-value = "/app/database/archimeuble.db"
-
-[[deploy.environmentVariables]]
-name = "PYTHON_PATH"
-value = "/opt/venv/bin/python3"
-
-[[deploy.environmentVariables]]
-name = "OUTPUT_DIR"
-value = "/app/models"
-
-[service]
-port = 8000
