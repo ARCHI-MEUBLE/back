@@ -20,9 +20,14 @@ class Database {
         // En local: ../database/archimeuble.db (depuis back/)
         $dbPath = getenv('DB_PATH');
 
-        if (!$dbPath) {
-            // Chemin local relatif
-            $dbPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'database' . DIRECTORY_SEPARATOR . 'archimeuble.db';
+        if (!$dbPath || empty($dbPath)) {
+            // Chemin par défaut pour Docker
+            $dbPath = '/app/database/archimeuble.db';
+
+            // Si le fichier n'existe pas en production, essayer le chemin local
+            if (!file_exists($dbPath)) {
+                $dbPath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'database' . DIRECTORY_SEPARATOR . 'archimeuble.db';
+            }
         }
 
         $this->dbPath = $dbPath;
