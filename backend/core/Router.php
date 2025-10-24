@@ -202,6 +202,14 @@ class Router {
 
             readfile($filePath);
         } else {
+            // Même pour un 404, envoyer les headers CORS
+            $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+            if (preg_match('/^https:\/\/.*\.vercel\.app$/', $origin)) {
+                header('Access-Control-Allow-Origin: ' . $origin);
+            } else {
+                header('Access-Control-Allow-Origin: *');
+            }
+
             $this->send404("Fichier non trouvé : $path");
         }
     }
