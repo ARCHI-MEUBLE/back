@@ -1,12 +1,17 @@
 #!/bin/bash
 set -e
 
-DB_PATH="/app/database/archimeuble.db"
+DB_PATH="/data/database/archimeuble.db"
 
 echo "Initialisation de la base de données ArchiMeuble..."
 
-# Créer le répertoire de la base de données s'il n'existe pas
-mkdir -p /app/database
+# Créer les répertoires dans le volume persistant /data
+mkdir -p /data/database
+mkdir -p /data/uploads/models
+mkdir -p /data/devis
+mkdir -p /data/pieces
+
+echo "Répertoires créés dans /data (volume persistant)"
 
 # Créer ou mettre à jour la base de données
 sqlite3 "$DB_PATH" <<'EOF'

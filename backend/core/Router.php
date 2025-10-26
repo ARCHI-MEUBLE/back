@@ -164,7 +164,12 @@ class Router {
      * @param string $path
      */
     private function serveStaticFile($path) {
-        $filePath = $this->baseDir . '/' . $path;
+        // Les fichiers uploads sont dans le volume persistant /data
+        if (strpos($path, 'uploads/') === 0) {
+            $filePath = '/data/' . $path;
+        } else {
+            $filePath = $this->baseDir . '/' . $path;
+        }
 
         if (file_exists($filePath) && is_file($filePath)) {
             $contentType = $this->getContentType($path);

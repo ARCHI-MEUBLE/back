@@ -66,8 +66,8 @@ try {
     $extension = $fileType === 'image/png' ? 'png' : 'jpg';
     $uniqueName = time() . '-' . uniqid() . '.' . $extension;
 
-    // Créer le dossier uploads si nécessaire
-    $uploadDir = __DIR__ . '/../../uploads/models/';
+    // Créer le dossier uploads dans le volume persistant /data
+    $uploadDir = '/data/uploads/models/';
     if (!is_dir($uploadDir)) {
         mkdir($uploadDir, 0755, true);
     }
