@@ -46,6 +46,12 @@ class Router {
             return;
         }
 
+        // Route temporaire : Supprimer les modèles par défaut
+        if ($path === 'delete-default-models') {
+            require $this->baseDir . '/delete_default_models.php';
+            return;
+        }
+
         // Route : Configurateur
         if ($path === 'configurator' || $path === 'configurator.html') {
             $this->serveFrontendPage('configurator.html');
