@@ -3,6 +3,7 @@
  * ArchiMeuble - Endpoint d'authentification administrateur
  * POST /api/admin-auth/login - Connexion admin
  * POST /api/admin-auth/logout - Déconnexion admin
+ * POST /api/admin-auth/register - Créer un nouvel admin
  * GET /api/admin-auth/session - Vérifier la session admin
  *
  * Date : 2025-10-21
@@ -55,6 +56,51 @@ if ($method === 'POST' && $action === 'login') {
     } else {
         http_response_code(401);
         echo json_encode(['error' => 'Identifiants invalides']);
+    }
+    exit;
+}
+
+/**
+ * POST /api/admin-auth/register
+ */
+if ($method === 'POST' && $action === 'register') {
+    $input = json_decode(file_get_contents('php://input'), true);
+
+    if (!isset($input['email']) || !isset($input['password'])) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Email et mot de passe requis']);
+        exit;
+    }
+
+    // Vérifier si l'email existe déjà
+    if ($admin->emailExists($input['email'])) {
+        http_response_code(409);
+        echo json_encode(['error' => 'Un administrateur avec cet email existe déjà']);
+        exit;
+    }
+
+    // Générer un username basé sur l'email (partie avant le @)
+    $username = explode('@', $input['email'])[0];
+
+    // Créer le nouvel admin
+    $passwordHash = password_hash($input['password'], PASSWORD_BCRYPT);
+    $success = $admin->create($input['email'], $passwordHash, $username);
+
+    if ($success) {
+        // Créer une session pour le nouvel admin
+        $session->set('admin_email', $input['email']);
+        $session->set('is_admin', true);
+
+        http_response_code(201);
+        echo json_encode([
+            'success' => true,
+            'admin' => [
+                'email' => $input['email']
+            ]
+        ]);
+    } else {
+        http_response_code(500);
+        echo json_encode(['error' => 'Erreur lors de la création de l\'administrateur']);
     }
     exit;
 }

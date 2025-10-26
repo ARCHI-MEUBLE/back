@@ -38,15 +38,22 @@ class Admin {
      * Crée un nouvel administrateur
      * @param string $email
      * @param string $passwordHash
+     * @param string $username (optionnel, généré depuis email si non fourni)
      * @return bool
      */
-    public function create($email, $passwordHash) {
-        $query = "INSERT INTO admins (email, password_hash)
-                  VALUES (:email, :password_hash)";
+    public function create($email, $passwordHash, $username = null) {
+        // Si username n'est pas fourni, utiliser la partie avant @ de l'email
+        if ($username === null) {
+            $username = explode('@', $email)[0];
+        }
+
+        $query = "INSERT INTO admins (username, email, password)
+                  VALUES (:username, :email, :password)";
 
         return $this->db->execute($query, [
+            'username' => $username,
             'email' => $email,
-            'password_hash' => $passwordHash
+            'password' => $passwordHash
         ]);
     }
 
@@ -76,10 +83,10 @@ class Admin {
      * @return bool
      */
     public function updatePassword($email, $newPasswordHash) {
-        $query = "UPDATE admins SET password_hash = :password_hash WHERE email = :email";
+        $query = "UPDATE admins SET password = :password WHERE email = :email";
         return $this->db->execute($query, [
             'email' => $email,
-            'password_hash' => $newPasswordHash
+            'password' => $newPasswordHash
         ]);
     }
 
