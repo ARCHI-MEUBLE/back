@@ -53,8 +53,10 @@ function convertImagePath($imagePath) {
     }
 
     // Construire l'URL complète
-    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    // Forcer HTTPS pour Railway/production, HTTP pour local
     $host = $_SERVER['HTTP_HOST'];
+    $isLocal = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
+    $protocol = $isLocal ? 'http' : 'https';
     $baseUrl = $protocol . '://' . $host;
 
     // S'assurer que le chemin commence par /
