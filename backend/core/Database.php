@@ -16,15 +16,15 @@ class Database {
      */
     private function __construct() {
         // Vérifier si on est dans Docker ou en local
-        // Dans Docker: /app/database/archimeuble.db
-        // En local: ../database/archimeuble.db (depuis back/)
+        // Production Railway: /data/database/archimeuble.db (volume persistant)
+        // Local: ../database/archimeuble.db (depuis back/)
         $dbPath = getenv('DB_PATH');
 
         if (!$dbPath || empty($dbPath)) {
-            // Chemin par défaut pour Docker
-            $dbPath = '/app/database/archimeuble.db';
+            // Chemin par défaut pour production Railway (volume persistant)
+            $dbPath = '/data/database/archimeuble.db';
 
-            // Si le fichier n'existe pas en production, essayer le chemin local
+            // Si le fichier n'existe pas, essayer le chemin local
             if (!file_exists($dbPath)) {
                 $dbPath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'database' . DIRECTORY_SEPARATOR . 'archimeuble.db';
             }
