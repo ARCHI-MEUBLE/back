@@ -52,6 +52,13 @@ class Router {
             return;
         }
 
+        // Route de diagnostic
+        if ($path === 'debug-db') {
+            header('Content-Type: text/plain');
+            require $this->baseDir . '/debug_db_path.php';
+            return;
+        }
+
         // Route : Configurateur
         if ($path === 'configurator' || $path === 'configurator.html') {
             $this->serveFrontendPage('configurator.html');
