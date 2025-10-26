@@ -35,6 +35,9 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 # Créer le répertoire de travail
 WORKDIR /app
 
+# Invalider le cache Docker pour forcer la copie des nouveaux fichiers
+ARG CACHEBUST=1
+
 # Copier tous les fichiers de l'application
 COPY . /app
 
