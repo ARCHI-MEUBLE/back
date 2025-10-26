@@ -59,6 +59,18 @@ class Router {
             return;
         }
 
+        // Route de diagnostic admins
+        if ($path === 'check-admins') {
+            require $this->baseDir . '/check_admins.php';
+            return;
+        }
+
+        // Route pour corriger le mot de passe admin
+        if ($path === 'fix-admin-password') {
+            require $this->baseDir . '/fix_admin_password.php';
+            return;
+        }
+
         // Route : Configurateur
         if ($path === 'configurator' || $path === 'configurator.html') {
             $this->serveFrontendPage('configurator.html');

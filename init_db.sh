@@ -127,11 +127,11 @@ CREATE INDEX IF NOT EXISTS idx_configurations_template_id ON configurations(temp
 EOF
 
 # Créer un admin par défaut (mot de passe: admin123)
-# Hash bcrypt pour "admin123": $2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi
+# Hash bcrypt pour "admin123": $2y$12$3uQQHtqzlQH5eptxZJkJoudv4TsExrfwl7T22u4gxIlzpJSxBbmtO
 echo "Création de l'administrateur par défaut..."
 sqlite3 "$DB_PATH" <<'EOF'
 INSERT OR IGNORE INTO admins (username, password, email)
-VALUES ('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin@archimeuble.com');
+VALUES ('admin', '$2y$12$3uQQHtqzlQH5eptxZJkJoudv4TsExrfwl7T22u4gxIlzpJSxBbmtO', 'admin@archimeuble.com');
 EOF
 
 echo "Base de données initialisée avec succès!"
