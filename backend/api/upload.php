@@ -79,13 +79,19 @@ try {
         throw new Exception('Failed to save file');
     }
 
-    // Retourner le chemin relatif
+    // Construire l'URL complète de l'image
+    // Déterminer l'URL du backend
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'];
+    $baseUrl = $protocol . '://' . $host;
+
     $relativePath = '/uploads/models/' . $uniqueName;
+    $fullUrl = $baseUrl . $relativePath;
 
     http_response_code(200);
     echo json_encode([
         'success' => true,
-        'imagePath' => $relativePath
+        'imagePath' => $fullUrl
     ]);
 
 } catch (Exception $e) {

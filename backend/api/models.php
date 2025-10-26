@@ -40,6 +40,49 @@ function isAdmin() {
 }
 
 /**
+ * Convertit un chemin relatif d'image en URL complète
+ */
+function convertImagePath($imagePath) {
+    if (!$imagePath) {
+        return null;
+    }
+
+    // Si c'est déjà une URL complète, la retourner telle quelle
+    if (strpos($imagePath, 'http://') === 0 || strpos($imagePath, 'https://') === 0) {
+        return $imagePath;
+    }
+
+    // Construire l'URL complète
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'];
+    $baseUrl = $protocol . '://' . $host;
+
+    // S'assurer que le chemin commence par /
+    if (strpos($imagePath, '/') !== 0) {
+        $imagePath = '/' . $imagePath;
+    }
+
+    return $baseUrl . $imagePath;
+}
+
+/**
+ * Convertit les chemins d'images dans un tableau de modèles
+ */
+function convertModelImagePaths($models) {
+    if (!is_array($models)) {
+        return $models;
+    }
+
+    foreach ($models as &$model) {
+        if (isset($model['image_url'])) {
+            $model['image_url'] = convertImagePath($model['image_url']);
+        }
+    }
+
+    return $models;
+}
+
+/**
  * GET /api/models
  */
 if ($method === 'GET') {
@@ -47,6 +90,10 @@ if ($method === 'GET') {
     if (isset($_GET['id'])) {
         $modelData = $model->getById($_GET['id']);
         if ($modelData) {
+            // Convertir le chemin de l'image en URL complète
+            if (isset($modelData['image_url'])) {
+                $modelData['image_url'] = convertImagePath($modelData['image_url']);
+            }
             http_response_code(200);
             echo json_encode($modelData);
         } else {
@@ -55,6 +102,8 @@ if ($method === 'GET') {
         }
     } else {
         $models = $model->getAll();
+        // Convertir tous les chemins d'images en URLs complètes
+        $models = convertModelImagePaths($models);
         http_response_code(200);
         echo json_encode(['models' => $models]);
     }
