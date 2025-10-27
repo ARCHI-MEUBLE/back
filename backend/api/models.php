@@ -52,17 +52,28 @@ function convertImagePath($imagePath) {
         return $imagePath;
     }
 
-    // Construire l'URL complète
-    // Forcer HTTPS pour Railway/production, HTTP pour local
-    $host = $_SERVER['HTTP_HOST'];
-    $isLocal = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
-    $protocol = $isLocal ? 'http' : 'https';
-    $baseUrl = $protocol . '://' . $host;
-
     // S'assurer que le chemin commence par /
     if (strpos($imagePath, '/') !== 0) {
         $imagePath = '/' . $imagePath;
     }
+
+    // Détecter l'environnement
+    $host = $_SERVER['HTTP_HOST'];
+    $isLocal = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
+
+    if ($isLocal) {
+        // EN LOCAL: Les images sont dans le frontend Next.js (localhost:3000)
+        // car le frontend les sauvegarde dans front/public/uploads/
+        $frontendUrl = getenv('FRONTEND_URL') ?: 'http://localhost:3000';
+        error_log("Converting image path (LOCAL): $imagePath -> $frontendUrl$imagePath");
+        return $frontendUrl . $imagePath;
+    }
+
+    // EN PRODUCTION: Les images sont sur Railway backend
+    // car le frontend proxie l'upload vers le backend
+    $protocol = 'https';
+    $baseUrl = $protocol . '://' . $host;
+    error_log("Converting image path (PRODUCTION): $imagePath -> $baseUrl$imagePath");
 
     return $baseUrl . $imagePath;
 }
