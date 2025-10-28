@@ -128,6 +128,18 @@ CREATE TABLE IF NOT EXISTS devis (
     FOREIGN KEY (projet_id) REFERENCES projets(id)
 );
 
+-- Table des notifications admin
+CREATE TABLE IF NOT EXISTS admin_notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    admin_id INTEGER NOT NULL,
+    type TEXT NOT NULL,
+    message TEXT NOT NULL,
+    related_id INTEGER,
+    is_read INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
+);
+
 -- Index pour améliorer les performances
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_configurations_user_id ON configurations(user_id);
