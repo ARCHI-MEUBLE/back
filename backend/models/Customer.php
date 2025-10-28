@@ -21,8 +21,7 @@ class Customer {
         $query = "INSERT INTO customers (email, password_hash, first_name, last_name, phone, address, city, postal_code, country)
                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        $stmt = $this->db->prepare($query);
-        $stmt->execute([$email, $passwordHash, $firstName, $lastName, $phone, $address, $city, $postalCode, $country]);
+        $this->db->execute($query, [$email, $passwordHash, $firstName, $lastName, $phone, $address, $city, $postalCode, $country]);
 
         return $this->db->lastInsertId();
     }
@@ -34,10 +33,7 @@ class Customer {
         $query = "SELECT id, email, first_name, last_name, phone, address, city, postal_code, country, created_at
                   FROM customers WHERE id = ?";
 
-        $stmt = $this->db->prepare($query);
-        $stmt->execute([$id]);
-
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        return $this->db->queryOne($query, [$id]);
     }
 
     /**
@@ -47,10 +43,7 @@ class Customer {
         $query = "SELECT id, email, password_hash, first_name, last_name, phone, address, city, postal_code, country, created_at
                   FROM customers WHERE email = ?";
 
-        $stmt = $this->db->prepare($query);
-        $stmt->execute([$email]);
-
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        return $this->db->queryOne($query, [$email]);
     }
 
     /**
@@ -94,8 +87,7 @@ class Customer {
         $values[] = $id;
         $query = "UPDATE customers SET " . implode(', ', $updates) . ", updated_at = CURRENT_TIMESTAMP WHERE id = ?";
 
-        $stmt = $this->db->prepare($query);
-        return $stmt->execute($values);
+        return $this->db->execute($query, $values);
     }
 
     /**
@@ -103,17 +95,15 @@ class Customer {
      */
     public function delete($id) {
         $query = "DELETE FROM customers WHERE id = ?";
-        $stmt = $this->db->prepare($query);
-        return $stmt->execute([$id]);
+        return $this->db->execute($query, [$id]);
     }
 
     /**
      * Vérifier si un email existe déjà
      */
     public function emailExists($email) {
-        $query = "SELECT COUNT(*) FROM customers WHERE email = ?";
-        $stmt = $this->db->prepare($query);
-        $stmt->execute([$email]);
-        return $stmt->fetchColumn() > 0;
+        $query = "SELECT COUNT(*) as count FROM customers WHERE email = ?";
+        $result = $this->db->queryOne($query, [$email]);
+        return $result && $result['count'] > 0;
     }
 }
