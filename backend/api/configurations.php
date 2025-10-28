@@ -111,11 +111,16 @@ try {
 
         // Créer la configuration
         $glbUrl = isset($data['glb_url']) ? $data['glb_url'] : null;
+        $metadata = isset($data['metadata']) ? json_encode($data['metadata']) : null; // Encoder metadata en JSON si présentes
+        
         $configId = $configModel->create(
-            $data['user_session'],
-            $data['prompt'],
-            (float)$data['price'],
-            $glbUrl
+            null,                      // user_id (null pour guest)
+            null,                      // template_id
+            $metadata,                 // config_string (metadata JSON)
+            (float)$data['price'],     // price
+            $glbUrl,                   // glb_url
+            $data['prompt'],           // prompt
+            $data['user_session']      // user_session
         );
 
         if ($configId !== false) {

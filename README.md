@@ -37,7 +37,7 @@ environment:
 ### 3. Lancer le backend avec Docker
 
 ```bash
-docker compose up
+docker compose up -d
 ```
 
 C'est tout ! Le backend est maintenant accessible sur **http://localhost:8000**

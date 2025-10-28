@@ -118,11 +118,11 @@ CREATE INDEX IF NOT EXISTS idx_configurations_user_id ON configurations(user_id)
 CREATE INDEX IF NOT EXISTS idx_configurations_user_session ON configurations(user_session);
 CREATE INDEX IF NOT EXISTS idx_configurations_template_id ON configurations(template_id);
 
--- Modèles par défaut désactivés (créez vos propres modèles depuis le dashboard admin)
--- INSERT OR IGNORE INTO models (id, name, description, prompt, price, image_url) VALUES
--- (1, 'Meuble TV Scandinave', 'Meuble TV au design scandinave épuré avec 3 compartiments', 'M1(1700,500,730)EFH3(F,T,F)', 899.00, '/images/meuble-scandinave.jpg'),
--- (2, 'Meuble TV Moderne', 'Meuble TV moderne avec 2 tiroirs et finition laquée', 'M1(2000,400,600)EFH2(T,T)', 1099.00, '/images/meuble-moderne.jpg'),
--- (3, 'Meuble TV Compact', 'Meuble TV compact idéal pour petits espaces', 'M1(1200,350,650)EFH4(F,F,T,F)', 699.00, '/images/meuble-compact.jpg');
+-- Insérer les 3 meubles TV de base (si pas déjà présents)
+INSERT OR IGNORE INTO models (id, name, description, prompt, price, image_url) VALUES
+(1, 'Meuble TV Scandinave', 'Meuble TV au design scandinave épuré avec 3 compartiments', 'M1(1700,500,730)EFH3(F,T,F)', 899.00, '/images/meuble-scandinave.jpg'),
+(2, 'Meuble TV Moderne', 'Meuble TV moderne avec 2 tiroirs et finition laquée', 'M1(2000,400,600)EFH2(T,T)', 1099.00, '/images/meuble-moderne.jpg'),
+(3, 'Meuble TV Compact', 'Meuble TV compact idéal pour petits espaces', 'M1(1200,350,650)EFH4(F,F,T,F)', 699.00, '/images/meuble-compact.jpg');
 
 EOF
 
@@ -139,3 +139,4 @@ echo "Identifiants admin par défaut:"
 echo "  Username: admin"
 echo "  Password: admin123"
 echo "  Email: admin@archimeuble.com"
+ 
