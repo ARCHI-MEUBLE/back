@@ -15,45 +15,66 @@ class AdminNotification {
     /**
      * Créer une notification
      */
-    public function create($adminId, $type, $message, $relatedId = null) {
-        $query = "INSERT INTO admin_notifications (admin_id, type, message, related_id)
-                  VALUES (?, ?, ?, ?)";
-
-        $stmt = $this->db->prepare($query);
-        $stmt->execute([$adminId, $type, $message, $relatedId]);
-
-        return $this->db->lastInsertId();
+    public function create($type, $title, $message, $relatedOrderId = null) {
+        $sql = "INSERT INTO admin_notifications (type, title, message, related_order_id, created_at)
+                VALUES (?, ?, ?, ?, datetime('now'))";
+        
+        return $this->db->execute($sql, [$type, $title, $message, $relatedOrderId]);
     }
 
     /**
      * Récupérer les notifications non lues
      */
-    public function getUnread($adminId) {
-        $query = "SELECT * FROM admin_notifications
-                  WHERE admin_id = ? AND is_read = 0
-                  ORDER BY created_at DESC";
-
-        $stmt = $this->db->prepare($query);
-        $stmt->execute([$adminId]);
-
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    public function getUnread($limit = 50) {
+        $sql = "SELECT * FROM admin_notifications
+                WHERE is_read = 0
+                ORDER BY created_at DESC
+                LIMIT ?";
+        
+        return $this->db->query($sql, [$limit]);
     }
 
     /**
-     * Marquer comme lu
+     * Récupérer toutes les notifications
+     */
+    public function getAll($limit = 100, $offset = 0) {
+        $sql = "SELECT * FROM admin_notifications
+                ORDER BY created_at DESC
+                LIMIT ? OFFSET ?";
+        
+        return $this->db->query($sql, [$limit, $offset]);
+    }
+
+    /**
+     * Compter les notifications non lues
+     */
+    public function countUnread() {
+        $sql = "SELECT COUNT(*) as count FROM admin_notifications WHERE is_read = 0";
+        $result = $this->db->queryOne($sql);
+        return $result ? (int)$result['count'] : 0;
+    }
+
+    /**
+     * Marquer toutes les notifications comme lues
+     */
+    public function markAllAsRead() {
+        $sql = "UPDATE admin_notifications SET is_read = 1 WHERE is_read = 0";
+        return $this->db->execute($sql);
+    }
+
+    /**
+     * Marquer une notification comme lue
      */
     public function markAsRead($id) {
-        $query = "UPDATE admin_notifications SET is_read = 1 WHERE id = ?";
-        $stmt = $this->db->prepare($query);
-        return $stmt->execute([$id]);
+        $sql = "UPDATE admin_notifications SET is_read = 1 WHERE id = ?";
+        return $this->db->execute($sql, [$id]);
     }
 
     /**
      * Supprimer une notification
      */
     public function delete($id) {
-        $query = "DELETE FROM admin_notifications WHERE id = ?";
-        $stmt = $this->db->prepare($query);
-        return $stmt->execute([$id]);
+        $sql = "DELETE FROM admin_notifications WHERE id = ?";
+        return $this->db->execute($sql, [$id]);
     }
 }
