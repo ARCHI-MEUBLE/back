@@ -26,7 +26,7 @@ try {
     }
     
     $customer = new Customer();
-    $customerData = $customer->authenticate($data['email'], $data['password']);
+    $customerData = $customer->verifyCredentials($data['email'], $data['password']);
     
     if (!$customerData) {
         http_response_code(401);
