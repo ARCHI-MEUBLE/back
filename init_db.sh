@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     FOREIGN KEY (user_id) REFERENCES admins(id)
 );
 
--- Table des clients
+-- Table des clients (pour gestion interne/devis)
 CREATE TABLE IF NOT EXISTS clients (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nom TEXT NOT NULL,
@@ -81,6 +81,22 @@ CREATE TABLE IF NOT EXISTS clients (
     adresse TEXT,
     ville TEXT,
     code_postal TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table des customers (pour authentification frontend)
+CREATE TABLE IF NOT EXISTS customers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    phone TEXT,
+    address TEXT,
+    city TEXT,
+    postal_code TEXT,
+    country TEXT DEFAULT 'France',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
