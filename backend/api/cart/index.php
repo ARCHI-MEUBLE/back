@@ -14,18 +14,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Vérifier l'authentification
-if (!isset($_SESSION['customer_id'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Non authentifié']);
-    exit;
-}
-
 require_once __DIR__ . '/../../models/Cart.php';
 
 try {
     $cart = new Cart();
-    $customerId = $_SESSION['customer_id'];
+
+    // Utiliser l'ID du customer s'il est connecté, sinon utiliser l'ID de session
+    $customerId = isset($_SESSION['customer_id'])
+        ? $_SESSION['customer_id']
+        : session_id();
     
     switch ($_SERVER['REQUEST_METHOD']) {
         case 'GET':

@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         require_once __DIR__ . '/../../models/Customer.php';
         $customer = new Customer();
         $customerData = $customer->getById($_SESSION['customer_id']);
-        
+
         if ($customerData) {
             http_response_code(200);
             echo json_encode([
@@ -23,11 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         } else {
             // Session invalide
             session_destroy();
-            http_response_code(401);
+            http_response_code(200);
             echo json_encode(['authenticated' => false]);
         }
     } else {
-        http_response_code(401);
+        // Pas de session customer (peut-être admin ou anonyme)
+        http_response_code(200);
         echo json_encode(['authenticated' => false]);
     }
     

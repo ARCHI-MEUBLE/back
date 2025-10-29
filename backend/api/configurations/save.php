@@ -24,13 +24,13 @@ if (!isset($_SESSION['customer_id'])) {
     exit;
 }
 
-require_once __DIR__ . '/../../models/SavedConfiguration.php';
+require_once __DIR__ . '/../../models/Configuration.php';
 
 try {
     $data = json_decode(file_get_contents('php://input'), true);
-    
+
     // Validation
-    $required = ['name', 'prompt', 'price'];
+    $required = ['prompt', 'price'];
     foreach ($required as $field) {
         if (!isset($data[$field]) || $data[$field] === '') {
             http_response_code(400);
@@ -38,28 +38,37 @@ try {
             exit;
         }
     }
-    
-    $savedConfig = new SavedConfiguration();
-    
-    $configId = $savedConfig->create(
+
+    // Préparer les données de configuration (inclure le name dans config_data)
+    $configData = $data['config_data'] ?? [];
+    if (isset($data['name'])) {
+        $configData['name'] = $data['name'];
+    }
+    if (isset($data['thumbnail_url'])) {
+        $configData['thumbnail_url'] = $data['thumbnail_url'];
+    }
+
+    $config = new Configuration();
+
+    // Signature: create($userId, $templateId, $configString, $price, $glbUrl = null, $prompt = null, $userSession = null)
+    $configId = $config->create(
         $_SESSION['customer_id'],
-        $data['name'],
-        $data['prompt'],
-        json_encode($data['config_data'] ?? []),
-        $data['price'],
         $data['model_id'] ?? null,
+        json_encode($configData),
+        $data['price'],
         $data['glb_url'] ?? null,
-        $data['thumbnail_url'] ?? null
+        $data['prompt'],
+        session_id()
     );
     
     // Récupérer la configuration créée
-    $config = $savedConfig->getById($configId);
+    $savedConfiguration = $config->getById($configId);
     
     http_response_code(201);
     echo json_encode([
         'success' => true,
         'message' => 'Configuration sauvegardée avec succès',
-        'configuration' => $config
+        'configuration' => $savedConfiguration
     ]);
     
 } catch (Exception $e) {

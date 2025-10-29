@@ -1,0 +1,176 @@
+{
+    "ORD-690158e4c7bc38.39827686": {
+        "id": "ORD-690158e4c7bc38.39827686",
+        "order_number": "CMD-20251028-827686",
+        "customer_id": 2,
+        "items": [
+            {
+                "configuration_id": 1,
+                "quantity": 1,
+                "added_at": "2025-10-28 23:59:26",
+                "configuration": {
+                    "id": 1,
+                    "name": "kkkkk",
+                    "prompt": "M1(1000,400,1000)hgdP2H3(T,,)",
+                    "price": 1235,
+                    "glb_url": "http:\/\/localhost:8000\/models\/meuble_69014eb8d08e9.glb",
+                    "thumbnail_url": "http:\/\/localhost:8000\/models\/meuble_69014eb8d08e9.glb",
+                    "created_at": "2025-10-28 23:16:23"
+                }
+            }
+        ],
+        "total": 1235,
+        "shipping_address": "11 rue Ingres, 59800 Douala, France",
+        "billing_address": "11 rue Ingres, 59800 Douala, France",
+        "payment_method": "card",
+        "payment_status": "pending",
+        "status": "confirmed",
+        "notes": null,
+        "created_at": "2025-10-28 23:59:32",
+        "updated_at": "2025-10-29 00:10:52",
+        "customer": {
+            "id": 2,
+            "email": "contact@archimeuble.com",
+            "password_hash": "$2y$10$b7nBZGnNyXyp.qoGEhzaHeDJ6GqnEMPHfGJEznM5MWz\/o4So12bIO",
+            "first_name": "collins",
+            "last_name": "LEMOGO",
+            "phone": "+33744171597",
+            "address": null,
+            "city": "Douala",
+            "postal_code": "59800",
+            "country": "France",
+            "created_at": "2025-10-28 23:06:09",
+            "updated_at": "2025-10-28 23:06:09"
+        }
+    },
+    "ORD-69018a9e896255.24198115": {
+        "id": "ORD-69018a9e896255.24198115",
+        "order_number": "CMD-20251029-198115",
+        "customer_id": 3,
+        "customer": {
+            "id": 3,
+            "email": "lemogo@gmail.com",
+            "password_hash": "$2y$10$nTTpbuGKoPJy9IyXOUpJeOlMFtjoGghNFBCydoCKMuAuspXCk4EMu",
+            "first_name": "collins",
+            "last_name": "LEMOGO",
+            "phone": "+33744171597",
+            "address": null,
+            "city": "Douala",
+            "postal_code": "59800",
+            "country": "France",
+            "created_at": "2025-10-29 03:29:20",
+            "updated_at": "2025-10-29 03:29:20"
+        },
+        "items": [
+            {
+                "configuration_id": 4,
+                "quantity": 1,
+                "added_at": "2025-10-29 03:31:33",
+                "configuration": {
+                    "id": 4,
+                    "name": "aaaaa",
+                    "prompt": "M1(2000,400,600)hgdP2H5(T,,,,)",
+                    "price": 1485,
+                    "glb_url": "http:\/\/localhost:8000\/models\/meuble_69018a68dc7c7.glb",
+                    "thumbnail_url": "http:\/\/localhost:8000\/models\/meuble_69018a68dc7c7.glb",
+                    "created_at": "2025-10-29 03:31:00"
+                }
+            }
+        ],
+        "total": 1485,
+        "shipping_address": "7 ALLEE DES BERGER, 59800 Douala, France",
+        "billing_address": "7 ALLEE DES BERGER, 59800 Douala, France",
+        "payment_method": "card",
+        "payment_status": "pending",
+        "status": "pending",
+        "notes": null,
+        "created_at": "2025-10-29 03:31:42"
+    },
+    "ORD-69018ae479c0f1.93044158": {
+        "id": "ORD-69018ae479c0f1.93044158",
+        "order_number": "CMD-20251029-044158",
+        "customer_id": 3,
+        "customer": {
+            "id": 3,
+            "email": "lemogo@gmail.com",
+            "password_hash": "$2y$10$nTTpbuGKoPJy9IyXOUpJeOlMFtjoGghNFBCydoCKMuAuspXCk4EMu",
+            "first_name": "collins",
+            "last_name": "LEMOGO",
+            "phone": "+33744171597",
+            "address": null,
+            "city": "Douala",
+            "postal_code": "59800",
+            "country": "France",
+            "created_at": "2025-10-29 03:29:20",
+            "updated_at": "2025-10-29 03:29:20"
+        },
+        "items": [
+            {
+                "configuration_id": 3,
+                "quantity": 1,
+                "added_at": "2025-10-29 03:32:44",
+                "configuration": {
+                    "id": 3,
+                    "name": "diididid",
+                    "prompt": "M1(1000,400,1000)hgdP2H3(T,,)",
+                    "price": 1235,
+                    "glb_url": "http:\/\/localhost:8000\/models\/meuble_69018a2a847fe.glb",
+                    "thumbnail_url": "http:\/\/localhost:8000\/models\/meuble_69018a2a847fe.glb",
+                    "created_at": "2025-10-29 03:30:29"
+                }
+            }
+        ],
+        "total": 1235,
+        "shipping_address": "Suresnes, 59800 Douala, France",
+        "billing_address": "Suresnes, 59800 Douala, France",
+        "payment_method": "card",
+        "payment_status": "pending",
+        "status": "pending",
+        "notes": null,
+        "created_at": "2025-10-29 03:32:52"
+    },
+    "ORD-690197c24d30c5.43348471": {
+        "id": "ORD-690197c24d30c5.43348471",
+        "order_number": "CMD-20251029-348471",
+        "customer_id": 4,
+        "customer": {
+            "id": 4,
+            "email": "10@mail.com",
+            "password_hash": "$2y$10$4l5HB6OCnY7dDnrXJe1bEOmMkKx2B6DYFDm6bkA6VcfcvoV98oIfC",
+            "first_name": "collins",
+            "last_name": "LEMOGO",
+            "phone": "+33744171597",
+            "address": null,
+            "city": "Douala",
+            "postal_code": "59800",
+            "country": "France",
+            "created_at": "2025-10-29 04:24:45",
+            "updated_at": "2025-10-29 04:24:45"
+        },
+        "items": [
+            {
+                "configuration_id": 5,
+                "quantity": 1,
+                "added_at": "2025-10-29 04:27:19",
+                "configuration": {
+                    "id": 5,
+                    "name": "kksksk",
+                    "prompt": "M1(1000,400,1451)EbFP2H3(T,,)",
+                    "price": 1325,
+                    "glb_url": "http:\/\/localhost:8000\/models\/meuble_6901974323c49.glb",
+                    "thumbnail_url": "http:\/\/localhost:8000\/models\/meuble_6901974323c49.glb",
+                    "created_at": "2025-10-29 04:26:34"
+                }
+            }
+        ],
+        "total": 1325,
+        "shipping_address": "7 ALLEE DES BERGER, 59800 Douala, France",
+        "billing_address": "7 ALLEE DES BERGER, 59800 Douala, France",
+        "payment_method": "card",
+        "payment_status": "pending",
+        "status": "delivered",
+        "notes": null,
+        "created_at": "2025-10-29 04:27:46",
+        "updated_at": "2025-10-29 04:37:59"
+    }
+}

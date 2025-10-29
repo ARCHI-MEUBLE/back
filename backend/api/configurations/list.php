@@ -19,24 +19,23 @@ if (!isset($_SESSION['customer_id'])) {
     exit;
 }
 
-require_once __DIR__ . '/../../models/SavedConfiguration.php';
+require_once __DIR__ . '/../../models/Configuration.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Lister les configurations
-        $savedConfig = new SavedConfiguration();
-        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 50;
-        $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
-        
-        $configurations = $savedConfig->getByCustomer($_SESSION['customer_id'], $limit, $offset);
-        $total = $savedConfig->countByCustomer($_SESSION['customer_id']);
-        
+        $config = new Configuration();
+
+        // Récupérer toutes les configurations du client (pas de pagination pour l'instant)
+        $configurations = $config->getByUserId($_SESSION['customer_id']);
+        $total = $config->countByUserId($_SESSION['customer_id']);
+
         http_response_code(200);
         echo json_encode([
             'configurations' => $configurations,
             'total' => $total
         ]);
-        
+
     } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
         // Supprimer une configuration
         // URL: /api/configurations/list?id=123
@@ -45,24 +44,25 @@ try {
             echo json_encode(['error' => 'ID requis']);
             exit;
         }
-        
-        $savedConfig = new SavedConfiguration();
-        
+
+        $config = new Configuration();
+
         // Vérifier que la config appartient au client
-        if (!$savedConfig->belongsToCustomer($_GET['id'], $_SESSION['customer_id'])) {
+        $existingConfig = $config->getById($_GET['id']);
+        if (!$existingConfig || $existingConfig['user_id'] !== $_SESSION['customer_id']) {
             http_response_code(403);
             echo json_encode(['error' => 'Accès refusé']);
             exit;
         }
-        
-        $savedConfig->delete($_GET['id'], $_SESSION['customer_id']);
-        
+
+        $config->delete($_GET['id']);
+
         http_response_code(200);
         echo json_encode([
             'success' => true,
             'message' => 'Configuration supprimée'
         ]);
-        
+
     } else {
         http_response_code(405);
         echo json_encode(['error' => 'Method not allowed']);

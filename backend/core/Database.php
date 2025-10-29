@@ -21,8 +21,8 @@ class Database {
         $dbPath = getenv('DB_PATH');
 
         if (!$dbPath || empty($dbPath)) {
-            // Chemin par défaut pour production Railway (volume persistant)
-            $dbPath = '/data/database/archimeuble.db';
+            // Chemin par défaut pour Docker et Railway
+            $dbPath = '/app/database/archimeuble.db';
 
             // Si le fichier n'existe pas, essayer le chemin local
             if (!file_exists($dbPath)) {
@@ -131,3 +131,4 @@ class Database {
         return (int)$this->pdo->lastInsertId();
     }
 }
+//

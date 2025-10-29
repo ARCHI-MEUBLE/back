@@ -34,29 +34,38 @@ try {
     if (isset($_GET['id'])) {
         // Récupérer une commande spécifique
         $orderData = $order->getById($_GET['id']);
-        
+
         if (!$orderData || $orderData['customer_id'] != $customerId) {
             http_response_code(404);
             echo json_encode(['error' => 'Commande non trouvée']);
             exit;
         }
-        
+
         // Récupérer les items de la commande
         $items = $order->getItems($_GET['id']);
         $orderData['items'] = $items;
-        
+
+        // Formater pour le frontend
+        $orderData = $order->formatForFrontend($orderData);
+
         http_response_code(200);
         echo json_encode(['order' => $orderData]);
-        
+
     } else {
         // Lister toutes les commandes
         $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 50;
         $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
-        
+
         $orders = $order->getByCustomer($customerId, $limit, $offset);
-        
+
+        // Formater chaque commande pour le frontend
+        $formattedOrders = [];
+        foreach ($orders as $ord) {
+            $formattedOrders[] = $order->formatForFrontend($ord);
+        }
+
         http_response_code(200);
-        echo json_encode(['orders' => $orders]);
+        echo json_encode(['orders' => $formattedOrders]);
     }
     
 } catch (Exception $e) {

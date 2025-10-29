@@ -21,25 +21,38 @@ if (!isset($_SESSION['admin_email'])) {
 
 require_once __DIR__ . '/../../models/Order.php';
 require_once __DIR__ . '/../../models/AdminNotification.php';
+require_once __DIR__ . '/../../core/Database.php';
 
 try {
     $order = new Order();
-    
+    $db = Database::getInstance();
+
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Lister les commandes
         if (isset($_GET['id'])) {
             // Détail d'une commande
             $orderData = $order->getById($_GET['id']);
-            
+
             if (!$orderData) {
                 http_response_code(404);
                 echo json_encode(['error' => 'Commande non trouvée']);
                 exit;
             }
-            
+
+            // Enrichir avec les infos du client depuis la table customers
+            if (isset($orderData['customer_id']) && !isset($orderData['customer'])) {
+                $customer = $db->queryOne("SELECT * FROM customers WHERE id = ?", [$orderData['customer_id']]);
+                if ($customer) {
+                    $orderData['customer'] = $customer;
+                }
+            }
+
             $items = $order->getItems($_GET['id']);
             $orderData['items'] = $items;
-            
+
+            // Formater pour le frontend
+            $orderData = $order->formatForFrontend($orderData);
+
             http_response_code(200);
             echo json_encode(['order' => $orderData]);
             
@@ -48,10 +61,25 @@ try {
             $status = $_GET['status'] ?? null;
             $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 100;
             $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
-            
+
             $orders = $order->getAll($status, $limit, $offset);
+
+            // Enrichir et formater chaque commande
+            $formattedOrders = [];
+            foreach ($orders as $ord) {
+                // Enrichir avec les infos du client si manquantes
+                if (isset($ord['customer_id']) && !isset($ord['customer'])) {
+                    $customer = $db->queryOne("SELECT * FROM customers WHERE id = ?", [$ord['customer_id']]);
+                    if ($customer) {
+                        $ord['customer'] = $customer;
+                    }
+                }
+                // Formater pour le frontend
+                $formattedOrders[] = $order->formatForFrontend($ord);
+            }
+
             $total = $order->countByStatus($status);
-            
+
             // Statistiques
             $stats = [
                 'pending' => $order->countByStatus('pending'),
@@ -61,10 +89,10 @@ try {
                 'delivered' => $order->countByStatus('delivered'),
                 'cancelled' => $order->countByStatus('cancelled')
             ];
-            
+
             http_response_code(200);
             echo json_encode([
-                'orders' => $orders,
+                'orders' => $formattedOrders,
                 'total' => $total,
                 'stats' => $stats
             ]);
