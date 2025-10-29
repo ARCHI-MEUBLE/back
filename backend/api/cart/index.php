@@ -14,15 +14,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
+// Vérifier l'authentification
+if (!isset($_SESSION['customer_id'])) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Non authentifié']);
+    exit;
+}
+
 require_once __DIR__ . '/../../models/Cart.php';
 
 try {
     $cart = new Cart();
-
-    // Utiliser l'ID du customer s'il est connecté, sinon utiliser l'ID de session
-    $customerId = isset($_SESSION['customer_id'])
-        ? $_SESSION['customer_id']
-        : session_id();
+    $customerId = $_SESSION['customer_id'];
     
     switch ($_SERVER['REQUEST_METHOD']) {
         case 'GET':
@@ -79,19 +82,21 @@ try {
             break;
             
         case 'DELETE':
-            // Retirer du panier
-            if (!isset($_GET['configuration_id'])) {
-                http_response_code(400);
-                echo json_encode(['error' => 'configuration_id requis']);
-                exit;
+            // Retirer du panier ou vider le panier
+            if (isset($_GET['configuration_id'])) {
+                // Retirer un item spécifique
+                $cart->removeItem($customerId, $_GET['configuration_id']);
+                $message = 'Retiré du panier';
+            } else {
+                // Vider tout le panier
+                $cart->clear($customerId);
+                $message = 'Panier vidé';
             }
-            
-            $cart->removeItem($customerId, $_GET['configuration_id']);
-            
+
             http_response_code(200);
             echo json_encode([
                 'success' => true,
-                'message' => 'Retiré du panier'
+                'message' => $message
             ]);
             break;
             
