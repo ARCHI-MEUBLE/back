@@ -16,6 +16,25 @@ class Admin {
     }
 
     /**
+     * Vérifie si une colonne existe dans une table
+     */
+    private function columnExists($table, $column) {
+        try {
+            $pdo = $this->db->getPDO();
+            $stmt = $pdo->query("PRAGMA table_info($table)");
+            $cols = $stmt->fetchAll();
+            foreach ($cols as $col) {
+                if (isset($col['name']) && $col['name'] === $column) return true;
+                // Certaines versions retournent indexés
+                if (isset($col[1]) && $col[1] === $column) return true;
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+        return false;
+    }
+
+    /**
      * Récupère tous les administrateurs
      * @return array
      */
@@ -83,7 +102,12 @@ class Admin {
      * @return bool
      */
     public function updatePassword($email, $newPasswordHash) {
-        $query = "UPDATE admins SET password = :password WHERE email = :email";
+        // Support des deux schémas: 'password_hash' (nouveau) ou 'password' (ancien)
+        if ($this->columnExists('admins', 'password_hash')) {
+            $query = "UPDATE admins SET password_hash = :password WHERE email = :email OR username = :email";
+        } else {
+            $query = "UPDATE admins SET password = :password WHERE email = :email OR username = :email";
+        }
         return $this->db->execute($query, [
             'email' => $email,
             'password' => $newPasswordHash
@@ -120,8 +144,12 @@ class Admin {
     public function verifyCredentials($email, $password) {
         $admin = $this->getByEmail($email);
 
-        if ($admin && password_verify($password, $admin['password'])) {
-            // Retourner l'admin sans le hash du mot de passe
+        // Gérer les deux schémas: 'password_hash' (nouveau) ou 'password' (ancien)
+        if ($admin && isset($admin['password_hash']) && password_verify($password, $admin['password_hash'])) {
+            // Retirer le hash du mot de passe avant de renvoyer
+            unset($admin['password_hash']);
+            return $admin;
+        } elseif ($admin && isset($admin['password']) && password_verify($password, $admin['password'])) {
             unset($admin['password']);
             return $admin;
         }

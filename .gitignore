@@ -1,45 +1,72 @@
 # Variables d'environnement
 .env
 .env.local
+.env.development.local
+.env.test.local
+.env.production.local
 .env.*.local
+
+# Base de données (SQLite)
+database/*.db
+database/*.db-journal
+database/*.db-shm
+database/*.db-wal
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Fichiers uploadés et générés
+uploads/
+models/
+pieces/
+textures/
+output/
 
 # Environnement virtuel Python
 .archimeuble/
-
-# Fichiers Python compilés
+venv/
+env/
+ENV/
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
 
-# Fichier de log énorme
+# Logs
+*.log
 log.txt
+logs/
 
-# Fichiers IDE
-.idea/
+# IDE
 .vscode/
+.idea/
+.claude
+*.swp
+*.swo
+*~
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Node / Next.js
+# Fichiers temporaires
+.tmp/
+tmp/
+temp/
+*.tmp
+
+# Node (si utilisé dans back)
 node_modules/
-.next/
-dist/
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
-.claude
 
-# Base de données SQLite
-database/*.db
-database/*.db-journal
-database/*.db-wal
-database/*.db-shm
+# Docker
+.dockerignore
 
-# Fichiers générés
-uploads/
-devis/*.json
-devis/*.pdf
-pieces/
-models/*.glb
-models/*.gltf
+# Fichiers sensibles
+*.pem
+*.key
+*.cert
+>>>>>>> 55dfaa4 (feat(back): save local backend changes before rebase on dev)

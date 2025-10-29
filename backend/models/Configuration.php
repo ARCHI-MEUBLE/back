@@ -22,16 +22,20 @@ class Configuration {
      * @param string $configString
      * @param float $price
      * @param string|null $glbUrl
+     * @param string|null $prompt
+     * @param string|null $userSession
      * @return int|false ID de la configuration créée ou false en cas d'erreur
      */
-    public function create($userId, $templateId, $configString, $price, $glbUrl = null) {
-        $query = "INSERT INTO configurations (user_id, template_id, config_string, price, glb_url)
-                  VALUES (:user_id, :template_id, :config_string, :price, :glb_url)";
+    public function create($userId, $templateId, $configString, $price, $glbUrl = null, $prompt = null, $userSession = null) {
+        $query = "INSERT INTO configurations (user_id, user_session, template_id, config_string, prompt, price, glb_url)
+                  VALUES (:user_id, :user_session, :template_id, :config_string, :prompt, :price, :glb_url)";
 
         $success = $this->db->execute($query, [
             'user_id' => $userId,
+            'user_session' => $userSession,
             'template_id' => $templateId,
             'config_string' => $configString,
+            'prompt' => $prompt,
             'price' => $price,
             'glb_url' => $glbUrl
         ]);
@@ -44,9 +48,8 @@ class Configuration {
      * @return array
      */
     public function getAll() {
-        $query = "SELECT c.*, t.name as template_name, t.image_url as template_image
+        $query = "SELECT c.*
                   FROM configurations c
-                  LEFT JOIN templates t ON c.template_id = t.id
                   ORDER BY c.created_at DESC";
         return $this->db->query($query);
     }
@@ -57,9 +60,8 @@ class Configuration {
      * @return array|null
      */
     public function getById($id) {
-        $query = "SELECT c.*, t.name as template_name, t.image_url as template_image
+        $query = "SELECT c.*
                   FROM configurations c
-                  LEFT JOIN templates t ON c.template_id = t.id
                   WHERE c.id = :id";
         return $this->db->queryOne($query, ['id' => $id]);
     }
@@ -70,12 +72,24 @@ class Configuration {
      * @return array
      */
     public function getByUserId($userId) {
-        $query = "SELECT c.*, t.name as template_name, t.image_url as template_image
+        $query = "SELECT c.*
                   FROM configurations c
-                  LEFT JOIN templates t ON c.template_id = t.id
                   WHERE c.user_id = :user_id
                   ORDER BY c.created_at DESC";
         return $this->db->query($query, ['user_id' => $userId]);
+    }
+
+    /**
+     * Récupère toutes les configurations par session
+     * @param string $userSession
+     * @return array
+     */
+    public function getBySession($userSession) {
+        $query = "SELECT c.*
+                  FROM configurations c
+                  WHERE c.user_session = :user_session
+                  ORDER BY c.created_at DESC";
+        return $this->db->query($query, ['user_session' => $userSession]);
     }
 
     /**

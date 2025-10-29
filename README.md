@@ -37,10 +37,30 @@ environment:
 ### 3. Lancer le backend avec Docker
 
 ```bash
-docker compose up
+docker compose up -d
 ```
 
-C'est tout ! Le backend est maintenant accessible sur **http://localhost:8000**
+**Important** : Au premier démarrage, le conteneur va :
+- Créer automatiquement la base de données SQLite
+- Initialiser toutes les tables nécessaires
+- Insérer les 3 modèles de meubles par défaut
+- Créer l'administrateur par défaut
+
+Attendez quelques secondes que l'initialisation se termine. Vous pouvez vérifier les logs avec :
+
+```bash
+docker logs archimeuble-backend
+```
+
+Vous devriez voir :
+```
+Initialisation de la base de données ArchiMeuble...
+Chemin de la base de données: /app/database/archimeuble.db
+Répertoires créés dans /app
+Base de données initialisée avec succès!
+```
+
+Le backend est maintenant accessible sur **http://localhost:8000**
 
 ### Options de lancement
 
@@ -279,13 +299,48 @@ ports:
   - "8001:8000"  # Utiliser le port 8001 au lieu de 8000
 ```
 
-### La base de données est vide
+### La base de données n'a pas été créée ou est vide
 
-Redémarrer le conteneur pour exécuter le script d'initialisation :
+Si le fichier `database/archimeuble.db` n'existe pas ou est vide après `docker compose up`, suivez ces étapes :
 
+**1. Vérifier les logs du conteneur :**
 ```bash
-docker compose restart
+docker logs archimeuble-backend
 ```
+
+Recherchez les messages d'erreur lors de l'initialisation de la base de données.
+
+**2. Arrêter et supprimer complètement le conteneur :**
+```bash
+docker compose down
+```
+
+**3. Optionnel - Nettoyer la base de données existante :**
+```bash
+# Sur Windows
+del database\archimeuble.db
+
+# Sur Linux/Mac
+rm database/archimeuble.db
+```
+
+**4. Reconstruire et redémarrer :**
+```bash
+docker compose build --no-cache
+docker compose up -d
+```
+
+**5. Vérifier que la base de données a été créée :**
+```bash
+# Vérifier que le fichier existe
+dir database\archimeuble.db  # Windows
+ls -l database/archimeuble.db  # Linux/Mac
+
+# Vérifier le contenu
+docker compose exec backend sqlite3 /app/database/archimeuble.db ".tables"
+```
+
+Vous devriez voir toutes les tables : `users`, `admins`, `models`, `configurations`, etc.
 
 ### Erreur "Database locked"
 

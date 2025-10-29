@@ -6,12 +6,16 @@ DB_PATH="${DB_PATH:-/app/database/archimeuble.db}"
 OUTPUT_DIR="${OUTPUT_DIR:-/app/models}"
 
 echo "Initialisation de la base de données ArchiMeuble..."
+echo "Chemin de la base de données: $DB_PATH"
 
 # Créer les répertoires nécessaires dans /app (montés par docker-compose)
 mkdir -p "$(dirname "$DB_PATH")"
 mkdir -p "$OUTPUT_DIR"
+mkdir -p /app/database
+mkdir -p /app/uploads/models
 mkdir -p /app/devis
 mkdir -p /app/pieces
+mkdir -p /app/models
 mkdir -p /app/uploads
 
 echo "Répertoires créés dans /app"
@@ -74,7 +78,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     FOREIGN KEY (user_id) REFERENCES admins(id)
 );
 
--- Table des clients
+-- Table des clients (pour gestion interne/devis)
 CREATE TABLE IF NOT EXISTS clients (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nom TEXT NOT NULL,
@@ -84,6 +88,22 @@ CREATE TABLE IF NOT EXISTS clients (
     adresse TEXT,
     ville TEXT,
     code_postal TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table des customers (pour authentification frontend)
+CREATE TABLE IF NOT EXISTS customers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    phone TEXT,
+    address TEXT,
+    city TEXT,
+    postal_code TEXT,
+    country TEXT DEFAULT 'France',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -127,17 +147,29 @@ CREATE TABLE IF NOT EXISTS avis (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
+-- Table des notifications admin
+CREATE TABLE IF NOT EXISTS admin_notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    admin_id INTEGER NOT NULL,
+    type TEXT NOT NULL,
+    message TEXT NOT NULL,
+    related_id INTEGER,
+    is_read INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
+);
+
 -- Index pour améliorer les performances
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_configurations_user_id ON configurations(user_id);
 CREATE INDEX IF NOT EXISTS idx_configurations_user_session ON configurations(user_session);
 CREATE INDEX IF NOT EXISTS idx_configurations_template_id ON configurations(template_id);
 
--- Modèles par défaut désactivés (créez vos propres modèles depuis le dashboard admin)
--- INSERT OR IGNORE INTO models (id, name, description, prompt, price, image_url) VALUES
--- (1, 'Meuble TV Scandinave', 'Meuble TV au design scandinave épuré avec 3 compartiments', 'M1(1700,500,730)EFH3(F,T,F)', 899.00, '/images/meuble-scandinave.jpg'),
--- (2, 'Meuble TV Moderne', 'Meuble TV moderne avec 2 tiroirs et finition laquée', 'M1(2000,400,600)EFH2(T,T)', 1099.00, '/images/meuble-moderne.jpg'),
--- (3, 'Meuble TV Compact', 'Meuble TV compact idéal pour petits espaces', 'M1(1200,350,650)EFH4(F,F,T,F)', 699.00, '/images/meuble-compact.jpg');
+-- Insérer les 3 meubles TV de base (si pas déjà présents)
+INSERT OR IGNORE INTO models (id, name, description, prompt, price, image_url) VALUES
+(1, 'Meuble TV Scandinave', 'Meuble TV au design scandinave épuré avec 3 compartiments', 'M1(1700,500,730)EFH3(F,T,F)', 899.00, '/images/meuble-scandinave.jpg'),
+(2, 'Meuble TV Moderne', 'Meuble TV moderne avec 2 tiroirs et finition laquée', 'M1(2000,400,600)EFH2(T,T)', 1099.00, '/images/meuble-moderne.jpg'),
+(3, 'Meuble TV Compact', 'Meuble TV compact idéal pour petits espaces', 'M1(1200,350,650)EFH4(F,F,T,F)', 699.00, '/images/meuble-compact.jpg');
 
 EOF
 
@@ -154,3 +186,4 @@ echo "Identifiants admin par défaut:"
 echo "  Username: admin"
 echo "  Password: admin123"
 echo "  Email: admin@archimeuble.com"
+ 
