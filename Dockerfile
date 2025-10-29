@@ -49,11 +49,10 @@ RUN mkdir -p /app/devis \
     && mkdir -p /app/database \
     && chmod -R 777 /app
 
-# Copier le script d'initialisation
-COPY init_db.sh /usr/local/bin/init_db.sh
-RUN chmod +x /usr/local/bin/init_db.sh
-# Convertir d'éventuels retours chariot Windows (CRLF) en LF pour éviter les erreurs '/bin/bash: cannot execute'
-RUN sed -i 's/\r$//' /usr/local/bin/init_db.sh || true
+# S'assurer que le script d'initialisation est exécutable et avec des fins de ligne Unix
+RUN cp /app/init_db.sh /usr/local/bin/init_db.sh \
+    && sed -i 's/\r$//' /usr/local/bin/init_db.sh \
+    && chmod +x /usr/local/bin/init_db.sh
 
 # Exposer le port 8000 pour le serveur PHP
 EXPOSE 8000
