@@ -21,6 +21,7 @@ if (!isset($_SESSION['admin_email'])) {
 
 require_once __DIR__ . '/../../models/Order.php';
 require_once __DIR__ . '/../../models/AdminNotification.php';
+require_once __DIR__ . '/../../models/Notification.php';
 require_once __DIR__ . '/../../core/Database.php';
 
 try {
@@ -101,21 +102,42 @@ try {
     } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT') {
         // Mettre à jour une commande
         $data = json_decode(file_get_contents('php://input'), true);
-        
+
         if (!isset($data['order_id']) || !isset($data['status'])) {
             http_response_code(400);
             echo json_encode(['error' => 'order_id et status requis']);
             exit;
         }
-        
+
+        // Récupérer les détails de la commande avant mise à jour
+        $orderData = $order->getById($data['order_id']);
+
+        if (!$orderData) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Commande non trouvée']);
+            exit;
+        }
+
+        // Mettre à jour le statut
         $order->updateStatus($data['order_id'], $data['status'], $data['admin_notes'] ?? null);
-        
+
+        // Créer une notification pour le client
+        if (isset($orderData['customer_id'])) {
+            $notification = new Notification();
+            $notification->createOrderStatusNotification(
+                $orderData['customer_id'],
+                $data['order_id'],
+                $orderData['order_number'],
+                $data['status']
+            );
+        }
+
         http_response_code(200);
         echo json_encode([
             'success' => true,
             'message' => 'Statut mis à jour'
         ]);
-        
+
     } else {
         http_response_code(405);
         echo json_encode(['error' => 'Method not allowed']);
