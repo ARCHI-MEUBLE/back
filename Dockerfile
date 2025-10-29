@@ -49,8 +49,10 @@ RUN mkdir -p /app/devis \
     && mkdir -p /app/database \
     && chmod -R 777 /app
 
-# S'assurer que le script d'initialisation est exécutable et copié au bon endroit
-RUN cp /app/init_db.sh /usr/local/bin/init_db.sh && chmod +x /usr/local/bin/init_db.sh
+# S'assurer que le script d'initialisation est exécutable et avec des fins de ligne Unix
+RUN cp /app/init_db.sh /usr/local/bin/init_db.sh \
+    && sed -i 's/\r$//' /usr/local/bin/init_db.sh \
+    && chmod +x /usr/local/bin/init_db.sh
 
 # Exposer le port 8000 pour le serveur PHP
 EXPOSE 8000

@@ -1,0 +1,48 @@
+[
+  {
+    "id": "paris-11",
+    "name": "Showroom Paris 11",
+    "address": "12 Rue Oberkampf",
+    "postalCode": "75011",
+    "city": "Paris",
+    "country": "France",
+    "lat": 48.8639,
+    "lng": 2.37,
+    "phone": "+33 1 23 45 67 89",
+    "email": "paris11@archimeuble.fr",
+    "services": ["Sur-mesure", "Pose", "Conseil déco"],
+    "openingHours": [
+      { "day": "Lun.", "open": "10:00", "close": "19:00" },
+      { "day": "Mar.", "open": "10:00", "close": "19:00" },
+      { "day": "Mer.", "open": "10:00", "close": "19:00" },
+      { "day": "Jeu.", "open": "10:00", "close": "19:00" },
+      { "day": "Ven.", "open": "10:00", "close": "19:00" },
+      { "day": "Sam.", "open": "10:00", "close": "18:00" },
+      { "day": "Dim.", "closed": true }
+    ],
+    "imageUrl": "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=60"
+  },
+  {
+    "id": "lyon-centre",
+    "name": "Showroom Lyon Centre",
+    "address": "5 Place Bellecour",
+    "postalCode": "69002",
+    "city": "Lyon",
+    "country": "France",
+    "lat": 45.7578,
+    "lng": 4.8320,
+    "phone": "+33 4 12 34 56 78",
+    "email": "lyon@archimeuble.fr",
+    "services": ["Sur-mesure", "Conseil déco"],
+    "openingHours": [
+      { "day": "Lun.", "open": "10:00", "close": "19:00" },
+      { "day": "Mar.", "open": "10:00", "close": "19:00" },
+      { "day": "Mer.", "open": "10:00", "close": "19:00" },
+      { "day": "Jeu.", "open": "10:00", "close": "19:00" },
+      { "day": "Ven.", "open": "10:00", "close": "19:00" },
+      { "day": "Sam.", "open": "10:00", "close": "18:00" },
+      { "day": "Dim.", "closed": true }
+    ],
+    "imageUrl": "https://images.unsplash.com/photo-1493666438817-866a91353ca9?auto=format&fit=crop&w=1200&q=60"
+  }
+]

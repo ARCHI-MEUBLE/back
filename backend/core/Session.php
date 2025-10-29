@@ -15,14 +15,21 @@ class Session {
     private function __construct() {
         // Démarrer la session si elle n'est pas déjà démarrée
         if (session_status() === PHP_SESSION_NONE) {
-            // Configurer les paramètres de cookie pour le cross-domain (Vercel <-> Railway)
+            // Détecter si on est en local ou en production
+            $isLocal = (
+                isset($_SERVER['HTTP_HOST']) && 
+                (strpos($_SERVER['HTTP_HOST'], 'localhost') !== false || 
+                 strpos($_SERVER['HTTP_HOST'], '127.0.0.1') !== false)
+            );
+
+            // Configurer les paramètres de cookie
             session_set_cookie_params([
                 'lifetime' => 86400 * 7, // 7 jours
                 'path' => '/',
                 'domain' => '', // Pas de domaine spécifique
-                'secure' => true, // HTTPS uniquement
+                'secure' => !$isLocal, // HTTPS uniquement en production
                 'httponly' => true, // Protection XSS
-                'samesite' => 'None' // Autoriser cross-domain
+                'samesite' => $isLocal ? 'Lax' : 'None' // Lax en local, None en prod
             ]);
 
             session_start();

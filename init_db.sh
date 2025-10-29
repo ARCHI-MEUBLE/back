@@ -1,17 +1,20 @@
 #!/bin/bash
 set -e
 
-DB_PATH="/data/database/archimeuble.db"
+# Utiliser les variables d'env si disponibles, sinon des valeurs par défaut adaptées au conteneur
+DB_PATH="${DB_PATH:-/app/database/archimeuble.db}"
+OUTPUT_DIR="${OUTPUT_DIR:-/app/models}"
 
 echo "Initialisation de la base de données ArchiMeuble..."
 
-# Créer les répertoires dans le volume persistant /data
-mkdir -p /data/database
-mkdir -p /data/uploads/models
-mkdir -p /data/devis
-mkdir -p /data/pieces
+# Créer les répertoires nécessaires dans /app (montés par docker-compose)
+mkdir -p "$(dirname "$DB_PATH")"
+mkdir -p "$OUTPUT_DIR"
+mkdir -p /app/devis
+mkdir -p /app/pieces
+mkdir -p /app/uploads
 
-echo "Répertoires créés dans /data (volume persistant)"
+echo "Répertoires créés dans /app"
 
 # Créer ou mettre à jour la base de données
 sqlite3 "$DB_PATH" <<'EOF'
@@ -110,6 +113,18 @@ CREATE TABLE IF NOT EXISTS devis (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (client_id) REFERENCES clients(id),
     FOREIGN KEY (projet_id) REFERENCES projets(id)
+);
+
+-- Table des avis clients
+CREATE TABLE IF NOT EXISTS avis (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT,
+    author_name TEXT NOT NULL,
+    rating INTEGER NOT NULL CHECK(rating >= 1 AND rating <= 5),
+    text TEXT NOT NULL,
+    date TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- Index pour améliorer les performances
