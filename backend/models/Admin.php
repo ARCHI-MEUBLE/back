@@ -144,14 +144,22 @@ class Admin {
     public function verifyCredentials($email, $password) {
         $admin = $this->getByEmail($email);
 
+        if (!$admin) {
+            return null;
+        }
+
         // Gérer les deux schémas: 'password_hash' (nouveau) ou 'password' (ancien)
-        if ($admin && isset($admin['password_hash']) && password_verify($password, $admin['password_hash'])) {
-            // Retirer le hash du mot de passe avant de renvoyer
-            unset($admin['password_hash']);
-            return $admin;
-        } elseif ($admin && isset($admin['password']) && password_verify($password, $admin['password'])) {
-            unset($admin['password']);
-            return $admin;
+        if ($admin && isset($admin['password_hash'])) {
+            if (password_verify($password, $admin['password_hash'])) {
+                // Retirer le hash du mot de passe avant de renvoyer
+                unset($admin['password_hash']);
+                return $admin;
+            }
+        } elseif ($admin && isset($admin['password'])) {
+            if (password_verify($password, $admin['password'])) {
+                unset($admin['password']);
+                return $admin;
+            }
         }
 
         return null;

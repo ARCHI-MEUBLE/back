@@ -27,6 +27,9 @@ $requestUri = $_SERVER['REQUEST_URI'];
 $pathParts = explode('/', trim($requestUri, '/'));
 $action = end($pathParts);
 
+// Enlever l'extension .php si présente et les query params
+$action = preg_replace('/\.php(\?.*)?$/', '', $action);
+
 /**
  * POST /api/admin-auth/login
  */

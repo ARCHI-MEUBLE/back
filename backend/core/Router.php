@@ -158,12 +158,37 @@ class Router {
      * @param string $path
      */
     private function handleBackendAPI($path) {
-        $apiFile = $this->baseDir . '/' . $path;
+        // Extraire l'endpoint depuis backend/api/...
+        $endpoint = str_replace('backend/api/', '', $path);
+        $endpoint = explode('?', $endpoint)[0]; // Enlever les query params
+
+        // Enlever l'extension .php si présente
+        $endpoint = preg_replace('/\.php$/', '', $endpoint);
+
+        // Essayer d'abord le chemin exact (pour les fichiers dans des sous-dossiers)
+        $exactFile = $this->baseDir . '/backend/api/' . $endpoint . '.php';
+
+        if (file_exists($exactFile)) {
+            require $exactFile;
+            return;
+        }
+
+        // Sinon, gérer les sous-routes avec fichier principal (ex: admin-auth/login -> admin-auth.php)
+        // Extraire la première partie (ex: admin-auth, admin, customers)
+        $parts = explode('/', $endpoint);
+        $mainEndpoint = $parts[0];
+
+        // Construire le chemin du fichier API principal
+        $apiFile = $this->baseDir . '/backend/api/' . $mainEndpoint . '.php';
 
         if (file_exists($apiFile)) {
             require $apiFile;
         } else {
-            $this->sendJSON(['success' => false, 'error' => 'Endpoint non trouvé'], 404);
+            $this->sendJSON([
+                'success' => false,
+                'error' => 'Endpoint non trouvé',
+                'requested' => $endpoint
+            ], 404);
         }
     }
 
@@ -281,7 +306,36 @@ class Router {
     private function sendJSON($data, $statusCode = 200) {
         http_response_code($statusCode);
         header('Content-Type: application/json; charset=utf-8');
-        header('Access-Control-Allow-Origin: *');
+
+        // Gérer CORS correctement avec credentials
+        $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+        $allowedOrigins = [
+            'http://localhost:3000',
+            'http://localhost:3001',
+            'http://127.0.0.1:3000',
+            'http://127.0.0.1:3001',
+        ];
+
+        $envFrontendUrl = getenv('FRONTEND_URL');
+        if ($envFrontendUrl) {
+            $allowedOrigins[] = $envFrontendUrl;
+        }
+
+        $isAllowed = in_array($origin, $allowedOrigins);
+        if (!$isAllowed && preg_match('/^https:\/\/.*\.vercel\.app$/', $origin)) {
+            $isAllowed = true;
+        }
+
+        if ($isAllowed) {
+            header('Access-Control-Allow-Origin: ' . $origin);
+        } else {
+            header('Access-Control-Allow-Origin: http://localhost:3000');
+        }
+
+        header('Access-Control-Allow-Credentials: true');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization, Cookie, Set-Cookie');
+
         echo json_encode($data);
     }
 

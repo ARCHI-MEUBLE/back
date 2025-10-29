@@ -98,6 +98,9 @@ if ($method === 'GET') {
 if ($method === 'PUT') {
     $input = json_decode(file_get_contents('php://input'), true);
 
+    // Log pour debugging
+    error_log("[ADMIN-USERS PUT] Input reçu: " . json_encode($input));
+
     if (!isset($input['id']) || !isset($input['type']) || !isset($input['newPassword'])) {
         http_response_code(400);
         echo json_encode(['error' => 'Paramètres manquants (id, type, newPassword requis)']);
@@ -107,6 +110,8 @@ if ($method === 'PUT') {
     $id = $input['id'];
     $type = $input['type'];
     $newPassword = $input['newPassword'];
+
+    error_log("[ADMIN-USERS PUT] Modification mot de passe - ID: $id, Type: $type");
 
     if (strlen($newPassword) < 6) {
         http_response_code(400);
@@ -126,6 +131,7 @@ if ($method === 'PUT') {
                 echo json_encode(['error' => "Colonne de mot de passe introuvable pour 'users'"]);
                 exit;
             }
+            error_log("[ADMIN-USERS PUT] User - Colonne: $targetColumn, ID: $id");
             $stmt = $db->prepare("UPDATE users SET $targetColumn = :password WHERE id = :id");
             $stmt->execute([
                 ':password' => $hashedPassword,
@@ -139,6 +145,7 @@ if ($method === 'PUT') {
                 echo json_encode(['error' => "Colonne de mot de passe introuvable pour 'admins'"]);
                 exit;
             }
+            error_log("[ADMIN-USERS PUT] Admin - Colonne: $targetColumn, ID: $id (type: " . gettype($id) . ")");
             $stmt = $db->prepare("UPDATE admins SET $targetColumn = :password WHERE id = :id");
             $stmt->execute([
                 ':password' => $hashedPassword,
@@ -150,7 +157,10 @@ if ($method === 'PUT') {
             exit;
         }
 
-        if ($stmt->rowCount() > 0) {
+        $rowCount = $stmt->rowCount();
+        error_log("[ADMIN-USERS PUT] Lignes affectées: $rowCount");
+
+        if ($rowCount > 0) {
             http_response_code(200);
             echo json_encode(['success' => true, 'message' => 'Mot de passe modifié avec succès']);
         } else {
