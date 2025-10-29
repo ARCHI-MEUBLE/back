@@ -20,22 +20,34 @@ if (!isset($_SESSION['admin_email'])) {
 }
 
 require_once __DIR__ . '/../../models/AdminNotification.php';
+require_once __DIR__ . '/../../models/Admin.php';
 
 try {
+    // Récupérer l'ID de l'admin connecté
+    $adminModel = new Admin();
+    $adminData = $adminModel->getByEmail($_SESSION['admin_email']);
+
+    if (!$adminData) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Admin non trouvé']);
+        exit;
+    }
+
+    $adminId = $adminData['id'];
     $notification = new AdminNotification();
-    
+
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $unreadOnly = isset($_GET['unread']) && $_GET['unread'] === 'true';
-        
+
         if ($unreadOnly) {
-            $notifications = $notification->getUnread(50);
+            $notifications = $notification->getUnread($adminId, 50);
         } else {
             $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 100;
             $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
-            $notifications = $notification->getAll($limit, $offset);
+            $notifications = $notification->getAll($adminId, $limit, $offset);
         }
-        
-        $unreadCount = $notification->countUnread();
+
+        $unreadCount = $notification->countUnread($adminId);
         
         http_response_code(200);
         echo json_encode([
@@ -55,7 +67,7 @@ try {
         }
 
         if ($markAllRead) {
-            $notification->markAllAsRead();
+            $notification->markAllAsRead($adminId);
         } elseif (isset($data['notification_id'])) {
             $notification->markAsRead($data['notification_id']);
         } elseif (isset($data['mark_as_read']) && isset($data['id'])) {
