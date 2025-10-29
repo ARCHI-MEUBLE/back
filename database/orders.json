@@ -212,8 +212,246 @@
         "billing_address": "7 ALLEE DES BERGER, 59800 Douala, France",
         "payment_method": "card",
         "payment_status": "pending",
+        "status": "confirmed",
+        "notes": null,
+        "created_at": "2025-10-29 05:26:48",
+        "updated_at": "2025-10-29 10:43:12"
+    },
+    "ORD-69020b9203a0d4.40889568": {
+        "id": "ORD-69020b9203a0d4.40889568",
+        "order_number": "CMD-20251029-889568",
+        "customer_id": 5,
+        "customer": {
+            "id": 5,
+            "email": "aa@gmail.com",
+            "password_hash": "$2y$10$BR6lho766v0EQcKF2IiiwuKmwpTADz5ihNfXWWW8EIbIW8FGWMsuW",
+            "first_name": "collins",
+            "last_name": "LEMOGO",
+            "phone": "+33744171597",
+            "address": null,
+            "city": "Douala",
+            "postal_code": "59800",
+            "country": "France",
+            "created_at": "2025-10-29 12:40:38",
+            "updated_at": "2025-10-29 12:40:38"
+        },
+        "items": [
+            {
+                "id": 2,
+                "configuration_id": 18,
+                "quantity": 1,
+                "added_at": "2025-10-29 12:40:51",
+                "configuration": {
+                    "id": 18,
+                    "name": "ppo",
+                    "prompt": "M1(1000,400,1000)hgdP2H3(T,,)",
+                    "price": 1235,
+                    "glb_url": "http:\/\/localhost:8000\/models\/meuble_69020b4bd7a06.glb",
+                    "thumbnail_url": "http:\/\/localhost:8000\/models\/meuble_69020b4bd7a06.glb",
+                    "config_data": {
+                        "dimensions": {
+                            "modules": 2,
+                            "width": 1000,
+                            "depth": 400,
+                            "height": 1000
+                        },
+                        "styling": {
+                            "finish": "mat",
+                            "color": "#FFFFFF",
+                            "colorLabel": "Blanc",
+                            "socle": "none"
+                        },
+                        "features": {
+                            "doorsOpen": true,
+                            "doors": 2,
+                            "drawers": 1,
+                            "shelves": 2,
+                            "hasDressing": false
+                        },
+                        "mode": {
+                            "isExpertMode": false,
+                            "useAdvancedMode": false,
+                            "selectedPreset": null
+                        },
+                        "basePlanches": {
+                            "b": false,
+                            "h": true,
+                            "g": true,
+                            "d": true,
+                            "f": false
+                        },
+                        "name": "ppo",
+                        "thumbnail_url": "http:\/\/localhost:8000\/models\/meuble_69020b4bd7a06.glb"
+                    },
+                    "created_at": "2025-10-29 12:40:51"
+                }
+            }
+        ],
+        "total": 1235,
+        "shipping_address": "7 ALLEE DES BERGER, 59800 Douala, France",
+        "billing_address": "7 ALLEE DES BERGER, 59800 Douala, France",
+        "payment_method": "card",
+        "payment_status": "pending",
+        "status": "in_production",
+        "notes": null,
+        "created_at": "2025-10-29 12:41:54",
+        "updated_at": "2025-10-29 12:48:53"
+    },
+    "ORD-69020fbf18ced7.37265850": {
+        "id": "ORD-69020fbf18ced7.37265850",
+        "order_number": "CMD-20251029-265850",
+        "customer_id": 5,
+        "customer": {
+            "id": 5,
+            "email": "aa@gmail.com",
+            "password_hash": "$2y$10$BR6lho766v0EQcKF2IiiwuKmwpTADz5ihNfXWWW8EIbIW8FGWMsuW",
+            "first_name": "collins",
+            "last_name": "LEMOGO",
+            "phone": "+33744171597",
+            "address": null,
+            "city": "Douala",
+            "postal_code": "59800",
+            "country": "France",
+            "created_at": "2025-10-29 12:40:38",
+            "updated_at": "2025-10-29 12:40:38"
+        },
+        "items": [
+            {
+                "id": 3,
+                "configuration_id": 19,
+                "quantity": 1,
+                "added_at": "2025-10-29 12:59:34",
+                "configuration": {
+                    "id": 19,
+                    "name": "iioo",
+                    "prompt": "M1(2000,400,600)hgdP2H3(T,,)",
+                    "price": 1455,
+                    "glb_url": "http:\/\/localhost:8000\/models\/meuble_69020f9d28284.glb",
+                    "thumbnail_url": "http:\/\/localhost:8000\/models\/meuble_69020f9d28284.glb",
+                    "config_data": {
+                        "dimensions": {
+                            "modules": 4,
+                            "width": 2000,
+                            "depth": 400,
+                            "height": 600
+                        },
+                        "styling": {
+                            "finish": "mat",
+                            "color": "#FFFFFF",
+                            "colorLabel": "Blanc",
+                            "socle": "none"
+                        },
+                        "features": {
+                            "doorsOpen": true,
+                            "doors": 2,
+                            "drawers": 1,
+                            "shelves": 2,
+                            "hasDressing": false
+                        },
+                        "mode": {
+                            "isExpertMode": false,
+                            "useAdvancedMode": false,
+                            "selectedPreset": null
+                        },
+                        "basePlanches": {
+                            "b": false,
+                            "h": true,
+                            "g": true,
+                            "d": true,
+                            "f": false
+                        },
+                        "name": "iioo",
+                        "thumbnail_url": "http:\/\/localhost:8000\/models\/meuble_69020f9d28284.glb"
+                    },
+                    "created_at": "2025-10-29 12:59:34"
+                }
+            }
+        ],
+        "total": 1455,
+        "shipping_address": "13 rue de Naples 59100 Roubaix, 59800 Douala, France",
+        "billing_address": "13 rue de Naples 59100 Roubaix, 59800 Douala, France",
+        "payment_method": "card",
+        "payment_status": "pending",
         "status": "pending",
         "notes": null,
-        "created_at": "2025-10-29 05:26:48"
+        "created_at": "2025-10-29 12:59:43"
+    },
+    "ORD-6902100a40c7c5.26973239": {
+        "id": "ORD-6902100a40c7c5.26973239",
+        "order_number": "CMD-20251029-973239",
+        "customer_id": 5,
+        "customer": {
+            "id": 5,
+            "email": "aa@gmail.com",
+            "password_hash": "$2y$10$BR6lho766v0EQcKF2IiiwuKmwpTADz5ihNfXWWW8EIbIW8FGWMsuW",
+            "first_name": "collins",
+            "last_name": "LEMOGO",
+            "phone": "+33744171597",
+            "address": null,
+            "city": "Douala",
+            "postal_code": "59800",
+            "country": "France",
+            "created_at": "2025-10-29 12:40:38",
+            "updated_at": "2025-10-29 12:40:38"
+        },
+        "items": [
+            {
+                "id": 4,
+                "configuration_id": 20,
+                "quantity": 1,
+                "added_at": "2025-10-29 13:00:48",
+                "configuration": {
+                    "id": 20,
+                    "name": "ioo",
+                    "prompt": "M1(1500,500,730)hgdP2H3(T,,)",
+                    "price": 1361,
+                    "glb_url": null,
+                    "thumbnail_url": null,
+                    "config_data": {
+                        "dimensions": {
+                            "modules": 3,
+                            "width": 1500,
+                            "depth": 500,
+                            "height": 730
+                        },
+                        "styling": {
+                            "finish": "mat",
+                            "color": "#FFFFFF",
+                            "colorLabel": "Blanc",
+                            "socle": "none"
+                        },
+                        "features": {
+                            "doorsOpen": true,
+                            "doors": 2,
+                            "drawers": 1,
+                            "shelves": 2,
+                            "hasDressing": false
+                        },
+                        "mode": {
+                            "isExpertMode": false,
+                            "useAdvancedMode": false,
+                            "selectedPreset": null
+                        },
+                        "basePlanches": {
+                            "b": false,
+                            "h": true,
+                            "g": true,
+                            "d": true,
+                            "f": false
+                        },
+                        "name": "ioo"
+                    },
+                    "created_at": "2025-10-29 13:00:48"
+                }
+            }
+        ],
+        "total": 1361,
+        "shipping_address": "7 ALLEE DES BERGERslslls, 59800 Douala, France",
+        "billing_address": "7 ALLEE DES BERGERslslls, 59800 Douala, France",
+        "payment_method": "card",
+        "payment_status": "pending",
+        "status": "pending",
+        "notes": null,
+        "created_at": "2025-10-29 13:00:58"
     }
 }
