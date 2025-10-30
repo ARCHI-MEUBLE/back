@@ -31,8 +31,8 @@ class Cors {
         // Vérifier si l'origine est autorisée
         $isAllowed = in_array($origin, $allowedOrigins);
 
-        // Autoriser tous les domaines Vercel (.vercel.app)
-        if (!$isAllowed && preg_match('/^https:\/\/.*\.vercel\.app$/', $origin)) {
+        // Autoriser tous les domaines Vercel (.vercel.app) et Railway (.railway.app)
+        if (!$isAllowed && preg_match('/^https:\/\/.*\.(vercel|railway)\.app$/', $origin)) {
             $isAllowed = true;
         }
 
