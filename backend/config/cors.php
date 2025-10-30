@@ -45,7 +45,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Démarrer la session si elle n'est pas déjà active
+// Configurer les paramètres de session pour cross-subdomain
 if (session_status() === PHP_SESSION_NONE) {
+    // Déterminer le domaine pour les cookies
+    $domain = '';
+    if (isset($_SERVER['HTTP_HOST'])) {
+        $host = $_SERVER['HTTP_HOST'];
+        // Si on est sur un sous-domaine de archimeuble.com, utiliser .archimeuble.com
+        if (preg_match('/\.archimeuble\.com$/', $host)) {
+            $domain = '.archimeuble.com';
+        }
+        // Si on est sur Railway, utiliser .railway.app
+        elseif (preg_match('/\.railway\.app$/', $host)) {
+            $domain = '.railway.app';
+        }
+    }
+
+    // Configurer les paramètres de cookie de session
+    session_set_cookie_params([
+        'lifetime' => 604800,  // 7 jours
+        'path' => '/',
+        'domain' => $domain,
+        'secure' => true,      // HTTPS uniquement
+        'httponly' => true,    // Protection XSS
+        'samesite' => 'None'   // Permet cross-subdomain
+    ]);
+
     session_start();
 }
