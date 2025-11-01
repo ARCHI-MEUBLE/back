@@ -3,16 +3,21 @@
  * Webhook Calendly pour ArchiMeuble
  *
  * Ce fichier reçoit les événements Calendly (création de rendez-vous, annulations, etc.)
- * et les traite pour notifier le menuisier et conserver un historique.
+ * et les traite pour notifier le menuisier et le client, et conserver un historique.
  *
  * URL du webhook à configurer dans Calendly :
  * https://votre-domaine.com/api/calendly/webhook.php
  */
 
+require_once __DIR__ . '/EmailService.php';
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, X-Calendly-Webhook-Signature');
+
+// Chemin vers la base de données SQLite
+$dbPath = __DIR__ . '/../../database/archimeuble.db';
 
 // Gestion de la requête OPTIONS pour CORS
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -68,6 +73,7 @@ if (isset($event['event']) && $event['event'] === 'invitee.created') {
     $startTime = $payload['scheduled_event']['start_time'] ?? 'N/A';
     $endTime = $payload['scheduled_event']['end_time'] ?? 'N/A';
     $timezone = $payload['timezone'] ?? 'Europe/Paris';
+    $calendlyEventId = $payload['event']['uri'] ?? uniqid('calendly_', true);
 
     // Formatage de la date et heure
     $startDateTime = new DateTime($startTime);
@@ -99,99 +105,96 @@ if (isset($event['event']) && $event['event'] === 'invitee.created') {
         }
     }
 
-    // Préparation de l'email de notification au menuisier
-    $to = 'pro.archimeuble@gmail.com';
-    $subject = "Nouveau RDV Calendly - ArchiMeuble : $eventType";
+    // Connexion à la base de données et enregistrement du rendez-vous
+    try {
+        $db = new PDO('sqlite:' . $dbPath);
+        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    $message = "
-    <html>
-    <head>
-        <style>
-            body { font-family: 'Source Sans 3', Arial, sans-serif; color: #2f2a26; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f6f1eb; }
-            .header { background-color: #2f2a26; color: white; padding: 20px; text-align: center; }
-            .content { background-color: white; padding: 30px; margin-top: 20px; border-radius: 8px; }
-            .info-row { margin: 15px 0; padding: 10px; background-color: #f6f1eb; border-radius: 4px; }
-            .label { font-weight: bold; color: #2f2a26; }
-            .button { display: inline-block; padding: 12px 24px; background-color: #2f2a26; color: white; text-decoration: none; border-radius: 24px; margin-top: 20px; }
-        </style>
-    </head>
-    <body>
-        <div class='container'>
-            <div class='header'>
-                <h1>Nouveau Rendez-vous ArchiMeuble</h1>
-            </div>
-            <div class='content'>
-                <p>Bonjour,</p>
-                <p>Un nouveau rendez-vous a été pris sur Calendly :</p>
+        // Insertion du rendez-vous dans la base de données
+        $stmt = $db->prepare("
+            INSERT OR REPLACE INTO calendly_appointments
+            (calendly_event_id, client_name, client_email, event_type, start_time, end_time, timezone, config_url, additional_notes, status, confirmation_sent)
+            VALUES (:event_id, :name, :email, :event_type, :start_time, :end_time, :timezone, :config_url, :notes, 'scheduled', 1)
+        ");
 
-                <div class='info-row'>
-                    <span class='label'>Type de consultation :</span> $eventType
-                </div>
+        $stmt->execute([
+            ':event_id' => $calendlyEventId,
+            ':name' => $name,
+            ':email' => $email,
+            ':event_type' => $eventType,
+            ':start_time' => $startTime,
+            ':end_time' => $endTime,
+            ':timezone' => $timezone,
+            ':config_url' => $configUrl,
+            ':notes' => $additionalNotes
+        ]);
 
-                <div class='info-row'>
-                    <span class='label'>Client :</span> $name
-                </div>
-
-                <div class='info-row'>
-                    <span class='label'>Email :</span> <a href='mailto:$email'>$email</a>
-                </div>
-
-                <div class='info-row'>
-                    <span class='label'>Date et heure :</span> $formattedStart - $formattedEnd
-                </div>
-
-                <div class='info-row'>
-                    <span class='label'>Fuseau horaire :</span> $timezone
-                </div>
-    ";
-
-    if ($configUrl) {
-        $message .= "
-                <div class='info-row'>
-                    <span class='label'>Lien de configuration :</span><br>
-                    <a href='$configUrl' class='button'>Voir la configuration</a>
-                </div>
-        ";
+    } catch (PDOException $e) {
+        $errorLog = sprintf(
+            "[%s] Database Error: %s\n",
+            $timestamp,
+            $e->getMessage()
+        );
+        file_put_contents($logFile, $errorLog, FILE_APPEND);
     }
 
-    if ($additionalNotes) {
-        $message .= "
-                <div class='info-row'>
-                    <span class='label'>Notes supplémentaires :</span><br>
-                    $additionalNotes
-                </div>
-        ";
+    // Envoi des emails
+    $emailService = new EmailService();
+
+    // Email de confirmation au client
+    try {
+        $emailService->sendConfirmationEmail(
+            $email,
+            $name,
+            $eventType,
+            $formattedStart,
+            $formattedEnd,
+            $configUrl
+        );
+
+        $emailLog = sprintf(
+            "[%s] Confirmation email sent to client: %s (%s)\n",
+            $timestamp,
+            $name,
+            $email
+        );
+        file_put_contents($logFile, $emailLog, FILE_APPEND);
+    } catch (Exception $e) {
+        $errorLog = sprintf(
+            "[%s] Error sending confirmation email: %s\n",
+            $timestamp,
+            $e->getMessage()
+        );
+        file_put_contents($logFile, $errorLog, FILE_APPEND);
     }
 
-    $message .= "
-                <p style='margin-top: 30px;'>Pensez à vous préparer pour cet entretien et à vérifier votre agenda.</p>
-                <p>Cordialement,<br>Système ArchiMeuble</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    ";
+    // Email de notification à l'administrateur
+    try {
+        $emailService->sendAdminNotification(
+            $name,
+            $email,
+            $eventType,
+            $formattedStart,
+            $formattedEnd,
+            $configUrl,
+            $additionalNotes
+        );
 
-    // En-têtes pour l'email HTML
-    $headers = "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-    $headers .= "From: ArchiMeuble <noreply@archimeuble.com>\r\n";
-    $headers .= "Reply-To: $email\r\n";
-
-    // Envoi de l'email (décommenter en production)
-    // mail($to, $subject, $message, $headers);
-
-    // Log de l'envoi
-    $emailLog = sprintf(
-        "[%s] Email notification prepared for: %s | Client: %s (%s) | Event: %s\n",
-        $timestamp,
-        $to,
-        $name,
-        $email,
-        $eventType
-    );
-    file_put_contents($logFile, $emailLog, FILE_APPEND);
+        $emailLog = sprintf(
+            "[%s] Admin notification sent for appointment with %s (%s)\n",
+            $timestamp,
+            $name,
+            $email
+        );
+        file_put_contents($logFile, $emailLog, FILE_APPEND);
+    } catch (Exception $e) {
+        $errorLog = sprintf(
+            "[%s] Error sending admin notification: %s\n",
+            $timestamp,
+            $e->getMessage()
+        );
+        file_put_contents($logFile, $errorLog, FILE_APPEND);
+    }
 
     // Réponse de succès
     http_response_code(200);
