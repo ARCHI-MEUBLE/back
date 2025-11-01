@@ -47,9 +47,12 @@ try {
 
         $config = new Configuration();
 
-        // Vérifier que la config appartient au client
+        // Vérifier que la config appartient au client (attention aux types int vs string)
         $existingConfig = $config->getById($_GET['id']);
-        if (!$existingConfig || $existingConfig['user_id'] !== $_SESSION['customer_id']) {
+        if (
+            !$existingConfig ||
+            strval($existingConfig['user_id']) !== strval($_SESSION['customer_id'])
+        ) {
             http_response_code(403);
             echo json_encode(['error' => 'Accès refusé']);
             exit;
