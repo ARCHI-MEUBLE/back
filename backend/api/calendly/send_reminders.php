@@ -9,8 +9,10 @@
 require_once __DIR__ . '/EmailService.php';
 
 // Configuration
-$dbPath = __DIR__ . '/../../database/archimeuble.db';
-$logFile = __DIR__ . '/../../logs/calendly_reminders.log';
+// Détecter si on est dans Docker ou en local
+$isDocker = file_exists('/app');
+$dbPath = $isDocker ? '/app/database/archimeuble.db' : __DIR__ . '/../../database/archimeuble.db';
+$logFile = $isDocker ? '/app/backend/logs/calendly_reminders.log' : __DIR__ . '/../../logs/calendly_reminders.log';
 $timestamp = date('Y-m-d H:i:s');
 
 // Log de démarrage
