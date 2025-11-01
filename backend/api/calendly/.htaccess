@@ -1,0 +1,23 @@
+# Configuration Apache pour l'API Calendly
+# Permet de rediriger toutes les requêtes vers webhook.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Redirection de toutes les requêtes vers webhook.php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ webhook.php [L,QSA]
+</IfModule>
+
+# Configuration CORS
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "POST, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, X-Calendly-Webhook-Signature"
+</IfModule>
+
+# Désactivation de l'affichage des erreurs en production
+php_flag display_errors Off
+php_flag log_errors On
+php_value error_log ../../logs/php_errors.log
