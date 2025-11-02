@@ -7,7 +7,7 @@
  * - Rappel 1h avant (fenêtre: 50min-70min avant le RDV)
  *
  * À exécuter toutes les 15 minutes via cron :
- * */15 * * * * php /path/to/send_reminders.php >> /path/to/logs/reminders.log 2>&1
+ * Example cron: every 15 minutes - 0,15,30,45 * * * * php /path/to/send_reminders.php
  */
 
 require_once __DIR__ . '/EmailService.php';
