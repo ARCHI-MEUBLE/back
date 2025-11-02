@@ -4,6 +4,10 @@
  * Appelé directement depuis le frontend après qu'un client ait réservé
  */
 
+// Activer l'affichage des erreurs pour le débogage
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 require_once __DIR__ . '/EmailService.php';
 
 header('Content-Type: application/json');
@@ -28,20 +32,32 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $input = file_get_contents('php://input');
 $data = json_decode($input, true);
 
+// Log du payload reçu pour débogage
+error_log("Calendly API - Payload reçu: " . $input);
+
 if (!$data) {
     http_response_code(400);
-    echo json_encode(['error' => 'Invalid JSON']);
+    echo json_encode(['error' => 'Invalid JSON', 'received' => $input]);
     exit();
 }
 
 // Validation des données requises
 $requiredFields = ['name', 'email', 'event_type', 'start_time', 'end_time'];
+$missingFields = [];
 foreach ($requiredFields as $field) {
     if (!isset($data[$field]) || empty($data[$field])) {
-        http_response_code(400);
-        echo json_encode(['error' => "Missing required field: $field"]);
-        exit();
+        $missingFields[] = $field;
     }
+}
+
+if (!empty($missingFields)) {
+    http_response_code(400);
+    echo json_encode([
+        'error' => 'Missing required fields',
+        'missing_fields' => $missingFields,
+        'received_data' => array_keys($data)
+    ]);
+    exit();
 }
 
 // Extraction des données
