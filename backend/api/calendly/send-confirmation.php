@@ -277,6 +277,29 @@ try {
         file_put_contents($logFile, $errorLog, FILE_APPEND);
     }
 
+    // Créer une notification admin dans le système
+    try {
+        require_once __DIR__ . '/../../models/AdminNotification.php';
+        $adminNotification = new AdminNotification();
+
+        $notificationType = $isPhoneAppointment ? 'calendly_phone' : 'calendly_video';
+        $notificationMessage = sprintf(
+            "Nouveau rendez-vous %s - %s (%s) prévu le %s",
+            $isPhoneAppointment ? 'téléphonique' : 'visio',
+            $name,
+            $email,
+            $formattedStart
+        );
+
+        $adminNotification->create($notificationType, $notificationMessage, $db->lastInsertId());
+
+        $logEntry = sprintf("[%s] Admin notification created in dashboard for %s (%s)\n", $timestamp, $name, $email);
+        file_put_contents($logFile, $logEntry, FILE_APPEND);
+    } catch (Exception $e) {
+        $errorLog = sprintf("[%s] Failed to create admin notification: %s\n", $timestamp, $e->getMessage());
+        file_put_contents($logFile, $errorLog, FILE_APPEND);
+    }
+
     // Réponse de succès
     http_response_code(200);
     echo json_encode([
