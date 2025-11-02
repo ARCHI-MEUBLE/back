@@ -29,6 +29,10 @@ services:
       - ADMIN_EMAIL=${ADMIN_EMAIL}
       # Calendly API Token
       - CALENDLY_API_TOKEN=${CALENDLY_API_TOKEN}
+      # Twilio SMS Configuration
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER}
     working_dir: /app
     # Force running the init script with bash to avoid CRLF/shebang issues on Windows
     command: /bin/bash -lc "bash /usr/local/bin/init_db.sh && php -S 0.0.0.0:8000 router.php"

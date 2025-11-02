@@ -144,6 +144,7 @@ if (empty($startTime) || empty($endTime)) {
 // Récupérer les questions/réponses personnalisées si présentes
 $configUrl = '';
 $additionalNotes = '';
+$phoneNumber = '';
 
 if (isset($resource['questions_and_answers'])) {
     foreach ($resource['questions_and_answers'] as $qa) {
@@ -156,8 +157,15 @@ if (isset($resource['questions_and_answers'])) {
         if (stripos($question, 'note') !== false || stripos($question, 'information') !== false) {
             $additionalNotes = $answer;
         }
+        // Récupérer le numéro de téléphone si présent
+        if (stripos($question, 'téléphone') !== false || stripos($question, 'phone') !== false || stripos($question, 'numero') !== false) {
+            $phoneNumber = $answer;
+        }
     }
 }
+
+// Détecter si c'est un rendez-vous téléphonique
+$isPhoneAppointment = (stripos($eventType, 'téléphone') !== false || stripos($eventType, 'phone') !== false || stripos($eventType, 'appel') !== false);
 
 $calendlyEventId = $inviteeUri;
 
@@ -227,29 +235,71 @@ try {
     exit();
 }
 
-// Envoi des emails
+// Envoi des notifications (SMS ou Email selon le type de rendez-vous)
 try {
-    $emailService = new EmailService();
+    $clientNotificationSent = false;
+    $notificationType = '';
 
-    // Email de confirmation au client
-    $clientEmailSent = $emailService->sendConfirmationEmail(
-        $email,
-        $name,
-        $eventType,
-        $formattedStart,
-        $formattedEnd,
-        $configUrl
-    );
+    // Si c'est un rendez-vous téléphonique, envoyer un SMS
+    if ($isPhoneAppointment) {
+        require_once __DIR__ . '/SMSService.php';
+        $smsService = new SMSService();
 
-    if ($clientEmailSent) {
-        $logEntry = sprintf("[%s] Confirmation email sent to client: %s (%s)\n", $timestamp, $name, $email);
-        file_put_contents($logFile, $logEntry, FILE_APPEND);
+        // Vérifier qu'on a bien un numéro de téléphone
+        if (empty($phoneNumber)) {
+            error_log("Rendez-vous téléphonique sans numéro de téléphone fourni");
+            $phoneNumber = $email; // Fallback sur email si pas de numéro
+        }
+
+        // Envoyer le SMS de confirmation
+        $clientNotificationSent = $smsService->sendConfirmationSMS(
+            $phoneNumber,
+            $name,
+            $eventType,
+            $formattedStart,
+            $formattedEnd
+        );
+
+        $notificationType = 'SMS';
+
+        if ($clientNotificationSent) {
+            $logEntry = sprintf("[%s] Confirmation SMS sent to client: %s (%s)\n", $timestamp, $name, $phoneNumber);
+            file_put_contents($logFile, $logEntry, FILE_APPEND);
+        } else {
+            $errorLog = sprintf("[%s] Failed to send confirmation SMS to client: %s (%s)\n", $timestamp, $name, $phoneNumber);
+            file_put_contents($logFile, $errorLog, FILE_APPEND);
+        }
     } else {
-        $errorLog = sprintf("[%s] Failed to send confirmation email to client: %s (%s)\n", $timestamp, $name, $email);
-        file_put_contents($logFile, $errorLog, FILE_APPEND);
+        // Sinon, envoyer un email (rendez-vous visio)
+        require_once __DIR__ . '/EmailService.php';
+        $emailService = new EmailService();
+
+        $clientNotificationSent = $emailService->sendConfirmationEmail(
+            $email,
+            $name,
+            $eventType,
+            $formattedStart,
+            $formattedEnd,
+            $configUrl
+        );
+
+        $notificationType = 'Email';
+
+        if ($clientNotificationSent) {
+            $logEntry = sprintf("[%s] Confirmation email sent to client: %s (%s)\n", $timestamp, $name, $email);
+            file_put_contents($logFile, $logEntry, FILE_APPEND);
+        } else {
+            $errorLog = sprintf("[%s] Failed to send confirmation email to client: %s (%s)\n", $timestamp, $name, $email);
+            file_put_contents($logFile, $errorLog, FILE_APPEND);
+        }
     }
 
-    // Email de notification à l'administrateur
+    // Email de notification à l'administrateur (toujours par email)
+    require_once __DIR__ . '/EmailService.php';
+    if (!isset($emailService)) {
+        $emailService = new EmailService();
+    }
+
     $adminEmailSent = $emailService->sendAdminNotification(
         $name,
         $email,
@@ -257,7 +307,7 @@ try {
         $formattedStart,
         $formattedEnd,
         $configUrl,
-        $additionalNotes
+        $additionalNotes . ($isPhoneAppointment && $phoneNumber ? "\nNuméro de téléphone: $phoneNumber" : '')
     );
 
     if ($adminEmailSent) {
@@ -272,14 +322,17 @@ try {
     http_response_code(200);
     echo json_encode([
         'success' => true,
-        'message' => 'Emails de confirmation envoyés',
+        'message' => $isPhoneAppointment ? 'SMS de confirmation envoyé' : 'Emails de confirmation envoyés',
         'data' => [
             'name' => $name,
             'email' => $email,
+            'phone_number' => $phoneNumber ?: null,
             'event_type' => $eventType,
             'start_time' => $formattedStart,
             'end_time' => $formattedEnd,
-            'client_email_sent' => $clientEmailSent,
+            'is_phone_appointment' => $isPhoneAppointment,
+            'notification_type' => $notificationType,
+            'client_notification_sent' => $clientNotificationSent,
             'admin_email_sent' => $adminEmailSent
         ]
     ]);
