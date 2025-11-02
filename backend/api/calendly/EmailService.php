@@ -11,14 +11,19 @@ class EmailService {
     private $adminEmail;
 
     public function __construct() {
-        // Configuration SMTP depuis les variables d'environnement ou valeurs par défaut
-        $smtpHost = getenv('SMTP_HOST') ?: 'smtp.gmail.com';
-        $smtpPort = getenv('SMTP_PORT') ?: 587;
-        $smtpUsername = getenv('SMTP_USERNAME') ?: 'benskotlemogo@gmail.com';
-        $smtpPassword = getenv('SMTP_PASSWORD') ?: 'jjuz wpwe ttaz dtfn';
-        $fromEmail = getenv('SMTP_FROM_EMAIL') ?: 'benskotlemogo@gmail.com';
-        $fromName = getenv('SMTP_FROM_NAME') ?: 'ArchiMeuble';
-        $this->adminEmail = getenv('ADMIN_EMAIL') ?: 'pro.archimeuble@gmail.com';
+        // Configuration SMTP depuis les variables d'environnement UNIQUEMENT
+        $smtpHost = getenv('SMTP_HOST');
+        $smtpPort = getenv('SMTP_PORT');
+        $smtpUsername = getenv('SMTP_USERNAME');
+        $smtpPassword = getenv('SMTP_PASSWORD');
+        $fromEmail = getenv('SMTP_FROM_EMAIL');
+        $fromName = getenv('SMTP_FROM_NAME');
+        $this->adminEmail = getenv('ADMIN_EMAIL');
+
+        // Vérification que toutes les variables sont configurées
+        if (!$smtpHost || !$smtpPort || !$smtpUsername || !$smtpPassword || !$fromEmail || !$fromName || !$this->adminEmail) {
+            throw new Exception('Configuration SMTP incomplète. Vérifiez les variables d\'environnement dans le fichier .env');
+        }
 
         $this->smtpMailer = new SMTPMailer(
             $smtpHost,
