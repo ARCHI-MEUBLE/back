@@ -23,10 +23,33 @@ require_once __DIR__ . '/../../models/Configuration.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        // Lister les configurations
         $config = new Configuration();
 
-        // Récupérer toutes les configurations du client (pas de pagination pour l'instant)
+        // Récupérer une configuration spécifique si un ID est fourni
+        if (isset($_GET['id'])) {
+            $configId = (int) $_GET['id'];
+            $configuration = $config->getById($configId);
+
+            if (!$configuration) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Configuration introuvable']);
+                exit;
+            }
+
+            if (strval($configuration['user_id']) !== strval($_SESSION['customer_id'])) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Accès refusé']);
+                exit;
+            }
+
+            http_response_code(200);
+            echo json_encode([
+                'configuration' => $configuration
+            ]);
+            exit;
+        }
+
+        // Lister toutes les configurations de l'utilisateur connecté
         $configurations = $config->getByUserId($_SESSION['customer_id']);
         $total = $config->countByUserId($_SESSION['customer_id']);
 

@@ -50,6 +50,49 @@ try {
 
     $config = new Configuration();
 
+    // Mise à jour si un identifiant est fourni
+    if (isset($data['id']) && $data['id']) {
+        $configId = (int) $data['id'];
+        $existing = $config->getById($configId);
+
+        if (!$existing) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Configuration introuvable']);
+            exit;
+        }
+
+        if (strval($existing['user_id']) !== strval($_SESSION['customer_id'])) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Accès refusé']);
+            exit;
+        }
+
+        $updateData = [
+            'config_string' => json_encode($configData),
+            'prompt' => $data['prompt'],
+            'price' => $data['price']
+        ];
+
+        if (array_key_exists('glb_url', $data)) {
+            $updateData['glb_url'] = $data['glb_url'] !== '' ? $data['glb_url'] : null;
+        }
+
+        if (array_key_exists('model_id', $data)) {
+            $updateData['template_id'] = $data['model_id'] ?: null;
+        }
+
+        $config->update($configId, $updateData);
+        $savedConfiguration = $config->getById($configId);
+
+        http_response_code(200);
+        echo json_encode([
+            'success' => true,
+            'message' => 'Configuration mise à jour avec succès',
+            'configuration' => $savedConfiguration
+        ]);
+        exit;
+    }
+
     // Signature: create($userId, $templateId, $configString, $price, $glbUrl = null, $prompt = null, $userSession = null)
     $configId = $config->create(
         $_SESSION['customer_id'],
