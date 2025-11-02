@@ -17,9 +17,30 @@ class EmailTemplate {
      * S'assure que la table existe (auto-migration)
      */
     private function ensureTableExists() {
-        $sql = file_get_contents(__DIR__ . '/../config/email_templates.sql');
-        if ($sql) {
-            $this->db->execute($sql);
+        $sqlFile = __DIR__ . '/../config/email_templates.sql';
+        if (!file_exists($sqlFile)) {
+            return;
+        }
+
+        $sql = file_get_contents($sqlFile);
+        if (!$sql) {
+            return;
+        }
+
+        // Séparer les commandes SQL (séparées par des points-virgules)
+        $statements = array_filter(
+            array_map('trim', explode(';', $sql)),
+            function($stmt) { return !empty($stmt); }
+        );
+
+        // Exécuter chaque statement séparément
+        foreach ($statements as $statement) {
+            try {
+                $this->db->execute($statement);
+            } catch (Exception $e) {
+                // Ignorer les erreurs (table existe déjà, etc.)
+                error_log("Email template migration: " . $e->getMessage());
+            }
         }
     }
 

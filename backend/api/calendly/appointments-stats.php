@@ -44,14 +44,16 @@ try {
     $cancellationRate = $totalAppointments > 0 ? round(($cancelledCount / $totalAppointments) * 100, 2) : 0;
 
     // Rendez-vous par type (visio vs téléphone)
-    $phoneCount = $db->queryOne(
-        "SELECT COUNT(*) as count FROM calendly_appointments
-         WHERE event_type LIKE '%téléphone%' OR event_type LIKE '%phone%' OR event_type LIKE '%appel%'"
-    )['count'];
-
+    // On compte d'abord les visio, puis tout le reste comme téléphone
     $visioCount = $db->queryOne(
         "SELECT COUNT(*) as count FROM calendly_appointments
-         WHERE event_type LIKE '%visio%' OR event_type LIKE '%video%'"
+         WHERE event_type LIKE '%visio%' OR event_type LIKE '%video%' OR event_type LIKE '%Visio%' OR event_type LIKE '%Video%'"
+    )['count'];
+
+    // Téléphone = tous les autres rendez-vous (qui ne sont pas visio)
+    $phoneCount = $db->queryOne(
+        "SELECT COUNT(*) as count FROM calendly_appointments
+         WHERE NOT (event_type LIKE '%visio%' OR event_type LIKE '%video%' OR event_type LIKE '%Visio%' OR event_type LIKE '%Video%')"
     )['count'];
 
     // Rendez-vous par semaine (4 dernières semaines)
