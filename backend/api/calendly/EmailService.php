@@ -122,6 +122,14 @@ class EmailService {
             ";
         }
 
+        // Logo en base64
+        $logoPath = __DIR__ . '/assets/logo.png';
+        $logoBase64 = '';
+        if (file_exists($logoPath)) {
+            $logoData = base64_encode(file_get_contents($logoPath));
+            $logoBase64 = 'data:image/png;base64,' . $logoData;
+        }
+
         return "
         <html>
         <head>
@@ -129,6 +137,7 @@ class EmailService {
                 body { font-family: 'Source Sans 3', Arial, sans-serif; color: #2f2a26; margin: 0; padding: 0; }
                 .container { max-width: 600px; margin: 0 auto; background-color: #f6f1eb; }
                 .header { background-color: #2f2a26; color: white; padding: 30px 20px; text-align: center; }
+                .header img { max-width: 200px; height: auto; margin-bottom: 15px; }
                 .header h1 { margin: 0; font-family: 'Playfair Display', serif; }
                 .content { background-color: white; padding: 40px 30px; margin: 20px; border-radius: 16px; }
                 .highlight-box { background-color: #f6f1eb; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2f2a26; }
@@ -141,6 +150,7 @@ class EmailService {
         <body>
             <div class='container'>
                 <div class='header'>
+                    " . ($logoBase64 ? "<img src='$logoBase64' alt='ArchiMeuble' />" : "") . "
                     <h1>✓ Rendez-vous confirmé</h1>
                 </div>
                 <div class='content'>
@@ -202,6 +212,14 @@ class EmailService {
             ";
         }
 
+        // Logo en base64
+        $logoPath = __DIR__ . '/assets/logo.png';
+        $logoBase64 = '';
+        if (file_exists($logoPath)) {
+            $logoData = base64_encode(file_get_contents($logoPath));
+            $logoBase64 = 'data:image/png;base64,' . $logoData;
+        }
+
         return "
         <html>
         <head>
@@ -209,6 +227,7 @@ class EmailService {
                 body { font-family: 'Source Sans 3', Arial, sans-serif; color: #2f2a26; margin: 0; padding: 0; }
                 .container { max-width: 600px; margin: 0 auto; background-color: #f6f1eb; }
                 .header { background-color: #2f2a26; color: white; padding: 30px 20px; text-align: center; }
+                .header img { max-width: 200px; height: auto; margin-bottom: 15px; }
                 .header h1 { margin: 0; font-family: 'Playfair Display', serif; }
                 .content { background-color: white; padding: 40px 30px; margin: 20px; border-radius: 16px; }
                 .highlight-box { background-color: #fff4e6; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ff9800; }
@@ -220,6 +239,7 @@ class EmailService {
         <body>
             <div class='container'>
                 <div class='header'>
+                    " . ($logoBase64 ? "<img src='$logoBase64' alt='ArchiMeuble' />" : "") . "
                     <h1>⏰ Rendez-vous demain !</h1>
                 </div>
                 <div class='content'>
@@ -283,6 +303,14 @@ class EmailService {
             ";
         }
 
+        // Logo en base64
+        $logoPath = __DIR__ . '/assets/logo.png';
+        $logoBase64 = '';
+        if (file_exists($logoPath)) {
+            $logoData = base64_encode(file_get_contents($logoPath));
+            $logoBase64 = 'data:image/png;base64,' . $logoData;
+        }
+
         return "
         <html>
         <head>
@@ -290,6 +318,7 @@ class EmailService {
                 body { font-family: 'Source Sans 3', Arial, sans-serif; color: #2f2a26; }
                 .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f6f1eb; }
                 .header { background-color: #2f2a26; color: white; padding: 20px; text-align: center; }
+                .header img { max-width: 200px; height: auto; margin-bottom: 15px; }
                 .content { background-color: white; padding: 30px; margin-top: 20px; border-radius: 8px; }
                 .info-row { margin: 15px 0; padding: 10px; background-color: #f6f1eb; border-radius: 4px; }
                 .label { font-weight: bold; color: #2f2a26; }
@@ -299,6 +328,7 @@ class EmailService {
         <body>
             <div class='container'>
                 <div class='header'>
+                    " . ($logoBase64 ? "<img src='$logoBase64' alt='ArchiMeuble' />" : "") . "
                     <h1>Nouveau Rendez-vous ArchiMeuble</h1>
                 </div>
                 <div class='content'>
