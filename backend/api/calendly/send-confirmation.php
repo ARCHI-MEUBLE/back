@@ -85,11 +85,21 @@ if (!$inviteeData || !isset($inviteeData['resource'])) {
 
 $resource = $inviteeData['resource'];
 
+// Log de la structure complète pour debug
+error_log("Calendly invitee resource: " . json_encode($resource, JSON_PRETTY_PRINT));
+
 // Extraire les informations nécessaires
 $name = $resource['name'] ?? 'Client';
 $email = $resource['email'] ?? '';
 $eventUri = $resource['event'] ?? '';
 $timezone = $resource['timezone'] ?? 'Europe/Paris';
+
+// Récupérer le numéro de téléphone depuis les champs standard de Calendly
+$phoneNumber = '';
+if (isset($resource['text_reminder_number']) && !empty($resource['text_reminder_number'])) {
+    $phoneNumber = $resource['text_reminder_number'];
+    error_log("Phone from text_reminder_number: $phoneNumber");
+}
 
 if (empty($email)) {
     http_response_code(400);
@@ -145,7 +155,6 @@ if (empty($startTime) || empty($endTime)) {
 // Récupérer les questions/réponses personnalisées si présentes
 $configUrl = '';
 $additionalNotes = '';
-$phoneNumber = '';
 
 if (isset($resource['questions_and_answers'])) {
     // Log des questions/réponses pour debug
@@ -162,16 +171,18 @@ if (isset($resource['questions_and_answers'])) {
             $additionalNotes = $answer;
         }
         // Récupérer le numéro de téléphone si présent (plusieurs variantes)
-        if (stripos($question, 'téléphone') !== false ||
+        // Seulement si pas déjà trouvé dans text_reminder_number
+        if (empty($phoneNumber) && (
+            stripos($question, 'téléphone') !== false ||
             stripos($question, 'phone') !== false ||
             stripos($question, 'numero') !== false ||
             stripos($question, 'numéro') !== false ||
             stripos($question, 'portable') !== false ||
             stripos($question, 'mobile') !== false ||
             stripos($question, 'contact') !== false ||
-            stripos($question, 'tel') !== false) {
+            stripos($question, 'tel') !== false)) {
             $phoneNumber = $answer;
-            error_log("Phone number found: $phoneNumber");
+            error_log("Phone number found in Q&A: $phoneNumber");
         }
     }
 } else {
