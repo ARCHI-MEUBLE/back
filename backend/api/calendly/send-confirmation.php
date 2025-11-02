@@ -41,35 +41,125 @@ if (!$data) {
     exit();
 }
 
-// Validation des données requises
-$requiredFields = ['name', 'email', 'event_type', 'start_time', 'end_time'];
-$missingFields = [];
-foreach ($requiredFields as $field) {
-    if (!isset($data[$field]) || empty($data[$field])) {
-        $missingFields[] = $field;
-    }
-}
-
-if (!empty($missingFields)) {
+// Vérifier qu'on a bien l'URI de l'invité
+if (!isset($data['invitee_uri']) || empty($data['invitee_uri'])) {
     http_response_code(400);
-    echo json_encode([
-        'error' => 'Missing required fields',
-        'missing_fields' => $missingFields,
-        'received_data' => array_keys($data)
-    ]);
+    echo json_encode(['error' => 'Missing invitee_uri', 'received_data' => array_keys($data)]);
     exit();
 }
 
-// Extraction des données
-$name = $data['name'];
-$email = $data['email'];
-$eventType = $data['event_type'];
-$startTime = $data['start_time'];
-$endTime = $data['end_time'];
-$timezone = $data['timezone'] ?? 'Europe/Paris';
-$configUrl = $data['config_url'] ?? '';
-$additionalNotes = $data['notes'] ?? '';
-$calendlyEventId = $data['event_uri'] ?? uniqid('calendly_', true);
+// Récupérer le token API Calendly depuis les variables d'environnement
+$calendlyToken = getenv('CALENDLY_API_TOKEN');
+if (!$calendlyToken) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Calendly API token not configured']);
+    exit();
+}
+
+// Récupérer les informations de l'invité via l'API Calendly
+$inviteeUri = $data['invitee_uri'];
+$ch = curl_init($inviteeUri);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Authorization: Bearer ' . $calendlyToken,
+    'Content-Type: application/json'
+]);
+
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if ($httpCode !== 200) {
+    error_log("Calendly API Error: HTTP $httpCode - $response");
+    http_response_code(500);
+    echo json_encode(['error' => 'Failed to fetch invitee data from Calendly', 'http_code' => $httpCode]);
+    exit();
+}
+
+$inviteeData = json_decode($response, true);
+if (!$inviteeData || !isset($inviteeData['resource'])) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Invalid response from Calendly API']);
+    exit();
+}
+
+$resource = $inviteeData['resource'];
+
+// Extraire les informations nécessaires
+$name = $resource['name'] ?? 'Client';
+$email = $resource['email'] ?? '';
+$eventUri = $resource['event'] ?? '';
+$timezone = $resource['timezone'] ?? 'Europe/Paris';
+
+if (empty($email)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'No email found in Calendly invitee data']);
+    exit();
+}
+
+// Récupérer les informations de l'événement
+if (empty($eventUri)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'No event URI found in invitee data']);
+    exit();
+}
+
+$ch = curl_init($eventUri);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Authorization: Bearer ' . $calendlyToken,
+    'Content-Type: application/json'
+]);
+
+$eventResponse = curl_exec($ch);
+$eventHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if ($eventHttpCode !== 200) {
+    error_log("Calendly Event API Error: HTTP $eventHttpCode - $eventResponse");
+    http_response_code(500);
+    echo json_encode(['error' => 'Failed to fetch event data from Calendly', 'http_code' => $eventHttpCode]);
+    exit();
+}
+
+$eventData = json_decode($eventResponse, true);
+if (!$eventData || !isset($eventData['resource'])) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Invalid event response from Calendly API']);
+    exit();
+}
+
+$eventResource = $eventData['resource'];
+$eventType = $eventResource['name'] ?? 'Rendez-vous';
+$startTime = $eventResource['start_time'] ?? '';
+$endTime = $eventResource['end_time'] ?? '';
+
+if (empty($startTime) || empty($endTime)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Missing event times in Calendly data']);
+    exit();
+}
+
+// Les données sont déjà extraites de l'API Calendly ci-dessus
+// Récupérer les questions/réponses personnalisées si présentes
+$configUrl = '';
+$additionalNotes = '';
+
+if (isset($resource['questions_and_answers'])) {
+    foreach ($resource['questions_and_answers'] as $qa) {
+        $question = strtolower($qa['question'] ?? '');
+        $answer = $qa['answer'] ?? '';
+
+        if (stripos($question, 'configuration') !== false || stripos($question, 'lien') !== false) {
+            $configUrl = $answer;
+        }
+        if (stripos($question, 'note') !== false || stripos($question, 'information') !== false) {
+            $additionalNotes = $answer;
+        }
+    }
+}
+
+$calendlyEventId = $inviteeUri;
 
 // Formatage de la date et heure
 try {
