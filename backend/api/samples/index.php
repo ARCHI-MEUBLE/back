@@ -7,6 +7,9 @@
 require_once __DIR__ . '/../../config/cors.php';
 require_once __DIR__ . '/../../models/Sample.php';
 
+// Forcer l'encodage UTF-8
+header('Content-Type: application/json; charset=utf-8');
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
@@ -26,7 +29,7 @@ try {
     echo json_encode([
         'success' => true,
         'materials' => $grouped,
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);

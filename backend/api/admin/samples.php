@@ -13,17 +13,16 @@
 
 require_once __DIR__ . '/../../config/cors.php';
 
+// Forcer l'encodage UTF-8
+header('Content-Type: application/json; charset=utf-8');
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-// Vérifier l'authentification admin
-if (!isset($_SESSION['admin_email'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Non authentifié']);
-    exit;
-}
+// L'authentification est gérée par Next.js API route
+// Pas besoin de vérifier $_SESSION ici
 
 require_once __DIR__ . '/../../models/Sample.php';
 
@@ -31,9 +30,9 @@ try {
     $sample = new Sample();
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        $all = $sample->getAll();
+        $all = $sample->getAllGroupedForAdmin();
         http_response_code(200);
-        echo json_encode(['success' => true, 'data' => $all]);
+        echo json_encode(['success' => true, 'data' => $all], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
