@@ -1,13 +1,34 @@
 <?php
 /**
  * Service d'envoi d'emails pour les rendez-vous Calendly
- * Gère les emails de confirmation et de rappel
+ * Gère les emails de confirmation et de rappel via SMTP
  */
 
+require_once __DIR__ . '/SMTPMailer.php';
+
 class EmailService {
-    private $fromEmail = 'noreply@archimeuble.com';
-    private $fromName = 'ArchiMeuble';
-    private $adminEmail = 'pro.archimeuble@gmail.com';
+    private $smtpMailer;
+    private $adminEmail;
+
+    public function __construct() {
+        // Configuration SMTP depuis les variables d'environnement ou valeurs par défaut
+        $smtpHost = getenv('SMTP_HOST') ?: 'smtp.gmail.com';
+        $smtpPort = getenv('SMTP_PORT') ?: 587;
+        $smtpUsername = getenv('SMTP_USERNAME') ?: 'benskotlemogo@gmail.com';
+        $smtpPassword = getenv('SMTP_PASSWORD') ?: 'jjuz wpwe ttaz dtfn';
+        $fromEmail = getenv('SMTP_FROM_EMAIL') ?: 'benskotlemogo@gmail.com';
+        $fromName = getenv('SMTP_FROM_NAME') ?: 'ArchiMeuble';
+        $this->adminEmail = getenv('ADMIN_EMAIL') ?: 'pro.archimeuble@gmail.com';
+
+        $this->smtpMailer = new SMTPMailer(
+            $smtpHost,
+            $smtpPort,
+            $smtpUsername,
+            $smtpPassword,
+            $fromEmail,
+            $fromName
+        );
+    }
 
     /**
      * Envoie un email de confirmation au client après réservation
@@ -296,16 +317,10 @@ class EmailService {
     }
 
     /**
-     * Fonction d'envoi d'email générique
+     * Fonction d'envoi d'email générique via SMTP
      */
     private function sendEmail($to, $subject, $htmlMessage) {
-        $headers = "MIME-Version: 1.0\r\n";
-        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-        $headers .= "From: $this->fromName <$this->fromEmail>\r\n";
-
-        // Utiliser la fonction mail() native de PHP
-        // En production, envisager PHPMailer ou un service SMTP
-        return mail($to, $subject, $htmlMessage, $headers);
+        return $this->smtpMailer->send($to, $subject, $htmlMessage);
     }
 }
 ?>
