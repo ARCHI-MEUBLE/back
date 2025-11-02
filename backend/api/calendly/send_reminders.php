@@ -1,21 +1,29 @@
 <?php
 /**
- * Script CRON pour envoyer les rappels 24h avant les rendez-vous
+ * Script CRON pour envoyer les rappels avant les rendez-vous
  *
- * À exécuter toutes les heures via cron :
- * 0 * * * * php /path/to/send_reminders.php >> /path/to/logs/reminders.log 2>&1
+ * Envoie 2 types de rappels :
+ * - Rappel 24h avant (fenêtre: 23h-25h avant le RDV)
+ * - Rappel 1h avant (fenêtre: 50min-70min avant le RDV)
+ *
+ * À exécuter toutes les 15 minutes via cron :
+ * */15 * * * * php /path/to/send_reminders.php >> /path/to/logs/reminders.log 2>&1
  */
 
 require_once __DIR__ . '/EmailService.php';
 
 // Configuration
-// Détecter si on est dans Docker ou en local
 $isDocker = file_exists('/app');
 $dbPath = $isDocker ? '/app/database/archimeuble.db' : __DIR__ . '/../../database/archimeuble.db';
-$logFile = $isDocker ? '/app/backend/logs/calendly_reminders.log' : __DIR__ . '/../../logs/calendly_reminders.log';
-$timestamp = date('Y-m-d H:i:s');
+$logFile = $isDocker ? '/app/logs/calendly_reminders.log' : __DIR__ . '/../../logs/calendly_reminders.log';
+$logDir = dirname($logFile);
 
-// Log de démarrage
+// Créer le dossier de logs si nécessaire
+if (!is_dir($logDir)) {
+    mkdir($logDir, 0755, true);
+}
+
+$timestamp = date('Y-m-d H:i:s');
 $startLog = sprintf("[%s] === Starting reminder check ===\n", $timestamp);
 file_put_contents($logFile, $startLog, FILE_APPEND);
 
@@ -24,134 +32,159 @@ try {
     $db = new PDO('sqlite:' . $dbPath);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Calcul de la fenêtre de temps pour les rappels
-    // On envoie les rappels pour les rendez-vous qui ont lieu dans 23h à 25h
+    // Vérifier si les colonnes reminder_24h_sent et reminder_1h_sent existent
+    $tableInfo = $db->query("PRAGMA table_info(calendly_appointments)")->fetchAll(PDO::FETCH_ASSOC);
+    $columns = array_column($tableInfo, 'name');
+
+    $has24hColumn = in_array('reminder_24h_sent', $columns);
+    $has1hColumn = in_array('reminder_1h_sent', $columns);
+    $hasOldColumn = in_array('reminder_sent', $columns);
+
+    // Ajouter les colonnes si elles n'existent pas
+    if (!$has24hColumn && $hasOldColumn) {
+        // Renommer l'ancienne colonne n'est pas possible en SQLite, donc on ajoute la nouvelle
+        $db->exec("ALTER TABLE calendly_appointments ADD COLUMN reminder_24h_sent BOOLEAN DEFAULT 0");
+        // Copier les valeurs de reminder_sent vers reminder_24h_sent
+        $db->exec("UPDATE calendly_appointments SET reminder_24h_sent = reminder_sent WHERE reminder_sent = 1");
+        $has24hColumn = true;
+    } elseif (!$has24hColumn) {
+        $db->exec("ALTER TABLE calendly_appointments ADD COLUMN reminder_24h_sent BOOLEAN DEFAULT 0");
+        $has24hColumn = true;
+    }
+
+    if (!$has1hColumn) {
+        $db->exec("ALTER TABLE calendly_appointments ADD COLUMN reminder_1h_sent BOOLEAN DEFAULT 0");
+        $has1hColumn = true;
+    }
+
+    $emailService = new EmailService();
     $now = new DateTime('now', new DateTimeZone('Europe/Paris'));
-    $reminderStart = clone $now;
-    $reminderStart->add(new DateInterval('PT23H')); // Dans 23 heures
-    $reminderEnd = clone $now;
-    $reminderEnd->add(new DateInterval('PT25H')); // Dans 25 heures
 
-    $startTimeStr = $reminderStart->format('Y-m-d H:i:s');
-    $endTimeStr = $reminderEnd->format('Y-m-d H:i:s');
+    // ========== RAPPELS 24H ==========
+    $reminder24hStart = clone $now;
+    $reminder24hStart->add(new DateInterval('PT23H'));
+    $reminder24hEnd = clone $now;
+    $reminder24hEnd->add(new DateInterval('PT25H'));
 
-    // Requête pour récupérer les rendez-vous qui nécessitent un rappel
-    $stmt = $db->prepare("
+    $stmt24h = $db->prepare("
         SELECT *
         FROM calendly_appointments
         WHERE status = 'scheduled'
-          AND reminder_sent = 0
+          AND reminder_24h_sent = 0
           AND datetime(start_time) BETWEEN datetime(:start) AND datetime(:end)
     ");
 
-    $stmt->execute([
-        ':start' => $startTimeStr,
-        ':end' => $endTimeStr
+    $stmt24h->execute([
+        ':start' => $reminder24hStart->format('Y-m-d H:i:s'),
+        ':end' => $reminder24hEnd->format('Y-m-d H:i:s')
     ]);
 
-    $appointments = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    $count = count($appointments);
+    $appointments24h = $stmt24h->fetchAll(PDO::FETCH_ASSOC);
+    $count24h = count($appointments24h);
 
-    $countLog = sprintf("[%s] Found %d appointment(s) requiring reminders\n", $timestamp, $count);
-    file_put_contents($logFile, $countLog, FILE_APPEND);
+    $log24h = sprintf("[%s] Found %d appointment(s) requiring 24h reminder\n", $timestamp, $count24h);
+    file_put_contents($logFile, $log24h, FILE_APPEND);
 
-    if ($count === 0) {
-        $noAppointmentsLog = sprintf("[%s] No reminders to send\n", $timestamp);
-        file_put_contents($logFile, $noAppointmentsLog, FILE_APPEND);
-        exit(0);
-    }
-
-    // Envoi des rappels
-    $emailService = new EmailService();
-    $successCount = 0;
-    $errorCount = 0;
-
-    foreach ($appointments as $appointment) {
+    $success24h = 0;
+    foreach ($appointments24h as $appointment) {
         try {
-            // Formatage des dates
-            $startDateTime = new DateTime($appointment['start_time']);
-            $endDateTime = new DateTime($appointment['end_time']);
+            $startDT = new DateTime($appointment['start_time']);
+            $endDT = new DateTime($appointment['end_time']);
             $tz = new DateTimeZone($appointment['timezone']);
-            $startDateTime->setTimezone($tz);
-            $endDateTime->setTimezone($tz);
+            $startDT->setTimezone($tz);
+            $endDT->setTimezone($tz);
 
-            $formattedStart = $startDateTime->format('d/m/Y à H:i');
-            $formattedEnd = $endDateTime->format('H:i');
-
-            // Envoi de l'email de rappel
             $sent = $emailService->sendReminderEmail(
                 $appointment['client_email'],
                 $appointment['client_name'],
                 $appointment['event_type'],
-                $formattedStart,
-                $formattedEnd,
+                $startDT->format('d/m/Y à H:i'),
+                $endDT->format('H:i'),
                 $appointment['config_url'] ?? ''
             );
 
             if ($sent) {
-                // Marquer le rappel comme envoyé dans la base de données
-                $updateStmt = $db->prepare("
-                    UPDATE calendly_appointments
-                    SET reminder_sent = 1, updated_at = CURRENT_TIMESTAMP
-                    WHERE id = :id
-                ");
-                $updateStmt->execute([':id' => $appointment['id']]);
-
-                $successCount++;
-                $successLog = sprintf(
-                    "[%s] Reminder sent successfully to %s (%s) for %s\n",
-                    $timestamp,
-                    $appointment['client_name'],
-                    $appointment['client_email'],
-                    $formattedStart
-                );
-                file_put_contents($logFile, $successLog, FILE_APPEND);
-            } else {
-                $errorCount++;
-                $errorLog = sprintf(
-                    "[%s] Failed to send reminder to %s (%s)\n",
-                    $timestamp,
-                    $appointment['client_name'],
-                    $appointment['client_email']
-                );
-                file_put_contents($logFile, $errorLog, FILE_APPEND);
+                $db->prepare("UPDATE calendly_appointments SET reminder_24h_sent = 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id")
+                   ->execute([':id' => $appointment['id']]);
+                $success24h++;
+                $log = sprintf("[%s] 24h reminder sent to %s (%s)\n", $timestamp, $appointment['client_name'], $appointment['client_email']);
+                file_put_contents($logFile, $log, FILE_APPEND);
             }
-
         } catch (Exception $e) {
-            $errorCount++;
-            $errorLog = sprintf(
-                "[%s] Error processing appointment ID %d: %s\n",
-                $timestamp,
-                $appointment['id'],
-                $e->getMessage()
-            );
+            $errorLog = sprintf("[%s] Error sending 24h reminder to %s: %s\n", $timestamp, $appointment['client_email'], $e->getMessage());
             file_put_contents($logFile, $errorLog, FILE_APPEND);
         }
     }
 
-    // Résumé final
-    $summaryLog = sprintf(
-        "[%s] === Reminder check completed: %d sent, %d errors ===\n",
-        $timestamp,
-        $successCount,
-        $errorCount
-    );
-    file_put_contents($logFile, $summaryLog, FILE_APPEND);
+    // ========== RAPPELS 1H ==========
+    $reminder1hStart = clone $now;
+    $reminder1hStart->add(new DateInterval('PT50M')); // 50 minutes
+    $reminder1hEnd = clone $now;
+    $reminder1hEnd->add(new DateInterval('PT70M')); // 70 minutes
 
-} catch (PDOException $e) {
-    $errorLog = sprintf(
-        "[%s] Database Error: %s\n",
+    $stmt1h = $db->prepare("
+        SELECT *
+        FROM calendly_appointments
+        WHERE status = 'scheduled'
+          AND reminder_1h_sent = 0
+          AND datetime(start_time) BETWEEN datetime(:start) AND datetime(:end)
+    ");
+
+    $stmt1h->execute([
+        ':start' => $reminder1hStart->format('Y-m-d H:i:s'),
+        ':end' => $reminder1hEnd->format('Y-m-d H:i:s')
+    ]);
+
+    $appointments1h = $stmt1h->fetchAll(PDO::FETCH_ASSOC);
+    $count1h = count($appointments1h);
+
+    $log1h = sprintf("[%s] Found %d appointment(s) requiring 1h reminder\n", $timestamp, $count1h);
+    file_put_contents($logFile, $log1h, FILE_APPEND);
+
+    $success1h = 0;
+    foreach ($appointments1h as $appointment) {
+        try {
+            $startDT = new DateTime($appointment['start_time']);
+            $endDT = new DateTime($appointment['end_time']);
+            $tz = new DateTimeZone($appointment['timezone']);
+            $startDT->setTimezone($tz);
+            $endDT->setTimezone($tz);
+
+            $sent = $emailService->sendReminderEmail(
+                $appointment['client_email'],
+                $appointment['client_name'],
+                $appointment['event_type'],
+                $startDT->format('d/m/Y à H:i'),
+                $endDT->format('H:i'),
+                $appointment['config_url'] ?? ''
+            );
+
+            if ($sent) {
+                $db->prepare("UPDATE calendly_appointments SET reminder_1h_sent = 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id")
+                   ->execute([':id' => $appointment['id']]);
+                $success1h++;
+                $log = sprintf("[%s] 1h reminder sent to %s (%s)\n", $timestamp, $appointment['client_name'], $appointment['client_email']);
+                file_put_contents($logFile, $log, FILE_APPEND);
+            }
+        } catch (Exception $e) {
+            $errorLog = sprintf("[%s] Error sending 1h reminder to %s: %s\n", $timestamp, $appointment['client_email'], $e->getMessage());
+            file_put_contents($logFile, $errorLog, FILE_APPEND);
+        }
+    }
+
+    // Résumé
+    $summary = sprintf(
+        "[%s] === Completed: %d/% 24h reminders, %d/%d 1h reminders ===\n",
         $timestamp,
-        $e->getMessage()
+        $success24h,
+        $count24h,
+        $success1h,
+        $count1h
     );
-    file_put_contents($logFile, $errorLog, FILE_APPEND);
-    exit(1);
+    file_put_contents($logFile, $summary, FILE_APPEND);
+
 } catch (Exception $e) {
-    $errorLog = sprintf(
-        "[%s] General Error: %s\n",
-        $timestamp,
-        $e->getMessage()
-    );
+    $errorLog = sprintf("[%s] Fatal Error: %s\n", $timestamp, $e->getMessage());
     file_put_contents($logFile, $errorLog, FILE_APPEND);
     exit(1);
 }

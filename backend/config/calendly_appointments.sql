@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS calendly_appointments (
     additional_notes TEXT,
     status TEXT DEFAULT 'scheduled',
     confirmation_sent BOOLEAN DEFAULT 0,
-    reminder_sent BOOLEAN DEFAULT 0,
+    reminder_24h_sent BOOLEAN DEFAULT 0,
+    reminder_1h_sent BOOLEAN DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -22,5 +23,6 @@ CREATE TABLE IF NOT EXISTS calendly_appointments (
 -- Index pour optimiser les requêtes
 CREATE INDEX IF NOT EXISTS idx_calendly_start_time ON calendly_appointments(start_time);
 CREATE INDEX IF NOT EXISTS idx_calendly_status ON calendly_appointments(status);
-CREATE INDEX IF NOT EXISTS idx_calendly_reminder_sent ON calendly_appointments(reminder_sent);
+CREATE INDEX IF NOT EXISTS idx_calendly_reminder_24h_sent ON calendly_appointments(reminder_24h_sent);
+CREATE INDEX IF NOT EXISTS idx_calendly_reminder_1h_sent ON calendly_appointments(reminder_1h_sent);
 CREATE INDEX IF NOT EXISTS idx_calendly_email ON calendly_appointments(client_email);
