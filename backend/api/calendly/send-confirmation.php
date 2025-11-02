@@ -133,6 +133,7 @@ $eventResource = $eventData['resource'];
 $eventType = $eventResource['name'] ?? 'Rendez-vous';
 $startTime = $eventResource['start_time'] ?? '';
 $endTime = $eventResource['end_time'] ?? '';
+$meetingUrl = $eventResource['location']['join_url'] ?? null;
 
 if (empty($startTime) || empty($endTime)) {
     http_response_code(400);
@@ -204,11 +205,27 @@ try {
     $db = new PDO('sqlite:' . $dbPath);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+    // Auto-migration: Ajouter les colonnes meeting_url et phone_number si elles n'existent pas
+    $tableInfo = $db->query("PRAGMA table_info(calendly_appointments)")->fetchAll(PDO::FETCH_ASSOC);
+    $columns = array_column($tableInfo, 'name');
+
+    if (!in_array('meeting_url', $columns)) {
+        $db->exec("ALTER TABLE calendly_appointments ADD COLUMN meeting_url TEXT");
+        $logEntry = sprintf("[%s] Auto-migration: Added meeting_url column\n", $timestamp);
+        file_put_contents($logFile, $logEntry, FILE_APPEND);
+    }
+
+    if (!in_array('phone_number', $columns)) {
+        $db->exec("ALTER TABLE calendly_appointments ADD COLUMN phone_number TEXT");
+        $logEntry = sprintf("[%s] Auto-migration: Added phone_number column\n", $timestamp);
+        file_put_contents($logFile, $logEntry, FILE_APPEND);
+    }
+
     // Insertion du rendez-vous
     $stmt = $db->prepare("
         INSERT OR REPLACE INTO calendly_appointments
-        (calendly_event_id, client_name, client_email, event_type, start_time, end_time, timezone, config_url, additional_notes, status, confirmation_sent)
-        VALUES (:event_id, :name, :email, :event_type, :start_time, :end_time, :timezone, :config_url, :notes, 'scheduled', 1)
+        (calendly_event_id, client_name, client_email, event_type, start_time, end_time, timezone, config_url, additional_notes, meeting_url, phone_number, status, confirmation_sent)
+        VALUES (:event_id, :name, :email, :event_type, :start_time, :end_time, :timezone, :config_url, :notes, :meeting_url, :phone_number, 'scheduled', 1)
     ");
 
     $stmt->execute([
@@ -220,10 +237,12 @@ try {
         ':end_time' => $endTime,
         ':timezone' => $timezone,
         ':config_url' => $configUrl,
-        ':notes' => $additionalNotes
+        ':notes' => $additionalNotes,
+        ':meeting_url' => $meetingUrl,
+        ':phone_number' => $phoneNumber
     ]);
 
-    $logEntry = sprintf("[%s] Appointment saved to database: %s (%s)\n", $timestamp, $name, $email);
+    $logEntry = sprintf("[%s] Appointment saved to database: %s (%s) with meeting URL: %s\n", $timestamp, $name, $email, $meetingUrl ?: 'none');
     file_put_contents($logFile, $logEntry, FILE_APPEND);
 
 } catch (PDOException $e) {
@@ -247,7 +266,8 @@ try {
         $eventType,
         $formattedStart,
         $formattedEnd,
-        $configUrl
+        $configUrl,
+        $meetingUrl
     );
 
     if ($clientEmailSent) {

@@ -38,7 +38,7 @@ class EmailService {
     /**
      * Envoie un email de confirmation au client après réservation
      */
-    public function sendConfirmationEmail($clientEmail, $clientName, $eventType, $startDateTime, $endDateTime, $configUrl = '') {
+    public function sendConfirmationEmail($clientEmail, $clientName, $eventType, $startDateTime, $endDateTime, $configUrl = '', $meetingUrl = null) {
         $subject = "Confirmation de votre rendez-vous ArchiMeuble - $eventType";
 
         $isPhone = stripos($eventType, 'téléphone') !== false || stripos($eventType, 'phone') !== false;
@@ -50,7 +50,8 @@ class EmailService {
             $startDateTime,
             $endDateTime,
             $contactMethod,
-            $configUrl
+            $configUrl,
+            $meetingUrl
         );
 
         return $this->sendEmail($clientEmail, $subject, $message);
@@ -99,13 +100,24 @@ class EmailService {
     /**
      * Template d'email de confirmation pour le client
      */
-    private function getConfirmationTemplate($name, $eventType, $start, $end, $contactMethod, $configUrl) {
+    private function getConfirmationTemplate($name, $eventType, $start, $end, $contactMethod, $configUrl, $meetingUrl = null) {
         $configSection = '';
         if ($configUrl) {
             $configSection = "
                 <div class='info-box'>
                     <p><strong>Votre configuration :</strong></p>
                     <a href='$configUrl' class='button'>Voir ma configuration</a>
+                </div>
+            ";
+        }
+
+        $meetingSection = '';
+        if ($meetingUrl && $contactMethod === 'visioconférence') {
+            $meetingSection = "
+                <div class='info-box' style='background-color: #e8f5e9; border-left: 4px solid #4caf50;'>
+                    <p><strong>🎥 Lien de visioconférence :</strong></p>
+                    <a href='$meetingUrl' class='button' style='background-color: #4caf50;'>Rejoindre la visioconférence</a>
+                    <p style='font-size: 12px; color: #666; margin-top: 10px;'>Cliquez sur ce lien au moment du rendez-vous pour nous rejoindre.</p>
                 </div>
             ";
         }
@@ -141,6 +153,8 @@ class EmailService {
                         <p><strong>🕐 Date et heure :</strong> $start - $end (heure de Paris)</p>
                         <p><strong>📞 Modalité :</strong> $contactMethod</p>
                     </div>
+
+                    $meetingSection
 
                     $configSection
 
