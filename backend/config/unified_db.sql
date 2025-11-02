@@ -55,3 +55,107 @@ INSERT OR IGNORE INTO models (id, name, description, prompt, base_price, image_p
 (1, 'Meuble TV Scandinave', 'Meuble TV au design scandinave épuré avec 3 compartiments', 'M1(1700,500,730)EFH3(F,T,F)', 899.00, '/frontend/assets/images/meuble-scandinave.jpg'),
 (2, 'Meuble TV Moderne', 'Meuble TV moderne avec 2 tiroirs et finition laquée', 'M1(2000,400,600)EFH2(T,T)', 1099.00, '/frontend/assets/images/meuble-moderne.jpg'),
 (3, 'Meuble TV Compact', 'Meuble TV compact idéal pour petits espaces', 'M1(1200,350,650)EFH4(F,F,T,F)', 699.00, '/frontend/assets/images/meuble-compact.jpg');
+
+-- ============================================================================
+-- ÉCHANTILLONS DE FAÇADES (ajouté le 2025-11-02)
+-- ============================================================================
+
+-- Table des types d'échantillons (sample_types)
+CREATE TABLE IF NOT EXISTS sample_types (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    material TEXT NOT NULL,
+    description TEXT,
+    active INTEGER DEFAULT 1,
+    position INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table des couleurs pour chaque type (sample_colors)
+CREATE TABLE IF NOT EXISTS sample_colors (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    hex TEXT,
+    image_url TEXT,
+    active INTEGER DEFAULT 1,
+    position INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (type_id) REFERENCES sample_types(id) ON DELETE CASCADE
+);
+
+-- Index pour améliorer les performances des échantillons
+CREATE INDEX IF NOT EXISTS idx_sample_types_material ON sample_types(material);
+CREATE INDEX IF NOT EXISTS idx_sample_types_active ON sample_types(active);
+CREATE INDEX IF NOT EXISTS idx_sample_colors_type_id ON sample_colors(type_id);
+CREATE INDEX IF NOT EXISTS idx_sample_colors_active ON sample_colors(active);
+
+-- Données des échantillons clients
+-- Note: Ces données correspondent aux choix du client
+
+-- ============================================
+-- AGGLOMÉRÉ
+-- ============================================
+INSERT OR IGNORE INTO sample_types (id, name, material, description, active, position) VALUES
+(7, 'Ambre solaire', 'Aggloméré', 'La lumière du soleil fait ressortir la clareté de votre matériau', 1, 0),
+(9, 'Blanc opalin', 'Aggloméré', NULL, 1, 1),
+(8, 'Chêne naturel', 'Aggloméré', NULL, 1, 2),
+(10, 'Gris galet', 'Aggloméré', NULL, 1, 3),
+(11, 'Kaki organique', 'Aggloméré', NULL, 1, 4),
+(13, 'Noir profond', 'Aggloméré', NULL, 1, 5),
+(12, 'Terracotta solaire', 'Aggloméré', NULL, 1, 6),
+(29, 'Test', 'Aggloméré', 'matériau de tests', 1, 7);
+
+INSERT OR IGNORE INTO sample_colors (type_id, name, hex, active, position) VALUES
+(7, 'Ambre solaire', '#D6A546', 1, 0),
+(9, 'Blanc opalin', '#f5f2ec', 1, 0),
+(8, 'Chêne naturel', '#d6c5b2', 1, 0),
+(10, 'Gris galet', '#b7b2ac', 1, 0),
+(11, 'Kaki organique', '#8b8a5c', 1, 0),
+(13, 'Noir profond', '#1f1d1b', 1, 0),
+(12, 'Terracotta solaire', '#d37a4a', 1, 0),
+(29, 'Test', '#e81717', 1, 0);
+
+-- ============================================
+-- MDF + REVÊTEMENT (MÉLAMINÉ)
+-- ============================================
+INSERT OR IGNORE INTO sample_types (id, name, material, description, active, position) VALUES
+(14, 'Bleu minéral', 'MDF + revêtement (mélaminé)', NULL, 1, 0),
+(16, 'Bleu nuit velours', 'MDF + revêtement (mélaminé)', NULL, 1, 1),
+(15, 'Brume azur', 'MDF + revêtement (mélaminé)', NULL, 1, 2),
+(20, 'Pourpre impérial', 'MDF + revêtement (mélaminé)', NULL, 1, 3),
+(19, 'Prune velours', 'MDF + revêtement (mélaminé)', NULL, 1, 4),
+(17, 'Turquoise lagon', 'MDF + revêtement (mélaminé)', NULL, 1, 5),
+(18, 'Violet brumeux', 'MDF + revêtement (mélaminé)', NULL, 1, 6);
+
+INSERT OR IGNORE INTO sample_colors (type_id, name, hex, active, position) VALUES
+(14, 'Bleu minéral', '#6c8ca6', 1, 0),
+(16, 'Bleu nuit velours', '#2d3e58', 1, 0),
+(15, 'Brume azur', '#a7c4cf', 1, 0),
+(20, 'Pourpre impérial', '#6f3c62', 1, 0),
+(19, 'Prune velours', '#4d3057', 1, 0),
+(17, 'Turquoise lagon', '#3a9d9f', 1, 0),
+(18, 'Violet brumeux', '#7b6a93', 1, 0);
+
+-- ============================================
+-- PLAQUÉ BOIS
+-- ============================================
+INSERT OR IGNORE INTO sample_types (id, name, material, description, active, position) VALUES
+(27, 'Blush pêche', 'Plaqué bois', NULL, 1, 0),
+(21, 'Noisette caramélisée', 'Plaqué bois', NULL, 1, 1),
+(22, 'Noyer fumé', 'Plaqué bois', NULL, 1, 2),
+(23, 'Rouge grenat', 'Plaqué bois', NULL, 1, 3),
+(24, 'Saule poudré', 'Plaqué bois', NULL, 1, 4),
+(25, 'Vert forêt profonde', 'Plaqué bois', NULL, 1, 5),
+(26, 'Vert sauge', 'Plaqué bois', NULL, 1, 6);
+
+INSERT OR IGNORE INTO sample_colors (type_id, name, hex, active, position) VALUES
+(27, 'Blush pêche', '#f2b9a8', 1, 0),
+(21, 'Noisette caramélisée', '#b17a55', 1, 0),
+(22, 'Noyer fumé', '#7b4b30', 1, 0),
+(23, 'Rouge grenat', '#a5393b', 1, 0),
+(24, 'Saule poudré', '#7c9885', 1, 0),
+(25, 'Vert forêt profonde', '#2f4a3e', 1, 0),
+(26, 'Vert sauge', '#809d7a', 1, 0);

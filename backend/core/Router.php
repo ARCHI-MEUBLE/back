@@ -129,28 +129,35 @@ class Router {
         $endpoint = str_replace('api/', '', $path);
         $endpoint = explode('?', $endpoint)[0]; // Enlever les query params
 
-        // Gérer les sous-routes (ex: auth/login, admin-auth/logout)
-        // Extraire la première partie (ex: auth, admin-auth, models)
+        // Essayer d'abord le chemin exact (ex: admin/samples -> backend/api/admin/samples.php)
+        $exactFile = $this->baseDir . DIRECTORY_SEPARATOR . 'backend' . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . $endpoint . '.php';
+        $exactFile = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $exactFile);
+
+        if (file_exists($exactFile)) {
+            require $exactFile;
+            return;
+        }
+
+        // Sinon, fallback sur le fichier racine (ex: admin -> backend/api/admin.php)
         $parts = explode('/', $endpoint);
         $mainEndpoint = $parts[0];
 
-        // Normaliser les slashes pour Windows
         $apiFile = $this->baseDir . DIRECTORY_SEPARATOR . 'backend' . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . $mainEndpoint . '.php';
         $apiFile = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $apiFile);
 
         if (file_exists($apiFile)) {
             require $apiFile;
-        } else {
-            // Debug : afficher le chemin cherché
-            $this->sendJSON([
-                'success' => false,
-                'error' => 'Endpoint non trouvé',
-                'debug_path' => $apiFile,
-                'debug_endpoint' => $endpoint,
-                'debug_main_endpoint' => $mainEndpoint,
-                'debug_exists' => file_exists($apiFile) ? 'yes' : 'no'
-            ], 404);
+            return;
         }
+
+        // Debug si rien trouvé
+        $this->sendJSON([
+            'success' => false,
+            'error' => 'Endpoint non trouvé',
+            'requested' => $endpoint,
+            'tried_exact' => $exactFile,
+            'tried_root' => $apiFile
+        ], 404);
     }
 
     /**
