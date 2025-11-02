@@ -148,6 +148,9 @@ $additionalNotes = '';
 $phoneNumber = '';
 
 if (isset($resource['questions_and_answers'])) {
+    // Log des questions/réponses pour debug
+    error_log("Calendly Q&A: " . json_encode($resource['questions_and_answers']));
+
     foreach ($resource['questions_and_answers'] as $qa) {
         $question = strtolower($qa['question'] ?? '');
         $answer = $qa['answer'] ?? '';
@@ -158,11 +161,21 @@ if (isset($resource['questions_and_answers'])) {
         if (stripos($question, 'note') !== false || stripos($question, 'information') !== false) {
             $additionalNotes = $answer;
         }
-        // Récupérer le numéro de téléphone si présent
-        if (stripos($question, 'téléphone') !== false || stripos($question, 'phone') !== false || stripos($question, 'numero') !== false) {
+        // Récupérer le numéro de téléphone si présent (plusieurs variantes)
+        if (stripos($question, 'téléphone') !== false ||
+            stripos($question, 'phone') !== false ||
+            stripos($question, 'numero') !== false ||
+            stripos($question, 'numéro') !== false ||
+            stripos($question, 'portable') !== false ||
+            stripos($question, 'mobile') !== false ||
+            stripos($question, 'contact') !== false ||
+            stripos($question, 'tel') !== false) {
             $phoneNumber = $answer;
+            error_log("Phone number found: $phoneNumber");
         }
     }
+} else {
+    error_log("No questions_and_answers in Calendly response");
 }
 
 // Détecter si c'est un rendez-vous téléphonique
