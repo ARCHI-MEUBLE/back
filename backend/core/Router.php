@@ -234,7 +234,7 @@ class Router {
                 'http://127.0.0.1:3001',
             ];
 
-            // Ajouter FRONTEND_URL depuis .env
+            // Ajouter FRONTEND_URL depuis .env.local
             $envFrontendUrl = getenv('FRONTEND_URL');
             if ($envFrontendUrl) {
                 $allowedOrigins[] = $envFrontendUrl;

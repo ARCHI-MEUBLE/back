@@ -22,7 +22,7 @@ class EmailService {
 
         // Vérification que toutes les variables sont configurées
         if (!$smtpHost || !$smtpPort || !$smtpUsername || !$smtpPassword || !$fromEmail || !$fromName || !$this->adminEmail) {
-            throw new Exception('Configuration SMTP incomplète. Vérifiez les variables d\'environnement dans le fichier .env');
+            throw new Exception('Configuration SMTP incomplète. Vérifiez les variables d\'environnement dans le fichier .env.local');
         }
 
         $this->smtpMailer = new SMTPMailer(

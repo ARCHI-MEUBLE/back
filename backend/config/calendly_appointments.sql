@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS calendly_appointments (
     timezone TEXT DEFAULT 'Europe/Paris',
     config_url TEXT,
     additional_notes TEXT,
+    meeting_url TEXT,
+    phone_number TEXT,
     status TEXT DEFAULT 'scheduled',
     confirmation_sent BOOLEAN DEFAULT 0,
     reminder_24h_sent BOOLEAN DEFAULT 0,

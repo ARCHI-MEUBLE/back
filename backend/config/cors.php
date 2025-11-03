@@ -11,7 +11,7 @@ $allowedOrigins = [
     'http://127.0.0.1:3001',
 ];
 
-// Ajouter FRONTEND_URL depuis .env si défini
+// Ajouter FRONTEND_URL depuis .env.local si défini
 $envFrontendUrl = getenv('FRONTEND_URL');
 if ($envFrontendUrl) {
     $allowedOrigins[] = $envFrontendUrl;

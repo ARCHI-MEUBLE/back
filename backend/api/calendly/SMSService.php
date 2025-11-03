@@ -17,7 +17,7 @@ class SMSService {
 
         // Vérification que toutes les variables sont configurées
         if (!$this->accountSid || !$this->authToken || !$this->fromNumber) {
-            throw new Exception('Configuration Twilio incomplète. Vérifiez les variables d\'environnement dans le fichier .env');
+            throw new Exception('Configuration Twilio incomplète. Vérifiez les variables d\'environnement dans le fichier .env.local');
         }
     }
 

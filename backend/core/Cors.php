@@ -8,7 +8,7 @@
 class Cors {
     /**
      * Configure les headers CORS automatiquement
-     * Utilise FRONTEND_URL depuis .env ou autorise localhost:3000/3001 par défaut
+     * Utilise FRONTEND_URL depuis .env.local ou autorise localhost:3000/3001 par défaut
      */
     public static function enable() {
         // Récupérer l'origine de la requête
@@ -22,7 +22,7 @@ class Cors {
             'http://127.0.0.1:3001',
         ];
 
-        // Ajouter FRONTEND_URL depuis .env si défini
+        // Ajouter FRONTEND_URL depuis .env.local si défini
         $envFrontendUrl = getenv('FRONTEND_URL');
         if ($envFrontendUrl) {
             $allowedOrigins[] = $envFrontendUrl;

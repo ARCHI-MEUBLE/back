@@ -363,14 +363,22 @@ try {
     ]);
 
 } catch (Exception $e) {
-    $errorLog = sprintf("[%s] Error sending emails: %s\n", $timestamp, $e->getMessage());
+    $errorLog = sprintf("[%s] Error sending emails (SMTP not configured): %s\n", $timestamp, $e->getMessage());
     file_put_contents($logFile, $errorLog, FILE_APPEND);
 
-    http_response_code(500);
+    // Retourner un succès quand même car le rendez-vous est enregistré
+    http_response_code(200);
     echo json_encode([
-        'success' => false,
-        'error' => 'Email sending failed',
-        'details' => $e->getMessage()
+        'success' => true,
+        'message' => 'Rendez-vous enregistré (emails non envoyés - SMTP non configuré)',
+        'data' => [
+            'name' => $name,
+            'email' => $email,
+            'event_type' => $eventType,
+            'start_time' => $formattedStart,
+            'emails_sent' => false,
+            'email_error' => $e->getMessage()
+        ]
     ]);
 }
 ?>

@@ -16,8 +16,9 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, X-Calendly-Webhook-Signature');
 
-// Chemin vers la base de données SQLite
-$dbPath = __DIR__ . '/../../database/archimeuble.db';
+// Détection de l'environnement et chemin vers la base de données
+$isDocker = file_exists('/app');
+$dbPath = $isDocker ? '/app/database/archimeuble.db' : __DIR__ . '/../../database/archimeuble.db';
 
 // Gestion de la requête OPTIONS pour CORS
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -138,58 +139,68 @@ if (isset($event['event']) && $event['event'] === 'invitee.created') {
         file_put_contents($logFile, $errorLog, FILE_APPEND);
     }
 
-    // Envoi des emails
-    $emailService = new EmailService();
-
-    // Email de confirmation au client
+    // Envoi des emails (optionnel - ne bloque pas l'enregistrement)
     try {
-        $emailService->sendConfirmationEmail(
-            $email,
-            $name,
-            $eventType,
-            $formattedStart,
-            $formattedEnd,
-            $configUrl
-        );
+        $emailService = new EmailService();
 
-        $emailLog = sprintf(
-            "[%s] Confirmation email sent to client: %s (%s)\n",
-            $timestamp,
-            $name,
-            $email
-        );
-        file_put_contents($logFile, $emailLog, FILE_APPEND);
+        // Email de confirmation au client
+        try {
+            $emailService->sendConfirmationEmail(
+                $email,
+                $name,
+                $eventType,
+                $formattedStart,
+                $formattedEnd,
+                $configUrl
+            );
+
+            $emailLog = sprintf(
+                "[%s] Confirmation email sent to client: %s (%s)\n",
+                $timestamp,
+                $name,
+                $email
+            );
+            file_put_contents($logFile, $emailLog, FILE_APPEND);
+        } catch (Exception $e) {
+            $errorLog = sprintf(
+                "[%s] Error sending confirmation email: %s\n",
+                $timestamp,
+                $e->getMessage()
+            );
+            file_put_contents($logFile, $errorLog, FILE_APPEND);
+        }
+
+        // Email de notification à l'administrateur
+        try {
+            $emailService->sendAdminNotification(
+                $name,
+                $email,
+                $eventType,
+                $formattedStart,
+                $formattedEnd,
+                $configUrl,
+                $additionalNotes
+            );
+
+            $emailLog = sprintf(
+                "[%s] Admin notification sent for appointment with %s (%s)\n",
+                $timestamp,
+                $name,
+                $email
+            );
+            file_put_contents($logFile, $emailLog, FILE_APPEND);
+        } catch (Exception $e) {
+            $errorLog = sprintf(
+                "[%s] Error sending admin notification: %s\n",
+                $timestamp,
+                $e->getMessage()
+            );
+            file_put_contents($logFile, $errorLog, FILE_APPEND);
+        }
     } catch (Exception $e) {
+        // SMTP non configuré - continuer sans envoyer d'emails
         $errorLog = sprintf(
-            "[%s] Error sending confirmation email: %s\n",
-            $timestamp,
-            $e->getMessage()
-        );
-        file_put_contents($logFile, $errorLog, FILE_APPEND);
-    }
-
-    // Email de notification à l'administrateur
-    try {
-        $emailService->sendAdminNotification(
-            $name,
-            $email,
-            $eventType,
-            $formattedStart,
-            $formattedEnd,
-            $configUrl,
-            $additionalNotes
-        );
-
-        $emailLog = sprintf(
-            "[%s] Admin notification sent for appointment with %s (%s)\n",
-            $timestamp,
-            $name,
-            $email
-        );
-        file_put_contents($logFile, $emailLog, FILE_APPEND);
-    } catch (Exception $e) {
-        $errorLog = sprintf(
-            "[%s] Error sending admin notification: %s\n",
+            "[%s] EmailService unavailable (SMTP not configured): %s\n",
             $timestamp,
             $e->getMessage()
         );
