@@ -11,12 +11,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Vérifier l'authentification admin
-if (!isset($_SESSION['admin_email'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Non authentifié']);
-    exit;
-}
+// L'authentification est gérée par Next.js API route
+// Pas besoin de vérifier $_SESSION ici
 
 require_once __DIR__ . '/../../core/Database.php';
 

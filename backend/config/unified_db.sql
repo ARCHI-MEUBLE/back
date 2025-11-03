@@ -159,3 +159,34 @@ INSERT OR IGNORE INTO sample_colors (type_id, name, hex, active, position) VALUE
 (24, 'Saule poudré', '#7c9885', 1, 0),
 (25, 'Vert forêt profonde', '#2f4a3e', 1, 0),
 (26, 'Vert sauge', '#809d7a', 1, 0);
+
+-- ============================================================================
+-- CALENDLY APPOINTMENTS (ajouté le 2025-11-03)
+-- ============================================================================
+
+-- Table des rendez-vous Calendly
+CREATE TABLE IF NOT EXISTS calendly_appointments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    calendly_event_id TEXT UNIQUE NOT NULL,
+    client_name TEXT NOT NULL,
+    client_email TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    start_time DATETIME NOT NULL,
+    end_time DATETIME NOT NULL,
+    timezone TEXT DEFAULT 'Europe/Paris',
+    config_url TEXT,
+    additional_notes TEXT,
+    status TEXT DEFAULT 'scheduled',
+    confirmation_sent BOOLEAN DEFAULT 0,
+    reminder_24h_sent BOOLEAN DEFAULT 0,
+    reminder_1h_sent BOOLEAN DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Index pour optimiser les requêtes
+CREATE INDEX IF NOT EXISTS idx_calendly_start_time ON calendly_appointments(start_time);
+CREATE INDEX IF NOT EXISTS idx_calendly_status ON calendly_appointments(status);
+CREATE INDEX IF NOT EXISTS idx_calendly_reminder_24h_sent ON calendly_appointments(reminder_24h_sent);
+CREATE INDEX IF NOT EXISTS idx_calendly_reminder_1h_sent ON calendly_appointments(reminder_1h_sent);
+CREATE INDEX IF NOT EXISTS idx_calendly_email ON calendly_appointments(client_email);
