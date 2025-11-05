@@ -453,5 +453,88 @@
         "status": "pending",
         "notes": null,
         "created_at": "2025-10-29 13:00:58"
+    },
+    "ORD-690b3dfb97d129.90166130": {
+        "id": "ORD-690b3dfb97d129.90166130",
+        "order_number": "CMD-20251105-166130",
+        "customer_id": 2,
+        "customer": {
+            "id": 2,
+            "email": "benskotlemogo@gmail.com",
+            "password_hash": "$2y$10$TXq8zJ1Lsz17QBzwUQWZju95f61FAfa2oq9v8zYwXoE\/7ZDyAIRnK",
+            "first_name": "collins",
+            "last_name": "LEMOGO",
+            "phone": "+33744171597",
+            "address": null,
+            "city": "Douala",
+            "postal_code": "59800",
+            "country": "France",
+            "created_at": "2025-11-03 10:37:24",
+            "updated_at": "2025-11-03 10:37:24"
+        },
+        "items": [
+            {
+                "id": 1,
+                "configuration_id": 29,
+                "quantity": 1,
+                "added_at": "2025-11-05 12:07:10",
+                "configuration": {
+                    "id": 29,
+                    "name": "smms",
+                    "prompt": "M1(1500,500,730)FH3(T,,)",
+                    "price": 1271,
+                    "glb_url": "http:\/\/localhost:8000\/models\/meuble_690b3de826ac0.glb",
+                    "thumbnail_url": "http:\/\/localhost:8000\/models\/meuble_690b3de826ac0.glb",
+                    "config_data": {
+                        "dimensions": {
+                            "modules": 3,
+                            "width": 1500,
+                            "depth": 500,
+                            "height": 730
+                        },
+                        "styling": {
+                            "materialKey": "agglomere",
+                            "materialLabel": "Agglom\u00e9r\u00e9",
+                            "finish": "Agglom\u00e9r\u00e9",
+                            "color": "#D6A546",
+                            "colorLabel": "Ambre solaire",
+                            "colorId": 29,
+                            "colorImage": null,
+                            "socle": "none"
+                        },
+                        "features": {
+                            "doorsOpen": true,
+                            "doors": 0,
+                            "drawers": 1,
+                            "shelves": 2,
+                            "hasDressing": false
+                        },
+                        "mode": {
+                            "isExpertMode": false,
+                            "useAdvancedMode": false
+                        },
+                        "basePlanches": {
+                            "b": false,
+                            "h": false,
+                            "g": false,
+                            "d": false,
+                            "f": true
+                        },
+                        "advancedZones": null,
+                        "name": "smms",
+                        "thumbnail_url": "http:\/\/localhost:8000\/models\/meuble_690b3de826ac0.glb"
+                    },
+                    "created_at": "2025-11-05 12:07:10"
+                }
+            }
+        ],
+        "total": 1271,
+        "shipping_address": "7 ALLEE DES BERGERlalala, 59800 Douala, France",
+        "billing_address": "7 ALLEE DES BERGERlalala, 59800 Douala, France",
+        "payment_method": "card",
+        "payment_status": "pending",
+        "status": "pending",
+        "notes": null,
+        "created_at": "2025-11-05 12:07:23"
     }
 }
