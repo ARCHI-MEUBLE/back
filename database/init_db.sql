@@ -108,6 +108,22 @@ CREATE INDEX IF NOT EXISTS idx_calendly_reminder_24h_sent ON calendly_appointmen
 CREATE INDEX IF NOT EXISTS idx_calendly_reminder_1h_sent ON calendly_appointments(reminder_1h_sent);
 CREATE INDEX IF NOT EXISTS idx_calendly_email ON calendly_appointments(client_email);
 
+-- Table panier (cart_items)
+CREATE TABLE IF NOT EXISTS cart_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    customer_id INTEGER NOT NULL,
+    configuration_id INTEGER NOT NULL,
+    quantity INTEGER NOT NULL DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+    FOREIGN KEY (configuration_id) REFERENCES configurations(id) ON DELETE CASCADE,
+    UNIQUE(customer_id, configuration_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_cart_customer ON cart_items(customer_id);
+CREATE INDEX IF NOT EXISTS idx_cart_configuration ON cart_items(configuration_id);
+
 -- Insérer quelques modèles de test
 INSERT OR IGNORE INTO models (id, name, prompt, description, price) VALUES
 (1, 'Meuble Scandinave 3 modules', 'M1(1700,500,730)EFH3(F,T,F)', 'Meuble style scandinave avec 3 modules, largeur 1700mm', 450.00),
