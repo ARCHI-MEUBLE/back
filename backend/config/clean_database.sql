@@ -15,11 +15,13 @@ DELETE FROM customers;
 -- Supprimer les modèles créés pour test (garde uniquement les 3 premiers)
 DELETE FROM models WHERE id > 3;
 
+-- Supprimer les admins de test (garde uniquement admin@archimeuble.com)
+DELETE FROM admins WHERE email <> 'admin@archimeuble.com';
+
 -- Supprimer les rendez-vous Calendly de test
 -- DELETE FROM calendly_appointments;
 
 -- Supprimer les notifications
-DELETE FROM notifications;
 DELETE FROM admin_notifications;
 
 -- Réinitialiser les séquences auto-increment
