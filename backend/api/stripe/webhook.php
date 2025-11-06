@@ -33,14 +33,14 @@ try {
 
     // Vérifier la signature du webhook
     try {
-        if ($webhookSecret && $webhookSecret !== 'whsec_YOUR_WEBHOOK_SECRET_HERE') {
+        if ($webhookSecret && $webhookSecret !== 'whsec_YOUR_WEBHOOK_SECRET_HERE' && $webhookSecret !== 'whsec_test_local_dev') {
             $event = \Stripe\Webhook::constructEvent(
                 $payload,
                 $sigHeader,
                 $webhookSecret
             );
         } else {
-            // En dev, si pas de secret webhook, parser directement
+            // En dev local sans Stripe CLI, parser directement (NON sécurisé, uniquement pour dev)
             $event = json_decode($payload, false);
         }
     } catch (\UnexpectedValueException $e) {
@@ -52,10 +52,12 @@ try {
     }
 
     require_once __DIR__ . '/../../models/Order.php';
+    require_once __DIR__ . '/../../models/Cart.php';
     require_once __DIR__ . '/../../core/Database.php';
 
     $db = Database::getInstance();
     $orderModel = new Order();
+    $cart = new Cart();
 
     // Traiter l'événement selon son type
     switch ($event->type) {
@@ -76,6 +78,9 @@ try {
                                WHERE id = ?";
                 $db->execute($updateQuery, [$order['id']]);
 
+                // Vider le panier du client
+                $cart->clear($order['customer_id']);
+
                 // Créer une notification pour l'admin
                 require_once __DIR__ . '/../../models/AdminNotification.php';
                 $notification = new AdminNotification();
@@ -86,7 +91,7 @@ try {
                 );
 
                 // Logger pour debug
-                error_log("Payment succeeded for order ID: {$order['id']}");
+                error_log("Payment succeeded for order ID: {$order['id']}, cart cleared for customer ID: {$order['customer_id']}");
             }
             break;
 
