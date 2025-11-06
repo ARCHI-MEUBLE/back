@@ -173,15 +173,21 @@ try {
     error_log("Output dir: $outputDir");
     error_log("Output path: $outputPath");
 
+    // Mesurer le temps d'exécution
+    $startTime = microtime(true);
+
     // Exécuter la commande Python
     $output = [];
     $returnCode = 0;
     exec($command, $output, $returnCode);
 
+    $executionTime = round(microtime(true) - $startTime, 2);
+
     // Log de sortie pour debug
     $outputText = implode("\n", $output);
     error_log("Python output: $outputText");
     error_log("Python return code: $returnCode");
+    error_log("Python execution time: {$executionTime}s");
 
     // Vérifier le code de retour
     if ($returnCode !== 0) {
@@ -227,7 +233,8 @@ try {
         'success' => true,
         'glb_url' => $glbUrl,
         'prompt' => $prompt,
-        'filename' => $filename
+        'filename' => $filename,
+        'execution_time' => $executionTime . 's'
     ]);
 
 } catch (Exception $e) {
