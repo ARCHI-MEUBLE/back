@@ -50,6 +50,7 @@ try {
 
     $prompt = trim($data['prompt']);
     $closed = isset($data['closed']) && $data['closed'] === true;
+    $color = isset($data['color']) ? trim($data['color']) : null;
 
     // VALIDATION 1 : Regex pour valider le format du prompt
     // Format attendu : M[1-5](largeur,profondeur,hauteur[,modules])MODULES(params)
@@ -141,13 +142,17 @@ try {
     // Ajouter --closed si demandé
     $closedFlag = $closed ? '--closed' : '';
 
+    // Ajouter --color si fourni
+    $colorFlag = $color ? '--color ' . escapeshellarg($color) : '';
+
     $command = sprintf(
-        '"%s" "%s" %s %s %s 2>&1',
+        '"%s" "%s" %s %s %s %s 2>&1',
         $pythonExe,
         $pythonScript,
         escapeshellarg($prompt),
         escapeshellarg($outputPath),
-        $closedFlag
+        $closedFlag,
+        $colorFlag
     );
 
     // Log de la commande pour debug

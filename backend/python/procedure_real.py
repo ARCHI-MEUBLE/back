@@ -1715,6 +1715,14 @@ chaine = sys.argv[1]  # Le prompt M1(...)
 output_path = sys.argv[2] if len(sys.argv) > 2 else "./meuble.glb"  # Chemin de sortie
 closed_mode = "--closed" in sys.argv  # Mode fermé (tiroirs et portes fermés)
 
+# Récupérer la couleur hex si fournie
+custom_color = None
+if "--color" in sys.argv:
+    color_index = sys.argv.index("--color")
+    if color_index + 1 < len(sys.argv):
+        custom_color = sys.argv[color_index + 1]
+        print(f"[INFO] Couleur personnalisée: {custom_color}")
+
 print(f"[INFO] Génération du meuble avec prompt: {chaine}")
 print(f"[INFO] Fichier de sortie: {output_path}")
 print(f"[INFO] Mode fermé: {closed_mode}") 
@@ -1735,6 +1743,31 @@ for i, planche in enumerate(planches) :
 
 for i, planche in enumerate(planches) :
     planche.texturer()
+
+# Si une couleur personnalisée est fournie, remplacer les textures par une couleur unie
+if custom_color:
+    print(f"[INFO] Application de la couleur personnalisée: {custom_color}")
+
+    # Convertir hex en RGB (format #RRGGBB ou RRGGBB)
+    hex_color = custom_color.lstrip('#')
+    if len(hex_color) == 6:
+        r = int(hex_color[0:2], 16)
+        g = int(hex_color[2:4], 16)
+        b = int(hex_color[4:6], 16)
+        rgb_color = [r, g, b, 255]  # RGBA
+
+        print(f"[INFO] Couleur RGB: {rgb_color}")
+
+        # Appliquer la couleur à toutes les planches
+        for planche in planches:
+            if hasattr(planche, 'mesh') and planche.mesh is not None:
+                # Créer un matériau avec la couleur unie
+                planche.mesh.visual = trimesh.visual.ColorVisuals(
+                    mesh=planche.mesh,
+                    vertex_colors=rgb_color
+                )
+    else:
+        print(f"[WARNING] Format de couleur hex invalide: {custom_color}")
 
 
 # Appliquer le mode fermé ou ouvert selon le paramètre
