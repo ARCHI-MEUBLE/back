@@ -294,24 +294,46 @@ class EmailService {
     }
 
     /**
-     * Envoie un email (utilise PHP mail() ou SMTP selon config)
+     * Envoie un email via SMTP Gmail
      */
     private function sendEmail($to, $subject, $htmlBody) {
-        $headers = [
-            'MIME-Version: 1.0',
-            'Content-Type: text/html; charset=UTF-8',
-            'From: ' . $this->siteName . ' <' . $this->from . '>',
-            'Reply-To: ' . $this->from,
-        ];
+        // Utiliser le SMTPMailer de Calendly qui fonctionne déjà
+        require_once __DIR__ . '/../api/calendly/SMTPMailer.php';
 
-        $success = mail($to, $subject, $htmlBody, implode("\r\n", $headers));
+        // Récupérer config SMTP depuis .env
+        $smtpHost = getenv('SMTP_HOST') ?: 'smtp.gmail.com';
+        $smtpPort = getenv('SMTP_PORT') ?: 587;
+        $smtpUser = getenv('SMTP_USERNAME') ?: getenv('SMTP_FROM_EMAIL');
+        $smtpPass = getenv('SMTP_PASSWORD');
 
-        if ($success) {
-            error_log("Email sent to {$to}: {$subject}");
-        } else {
-            error_log("Failed to send email to {$to}: {$subject}");
+        if (!$smtpUser || !$smtpPass) {
+            error_log("SMTP credentials not configured");
+            return false;
         }
 
-        return $success;
+        try {
+            $mailer = new SMTPMailer(
+                $smtpHost,
+                $smtpPort,
+                $smtpUser,
+                $smtpPass,
+                $this->from,
+                $this->siteName
+            );
+
+            $success = $mailer->send($to, $subject, $htmlBody);
+
+            if ($success) {
+                error_log("Email sent to {$to}: {$subject}");
+            } else {
+                error_log("Failed to send email to {$to}: {$subject}");
+            }
+
+            return $success;
+
+        } catch (Exception $e) {
+            error_log("SMTP error: " . $e->getMessage());
+            return false;
+        }
     }
 }
