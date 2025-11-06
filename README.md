@@ -16,23 +16,59 @@ git clone <votre-repo-backend>
 cd back
 ```
 
-### 2. Configuration (optionnel)
+### 2. Configuration **OBLIGATOIRE**
 
-Le backend utilise Docker et toutes les variables d'environnement sont déjà configurées dans `docker-compose.yml`.
+⚠️ **Configuration requise avant de démarrer !**
 
-**Aucune configuration manuelle nécessaire !**
+```bash
+# Copier le fichier d'exemple
+cp .env.example .env
 
-Si vous souhaitez personnaliser la configuration, vous pouvez modifier `docker-compose.yml` :
-
-```yaml
-environment:
-  - DB_PATH=/app/database/archimeuble.db      # Chemin de la base de données
-  - PYTHON_PATH=/opt/venv/bin/python3          # Chemin Python
-  - FRONTEND_URL=http://localhost:3000         # URL du frontend (CORS)
-  - OUTPUT_DIR=/app/models                     # Dossier des modèles 3D
+# Éditer le fichier .env
+nano .env  # ou utilisez votre éditeur préféré (VS Code, Notepad++, etc.)
 ```
 
-**Note** : Le fichier `.env` présent dans le dossier n'est **pas utilisé** avec Docker. Il est conservé uniquement pour compatibilité avec d'éventuels tests locaux sans Docker.
+**Variables OBLIGATOIRES à configurer dans `.env`:**
+
+```env
+# EMAIL (Gmail recommandé)
+SMTP_USERNAME=votre-email@gmail.com
+SMTP_PASSWORD=votre-mot-de-passe-application  # Voir instructions ci-dessous
+SMTP_FROM_EMAIL=votre-email@gmail.com
+
+# CALENDLY (pour les rendez-vous)
+CALENDLY_API_TOKEN=votre_token_ici  # https://calendly.com/integrations/api_webhooks
+CALENDLY_PHONE_URL=https://calendly.com/votre-nom/consultation-telephone
+CALENDLY_VISIO_URL=https://calendly.com/votre-nom/consultation-visio
+
+# CRISP (support client en temps réel)
+CRISP_WEBSITE_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  # https://app.crisp.chat/settings/websites/
+```
+
+**📧 Configuration Gmail (SMTP):**
+
+1. Aller sur https://myaccount.google.com/security
+2. Activer la validation en 2 étapes
+3. Aller dans "Mots de passe des applications"
+4. Créer un nouveau mot de passe d'application
+5. Copier le mot de passe généré dans `SMTP_PASSWORD`
+
+**📅 Configuration Calendly:**
+
+1. Créer un compte sur https://calendly.com
+2. Créer vos événements (consultation téléphone + visio)
+3. Obtenir le token API: https://calendly.com/integrations/api_webhooks
+4. Copier vos URLs d'événements et le token dans `.env`
+
+**💬 Configuration Crisp:**
+
+1. Créer un compte sur https://crisp.chat
+2. Aller dans Settings → Websites
+3. Copier votre Website ID dans `.env`
+
+**📚 Voir [CONFIGURATION.md](./CONFIGURATION.md) pour plus de détails.**
+
+**Note importante:** Le fichier `.env` est chargé automatiquement par Docker **ET** peut être modifié à chaud (rechargement automatique sans redémarrer Docker pour la plupart des variables).
 
 ### 3. Lancer le backend avec Docker
 

@@ -2,6 +2,10 @@
 # Image de base avec PHP 8.2 et support Python
 FROM php:8.2-cli
 
+# Configuration du fuseau horaire (Europe/Paris)
+ENV TZ=Europe/Paris
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 # Installation des dépendances système
 RUN apt-get update && apt-get install -y \
     sqlite3 \
@@ -14,6 +18,7 @@ RUN apt-get update && apt-get install -y \
     libosmesa6-dev \
     libgl1-mesa-dri \
     xvfb \
+    tzdata \
     && docker-php-ext-install pdo pdo_sqlite \
     && rm -rf /var/lib/apt/lists/*
 

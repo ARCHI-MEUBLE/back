@@ -8,19 +8,18 @@
  * Date : 2025-10-23
  */
 
+require_once __DIR__ . '/../config/cors.php';
 require_once __DIR__ . '/../core/Database.php';
-require_once __DIR__ . '/../core/Session.php';
-require_once __DIR__ . '/../core/Cors.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Admin.php';
 
-// Activer CORS
-Cors::enable();
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
 
-$session = Session::getInstance();
-
-// Vérifier que l'utilisateur est admin
-if (!$session->has('is_admin') || $session->get('is_admin') !== true) {
+// Vérifier que l'utilisateur est admin (utiliser $_SESSION natif)
+if (!isset($_SESSION['admin_email']) || empty($_SESSION['admin_email'])) {
     http_response_code(403);
     echo json_encode(['error' => 'Accès non autorisé']);
     exit;

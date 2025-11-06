@@ -15,6 +15,7 @@ services:
       # Persister la base de données ← NOUVEAU
       - ./database:/app/database
     environment:
+      - TZ=Europe/Paris
       - DB_PATH=/app/database/archimeuble.db
       - PYTHON_PATH=/opt/venv/bin/python3
       - FRONTEND_URL=http://localhost:3000
@@ -29,6 +30,11 @@ services:
       - ADMIN_EMAIL=${ADMIN_EMAIL}
       # Calendly API Token
       - CALENDLY_API_TOKEN=${CALENDLY_API_TOKEN}
+      # Calendly URLs publiques
+      - CALENDLY_PHONE_URL=${CALENDLY_PHONE_URL}
+      - CALENDLY_VISIO_URL=${CALENDLY_VISIO_URL}
+      # Crisp Chat Widget ID
+      - CRISP_WEBSITE_ID=${CRISP_WEBSITE_ID}
       # Twilio SMS Configuration
       - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
       - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}

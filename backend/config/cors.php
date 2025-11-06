@@ -3,6 +3,9 @@
  * Configuration CORS pour toutes les API
  */
 
+// Charger les variables d'environnement depuis .env (rechargement automatique)
+require_once __DIR__ . '/env.php';
+
 // Autoriser les requêtes depuis le frontend Next.js
 $allowedOrigins = [
     'http://localhost:3000',

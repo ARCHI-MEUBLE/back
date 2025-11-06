@@ -50,9 +50,14 @@ if (!isset($data['invitee_uri']) || empty($data['invitee_uri'])) {
 
 // Récupérer le token API Calendly depuis les variables d'environnement
 $calendlyToken = getenv('CALENDLY_API_TOKEN');
-if (!$calendlyToken) {
+if (!$calendlyToken || empty(trim($calendlyToken))) {
+    error_log("Warning: CALENDLY_API_TOKEN not configured - cannot fetch detailed appointment info");
     http_response_code(500);
-    echo json_encode(['error' => 'Calendly API token not configured']);
+    echo json_encode([
+        'error' => 'Calendly API token not configured',
+        'message' => 'Veuillez configurer CALENDLY_API_TOKEN dans le fichier .env',
+        'instructions' => 'Obtenez votre token sur: https://calendly.com/integrations/api_webhooks'
+    ]);
     exit();
 }
 

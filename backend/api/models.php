@@ -10,30 +10,27 @@
  * Date : 2025-10-21
  */
 
+require_once __DIR__ . '/../config/cors.php';
 require_once __DIR__ . '/../core/Database.php';
-require_once __DIR__ . '/../core/Session.php';
-require_once __DIR__ . '/../core/Cors.php';
 require_once __DIR__ . '/../models/Model.php';
 
-// Activer CORS
-Cors::enable();
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
 
-$session = Session::getInstance();
 $model = new Model();
-
 $method = $_SERVER['REQUEST_METHOD'];
 
 /**
  * Vérifie si l'utilisateur est admin
  */
 function isAdmin() {
-    global $session;
-    $isAdmin = $session->has('is_admin') && $session->get('is_admin') === true;
+    // Utiliser $_SESSION natif comme dans les autres endpoints admin
+    $isAdmin = isset($_SESSION['admin_email']) && !empty($_SESSION['admin_email']);
 
     // Log pour debug
-    error_log("Session ID: " . $session->getId());
-    error_log("is_admin: " . ($session->has('is_admin') ? 'true' : 'false'));
-    error_log("is_admin value: " . ($session->get('is_admin') ? 'true' : 'false'));
+    error_log("Admin check - admin_email: " . ($_SESSION['admin_email'] ?? 'not set'));
     error_log("Result: " . ($isAdmin ? 'true' : 'false'));
 
     return $isAdmin;

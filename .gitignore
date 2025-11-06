@@ -69,5 +69,3 @@ pnpm-lock.yaml
 *.pem
 *.key
 *.cert
->>>>>>> 55dfaa4 (feat(back): save local backend changes before rebase on dev)
-NUL
