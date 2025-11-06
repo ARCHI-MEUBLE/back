@@ -84,28 +84,30 @@ try {
 
     // Sinon, télécharger directement le fichier
     if (isset($_GET['download']) && $_GET['download'] === 'true') {
-        $filepath = $invoice['filepath'];
+        $pdfPath = $invoice['filepath'];
 
-        if (file_exists($filepath)) {
+        // Vérifier si le PDF existe et est valide (> 100 bytes)
+        if (file_exists($pdfPath) && filesize($pdfPath) > 100) {
+            // Servir le PDF
             header('Content-Type: application/pdf');
-            header('Content-Disposition: attachment; filename="' . $invoice['filename'] . '"');
-            header('Content-Length: ' . filesize($filepath));
-            readfile($filepath);
-            exit;
-        } else {
-            // Fallback: télécharger la version HTML si PDF non disponible
-            $htmlFilepath = str_replace('.pdf', '.html', $filepath);
-            if (file_exists($htmlFilepath)) {
-                header('Content-Type: text/html; charset=UTF-8');
-                header('Content-Disposition: attachment; filename="' . str_replace('.pdf', '.html', $invoice['filename']) . '"');
-                readfile($htmlFilepath);
-                exit;
-            }
-
-            http_response_code(500);
-            echo json_encode(['error' => 'Erreur lors de la génération de la facture']);
+            header('Content-Disposition: inline; filename="' . $invoice['filename'] . '"');
+            header('Content-Length: ' . filesize($pdfPath));
+            readfile($pdfPath);
             exit;
         }
+
+        // Fallback: servir le HTML si le PDF n'existe pas
+        $htmlFilepath = str_replace('.pdf', '.html', $pdfPath);
+        if (file_exists($htmlFilepath)) {
+            header('Content-Type: text/html; charset=UTF-8');
+            header('Content-Disposition: inline; filename="' . str_replace('.pdf', '.html', $invoice['filename']) . '"');
+            readfile($htmlFilepath);
+            exit;
+        }
+
+        http_response_code(500);
+        echo json_encode(['error' => 'Facture introuvable']);
+        exit;
     }
 
 } catch (Exception $e) {

@@ -216,29 +216,38 @@ class InvoiceService {
     }
 
     /**
-     * Convertit HTML en PDF
-     * Utilise une méthode simple avec wkhtmltopdf ou génération basique
+     * Convertit HTML en PDF avec wkhtmltopdf
      */
     private function htmlToPdf($html, $filepath) {
-        // Option 1: Utiliser wkhtmltopdf (si installé sur le serveur)
-        if (function_exists('exec') && $this->commandExists('wkhtmltopdf')) {
-            $tempHtml = tempnam(sys_get_temp_dir(), 'invoice_') . '.html';
-            file_put_contents($tempHtml, $html);
-            exec("wkhtmltopdf {$tempHtml} {$filepath}", $output, $return_var);
-            unlink($tempHtml);
-
-            if ($return_var === 0 && file_exists($filepath)) {
-                return true;
-            }
-        }
-
-        // Option 2: Sauvegarder en HTML (fallback simple)
-        // En production, vous devriez utiliser une vraie bibliothèque PDF comme TCPDF, FPDF ou DomPDF
+        // Toujours sauvegarder le HTML pour backup
         $htmlFilepath = str_replace('.pdf', '.html', $filepath);
         file_put_contents($htmlFilepath, $html);
 
-        // Créer un fichier PDF vide avec un message
-        $simplePDF = "%PDF-1.4\n%âãÏÓ\nUne facture HTML a été générée. Veuillez installer une bibliothèque PDF.\n";
+        // Utiliser wkhtmltopdf pour générer le PDF
+        if (function_exists('exec') && $this->commandExists('wkhtmltopdf')) {
+            $tempHtml = tempnam(sys_get_temp_dir(), 'invoice_') . '.html';
+            file_put_contents($tempHtml, $html);
+
+            // Options wkhtmltopdf pour un meilleur rendu
+            $cmd = sprintf(
+                'wkhtmltopdf --quiet --page-size A4 --margin-top 10mm --margin-bottom 10mm --margin-left 10mm --margin-right 10mm %s %s 2>&1',
+                escapeshellarg($tempHtml),
+                escapeshellarg($filepath)
+            );
+
+            exec($cmd, $output, $return_var);
+            @unlink($tempHtml);
+
+            if ($return_var === 0 && file_exists($filepath) && filesize($filepath) > 100) {
+                error_log("PDF generated successfully: {$filepath}");
+                return true;
+            } else {
+                error_log("wkhtmltopdf failed: " . implode("\n", $output));
+            }
+        }
+
+        // Fallback: créer un PDF basique si wkhtmltopdf échoue
+        $simplePDF = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/MediaBox[0 0 595 842]/Parent 2 0 R/Resources<<>>>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000056 00000 n\n0000000115 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n203\n%%EOF";
         file_put_contents($filepath, $simplePDF);
 
         return true;
