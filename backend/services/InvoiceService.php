@@ -83,8 +83,8 @@ class InvoiceService {
                 .header {
                     display: flex;
                     justify-content: space-between;
-                    margin-bottom: 40px;
-                    padding-bottom: 20px;
+                    margin-bottom: 25px;
+                    padding-bottom: 15px;
                     border-bottom: 3px solid #d97706;
                 }
                 .company-info {
@@ -102,15 +102,15 @@ class InvoiceService {
                 .section-title {
                     font-size: 16px;
                     font-weight: bold;
-                    margin-top: 30px;
-                    margin-bottom: 10px;
+                    margin-top: 20px;
+                    margin-bottom: 8px;
                     color: #111;
                 }
                 .info-box {
                     background-color: #f9fafb;
-                    padding: 15px;
+                    padding: 12px;
                     border-radius: 8px;
-                    margin-bottom: 20px;
+                    margin-bottom: 15px;
                 }
                 table {
                     width: 100%;
@@ -129,12 +129,13 @@ class InvoiceService {
                     background-color: #fef3c7;
                 }
                 .footer {
-                    margin-top: 50px;
-                    padding-top: 20px;
+                    margin-top: 30px;
+                    padding-top: 15px;
                     border-top: 1px solid #ddd;
                     text-align: center;
-                    font-size: 12px;
+                    font-size: 11px;
                     color: #666;
+                    line-height: 1.4;
                 }
             </style>
         </head>
@@ -200,15 +201,15 @@ class InvoiceService {
                 </tr>
             </table>
 
-            <div style='margin-top: 30px; padding: 15px; background-color: #fef3c7; border-radius: 8px;'>
+            <div style='margin-top: 20px; padding: 12px; background-color: #fef3c7; border-radius: 8px;'>
                 <p style='margin: 0;'><strong>Paiement effectué par:</strong> " . ucfirst($order['payment_method']) . "</p>
                 <p style='margin: 5px 0 0 0;'><strong>Statut:</strong> Payé le " . date('d/m/Y', strtotime($order['confirmed_at'])) . "</p>
             </div>
 
             <div class='footer'>
-                <p>Merci pour votre confiance !</p>
-                <p>{$this->companyName} - {$this->companyAddress}</p>
-                <p>SIRET: {$this->companySiret} | N° TVA: {$this->companyTVA}</p>
+                <p style='margin: 0 0 5px 0;'>Merci pour votre confiance !</p>
+                <p style='margin: 0 0 5px 0;'>{$this->companyName} - {$this->companyAddress}</p>
+                <p style='margin: 0;'>SIRET: {$this->companySiret} | N° TVA: {$this->companyTVA}</p>
             </div>
         </body>
         </html>
@@ -230,7 +231,7 @@ class InvoiceService {
 
             // Options wkhtmltopdf pour un meilleur rendu
             $cmd = sprintf(
-                'wkhtmltopdf --quiet --page-size A4 --margin-top 10mm --margin-bottom 10mm --margin-left 10mm --margin-right 10mm %s %s 2>&1',
+                'wkhtmltopdf --quiet --page-size A4 --margin-top 8mm --margin-bottom 8mm --margin-left 10mm --margin-right 10mm %s %s 2>&1',
                 escapeshellarg($tempHtml),
                 escapeshellarg($filepath)
             );
