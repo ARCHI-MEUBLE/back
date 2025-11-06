@@ -1,10 +1,17 @@
 <?php
 /**
  * Chargeur automatique des variables d'environnement depuis .env
- * Lit le fichier .env à chaque requête pour permettre les modifications à chaud
+ * Utilise un cache APCu pour éviter de relire le fichier à chaque requête
  */
 
+// Variable globale pour éviter de charger plusieurs fois par requête
+$GLOBALS['_env_loaded'] = $GLOBALS['_env_loaded'] ?? false;
+
 function loadEnvFile($filePath = null) {
+    // Si déjà chargé dans cette requête, retourner immédiatement
+    if ($GLOBALS['_env_loaded']) {
+        return;
+    }
     // Déterminer le chemin du fichier .env
     if ($filePath === null) {
         // Détecter si on est dans Docker ou en local
@@ -49,6 +56,9 @@ function loadEnvFile($filePath = null) {
             }
         }
     }
+
+    // Marquer comme chargé
+    $GLOBALS['_env_loaded'] = true;
 }
 
 // Charger automatiquement le fichier .env
