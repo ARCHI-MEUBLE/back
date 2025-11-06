@@ -1715,13 +1715,24 @@ chaine = sys.argv[1]  # Le prompt M1(...)
 output_path = sys.argv[2] if len(sys.argv) > 2 else "./meuble.glb"  # Chemin de sortie
 closed_mode = "--closed" in sys.argv  # Mode fermé (tiroirs et portes fermés)
 
-# Récupérer la couleur hex si fournie
-custom_color = None
-if "--color" in sys.argv:
+# Récupérer les couleurs hex si fournies (format JSON pour multi-couleurs)
+custom_colors = {}
+if "--colors" in sys.argv:
+    colors_index = sys.argv.index("--colors")
+    if colors_index + 1 < len(sys.argv):
+        import json
+        try:
+            custom_colors = json.loads(sys.argv[colors_index + 1])
+            print(f"[INFO] Couleurs personnalisées (multi): {custom_colors}")
+        except json.JSONDecodeError as e:
+            print(f"[WARNING] Format JSON invalide pour --colors: {e}")
+            custom_colors = {}
+elif "--color" in sys.argv:
+    # Support legacy single color
     color_index = sys.argv.index("--color")
     if color_index + 1 < len(sys.argv):
-        custom_color = sys.argv[color_index + 1]
-        print(f"[INFO] Couleur personnalisée: {custom_color}")
+        custom_colors = {"all": sys.argv[color_index + 1]}
+        print(f"[INFO] Couleur unique: {custom_colors['all']}")
 
 print(f"[INFO] Génération du meuble avec prompt: {chaine}")
 print(f"[INFO] Fichier de sortie: {output_path}")
@@ -1744,30 +1755,55 @@ for i, planche in enumerate(planches) :
 for i, planche in enumerate(planches) :
     planche.texturer()
 
-# Si une couleur personnalisée est fournie, remplacer les textures par une couleur unie
-if custom_color:
-    print(f"[INFO] Application de la couleur personnalisée: {custom_color}")
+# Si des couleurs personnalisées sont fournies, remplacer les textures par des couleurs unies
+if custom_colors:
+    print(f"[INFO] Application des couleurs personnalisées par composant")
 
-    # Convertir hex en RGB (format #RRGGBB ou RRGGBB)
-    hex_color = custom_color.lstrip('#')
-    if len(hex_color) == 6:
-        r = int(hex_color[0:2], 16)
-        g = int(hex_color[2:4], 16)
-        b = int(hex_color[4:6], 16)
-        rgb_color = [r, g, b, 255]  # RGBA
+    def hex_to_rgba(hex_color):
+        """Convertit une couleur hex en RGBA"""
+        hex_color = hex_color.lstrip('#')
+        if len(hex_color) == 6:
+            r = int(hex_color[0:2], 16)
+            g = int(hex_color[2:4], 16)
+            b = int(hex_color[4:6], 16)
+            return [r, g, b, 255]
+        return None
 
-        print(f"[INFO] Couleur RGB: {rgb_color}")
+    # Mapping des types de composants vers les clés de couleur
+    # Types de blocs dans le code: "tiroir", "porteg", "ported", "portec", "porte_coulissante", "socle"
+    # Clés frontend: "structure", "drawers", "doors", "base"
 
-        # Appliquer la couleur à toutes les planches
-        for planche in planches:
-            if hasattr(planche, 'mesh') and planche.mesh is not None:
-                # Créer un matériau avec la couleur unie
+    for planche in planches:
+        if not hasattr(planche, 'mesh') or planche.mesh is None:
+            continue
+
+        # Déterminer quelle couleur appliquer selon le type de bloc
+        color_key = None
+        bloc_type = getattr(planche, 'bloc', None)
+
+        if bloc_type == "tiroir":
+            color_key = "drawers"
+        elif bloc_type in ["porteg", "ported", "portec", "porte_coulissante"]:
+            color_key = "doors"
+        elif bloc_type == "socle":
+            color_key = "base"
+        else:
+            # Structure (planches du corps du meuble)
+            color_key = "structure"
+
+        # Récupérer la couleur appropriée (ou "all" si couleur unique)
+        hex_color = custom_colors.get(color_key) or custom_colors.get("all")
+
+        if hex_color:
+            rgb_color = hex_to_rgba(hex_color)
+            if rgb_color:
                 planche.mesh.visual = trimesh.visual.ColorVisuals(
                     mesh=planche.mesh,
                     vertex_colors=rgb_color
                 )
-    else:
-        print(f"[WARNING] Format de couleur hex invalide: {custom_color}")
+                print(f"[INFO] Couleur appliquée à {color_key or 'structure'} ({bloc_type or 'planche'}): {hex_color} -> RGB{rgb_color[:3]}")
+            else:
+                print(f"[WARNING] Format hex invalide pour {color_key}: {hex_color}")
 
 
 # Appliquer le mode fermé ou ouvert selon le paramètre
