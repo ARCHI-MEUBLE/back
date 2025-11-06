@@ -69,3 +69,4 @@ pnpm-lock.yaml
 *.pem
 *.key
 *.cert
+/vendor/

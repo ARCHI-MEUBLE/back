@@ -30,7 +30,7 @@ class Customer {
      * Récupérer un client par ID
      */
     public function getById($id) {
-        $query = "SELECT id, email, first_name, last_name, phone, address, city, postal_code, country, created_at
+        $query = "SELECT id, email, first_name, last_name, phone, address, city, postal_code, country, stripe_customer_id, created_at
                   FROM customers WHERE id = ?";
 
         return $this->db->queryOne($query, [$id]);
@@ -105,5 +105,13 @@ class Customer {
         $query = "SELECT COUNT(*) as count FROM customers WHERE email = ?";
         $result = $this->db->queryOne($query, [$email]);
         return $result && $result['count'] > 0;
+    }
+
+    /**
+     * Mettre à jour le Stripe customer ID
+     */
+    public function updateStripeCustomerId($customerId, $stripeCustomerId) {
+        $query = "UPDATE customers SET stripe_customer_id = ? WHERE id = ?";
+        return $this->db->execute($query, [$stripeCustomerId, $customerId]);
     }
 }
