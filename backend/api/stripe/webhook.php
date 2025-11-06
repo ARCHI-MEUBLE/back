@@ -56,12 +56,14 @@ try {
     require_once __DIR__ . '/../../models/Customer.php';
     require_once __DIR__ . '/../../core/Database.php';
     require_once __DIR__ . '/../../services/EmailService.php';
+    require_once __DIR__ . '/../../services/InvoiceService.php';
 
     $db = Database::getInstance();
     $orderModel = new Order();
     $cart = new Cart();
     $customerModel = new Customer();
     $emailService = new EmailService();
+    $invoiceService = new InvoiceService();
 
     // Traiter l'événement selon son type
     switch ($event->type) {
@@ -95,6 +97,14 @@ try {
 
                 // Envoyer notification à l'admin
                 $emailService->sendNewOrderNotificationToAdmin($fullOrder, $customer, $orderItems);
+
+                // Générer la facture PDF automatiquement
+                try {
+                    $invoice = $invoiceService->generateInvoice($fullOrder, $customer, $orderItems);
+                    error_log("Invoice generated: {$invoice['filename']} for order ID: {$order['id']}");
+                } catch (Exception $e) {
+                    error_log("Failed to generate invoice for order ID: {$order['id']}: " . $e->getMessage());
+                }
 
                 // Créer une notification dans le dashboard admin
                 require_once __DIR__ . '/../../models/AdminNotification.php';
