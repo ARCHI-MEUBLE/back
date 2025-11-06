@@ -57,6 +57,7 @@ try {
     require_once __DIR__ . '/../../core/Database.php';
     require_once __DIR__ . '/../../services/EmailService.php';
     require_once __DIR__ . '/../../services/InvoiceService.php';
+    require_once __DIR__ . '/../../services/InstallmentService.php';
 
     $db = Database::getInstance();
     $orderModel = new Order();
@@ -64,6 +65,7 @@ try {
     $customerModel = new Customer();
     $emailService = new EmailService();
     $invoiceService = new InvoiceService();
+    $installmentService = new InstallmentService();
 
     // Traiter l'événement selon son type
     switch ($event->type) {
@@ -104,6 +106,21 @@ try {
                     error_log("Invoice generated: {$invoice['filename']} for order ID: {$order['id']}");
                 } catch (Exception $e) {
                     error_log("Failed to generate invoice for order ID: {$order['id']}: " . $e->getMessage());
+                }
+
+                // Créer les mensualités si paiement en 3 fois
+                $installments = $paymentIntent->metadata->installments ?? 1;
+                if ($installments == 3) {
+                    try {
+                        $installmentService->createInstallments(
+                            $order['id'],
+                            $order['customer_id'],
+                            $fullOrder['total_amount']
+                        );
+                        error_log("Installments created for order ID: {$order['id']}");
+                    } catch (Exception $e) {
+                        error_log("Failed to create installments for order ID: {$order['id']}: " . $e->getMessage());
+                    }
                 }
 
                 // Créer une notification dans le dashboard admin
