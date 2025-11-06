@@ -53,11 +53,15 @@ try {
 
     require_once __DIR__ . '/../../models/Order.php';
     require_once __DIR__ . '/../../models/Cart.php';
+    require_once __DIR__ . '/../../models/Customer.php';
     require_once __DIR__ . '/../../core/Database.php';
+    require_once __DIR__ . '/../../services/EmailService.php';
 
     $db = Database::getInstance();
     $orderModel = new Order();
     $cart = new Cart();
+    $customerModel = new Customer();
+    $emailService = new EmailService();
 
     // Traiter l'événement selon son type
     switch ($event->type) {
@@ -81,7 +85,18 @@ try {
                 // Vider le panier du client
                 $cart->clear($order['customer_id']);
 
-                // Créer une notification pour l'admin
+                // Récupérer les détails complets de la commande
+                $fullOrder = $orderModel->getById($order['id']);
+                $customer = $customerModel->getById($order['customer_id']);
+                $orderItems = $orderModel->getOrderItems($order['id']);
+
+                // Envoyer email de confirmation au client
+                $emailService->sendOrderConfirmation($fullOrder, $customer, $orderItems);
+
+                // Envoyer notification à l'admin
+                $emailService->sendNewOrderNotificationToAdmin($fullOrder, $customer, $orderItems);
+
+                // Créer une notification dans le dashboard admin
                 require_once __DIR__ . '/../../models/AdminNotification.php';
                 $notification = new AdminNotification();
                 $notification->create(
@@ -99,7 +114,7 @@ try {
             $paymentIntent = $event->data->object;
 
             // Trouver la commande associée
-            $query = "SELECT id FROM orders WHERE stripe_payment_intent_id = ?";
+            $query = "SELECT id, customer_id FROM orders WHERE stripe_payment_intent_id = ?";
             $order = $db->queryOne($query, [$paymentIntent->id]);
 
             if ($order) {
@@ -109,6 +124,13 @@ try {
                                    updated_at = CURRENT_TIMESTAMP
                                WHERE id = ?";
                 $db->execute($updateQuery, [$order['id']]);
+
+                // Récupérer les détails pour l'email
+                $fullOrder = $orderModel->getById($order['id']);
+                $customer = $customerModel->getById($order['customer_id']);
+
+                // Envoyer email d'échec au client
+                $emailService->sendPaymentFailedEmail($fullOrder, $customer);
 
                 // Créer une notification pour l'admin
                 require_once __DIR__ . '/../../models/AdminNotification.php';
