@@ -6,8 +6,8 @@
 
 class InvoiceService {
     private $companyName = 'ArchiMeuble';
-    private $companyAddress = '123 Rue Example, 75001 Paris, France';
-    private $companyPhone = '+33 1 23 45 67 89';
+    private $companyAddress = '30 Rue Henri Regnault, 59000 Lille, France';
+    private $companyPhone = '06 01 06 28 67';
     private $companyEmail = 'pro.archimeuble@gmail.com';
     private $companySiret = '123 456 789 00012';
     private $companyTVA = 'FR 12 123456789';
