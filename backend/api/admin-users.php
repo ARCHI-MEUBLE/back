@@ -55,7 +55,7 @@ if ($method === 'GET') {
         $db = Database::getInstance()->getPDO();
 
         // Récupérer tous les clients (customers)
-        $customersStmt = $db->query('SELECT id, email, CONCAT(first_name, " ", last_name) as name, created_at FROM customers ORDER BY created_at DESC');
+        $customersStmt = $db->query('SELECT id, email, first_name, last_name, created_at FROM customers ORDER BY created_at DESC');
         $customers = $customersStmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Récupérer tous les admins
@@ -66,10 +66,11 @@ if ($method === 'GET') {
         echo json_encode([
             'success' => true,
             'users' => array_map(function($customer) {
+                $name = trim(($customer['first_name'] ?? '') . ' ' . ($customer['last_name'] ?? ''));
                 return [
                     'id' => (string)$customer['id'],
                     'email' => $customer['email'],
-                    'name' => $customer['name'],
+                    'name' => !empty($name) ? $name : 'Client',
                     'type' => 'user',
                     'created_at' => $customer['created_at']
                 ];
