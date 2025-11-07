@@ -54,9 +54,9 @@ if ($method === 'GET') {
     try {
         $db = Database::getInstance()->getPDO();
 
-        // Récupérer tous les utilisateurs
-        $usersStmt = $db->query('SELECT id, email, name, created_at FROM users ORDER BY created_at DESC');
-        $users = $usersStmt->fetchAll(PDO::FETCH_ASSOC);
+        // Récupérer tous les clients (customers)
+        $customersStmt = $db->query('SELECT id, email, CONCAT(first_name, " ", last_name) as name, created_at FROM customers ORDER BY created_at DESC');
+        $customers = $customersStmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Récupérer tous les admins
         $adminsStmt = $db->query('SELECT id, email, username, created_at FROM admins ORDER BY created_at DESC');
@@ -65,15 +65,15 @@ if ($method === 'GET') {
         http_response_code(200);
         echo json_encode([
             'success' => true,
-            'users' => array_map(function($user) {
+            'users' => array_map(function($customer) {
                 return [
-                    'id' => (string)$user['id'],
-                    'email' => $user['email'],
-                    'name' => $user['name'],
+                    'id' => (string)$customer['id'],
+                    'email' => $customer['email'],
+                    'name' => $customer['name'],
                     'type' => 'user',
-                    'created_at' => $user['created_at']
+                    'created_at' => $customer['created_at']
                 ];
-            }, $users),
+            }, $customers),
             'admins' => array_map(function($admin) {
                 return [
                     'id' => (int)$admin['id'],
@@ -123,15 +123,15 @@ if ($method === 'PUT') {
         $hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
 
         if ($type === 'user') {
-            // Par défaut, les utilisateurs utilisent password_hash
-            $targetColumn = columnExists($db, 'users', 'password_hash') ? 'password_hash' : (columnExists($db, 'users', 'password') ? 'password' : null);
+            // Les clients (customers) utilisent password_hash
+            $targetColumn = columnExists($db, 'customers', 'password_hash') ? 'password_hash' : (columnExists($db, 'customers', 'password') ? 'password' : null);
             if ($targetColumn === null) {
                 http_response_code(500);
-                echo json_encode(['error' => "Colonne de mot de passe introuvable pour 'users'"]);
+                echo json_encode(['error' => "Colonne de mot de passe introuvable pour 'customers'"]);
                 exit;
             }
-            error_log("[ADMIN-USERS PUT] User - Colonne: $targetColumn, ID: $id");
-            $stmt = $db->prepare("UPDATE users SET $targetColumn = :password WHERE id = :id");
+            error_log("[ADMIN-USERS PUT] Customer - Colonne: $targetColumn, ID: $id");
+            $stmt = $db->prepare("UPDATE customers SET $targetColumn = :password WHERE id = :id");
             $stmt->execute([
                 ':password' => $hashedPassword,
                 ':id' => $id
@@ -192,7 +192,7 @@ if ($method === 'DELETE') {
         $db = Database::getInstance()->getPDO();
 
         if ($type === 'user') {
-            $stmt = $db->prepare('DELETE FROM users WHERE id = :id');
+            $stmt = $db->prepare('DELETE FROM customers WHERE id = :id');
             $stmt->execute([':id' => $id]);
         } elseif ($type === 'admin') {
             // Empêcher la suppression du dernier admin
