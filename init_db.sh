@@ -160,6 +160,23 @@ CREATE TABLE IF NOT EXISTS admin_notifications (
     FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
 );
 
+-- Table des rendez-vous Calendly
+CREATE TABLE IF NOT EXISTS calendly_appointments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id TEXT UNIQUE NOT NULL,
+    customer_email TEXT NOT NULL,
+    customer_name TEXT,
+    event_type TEXT,
+    start_time DATETIME NOT NULL,
+    end_time DATETIME NOT NULL,
+    status TEXT DEFAULT 'scheduled',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_calendly_appointments_email ON calendly_appointments(customer_email);
+CREATE INDEX IF NOT EXISTS idx_calendly_appointments_start_time ON calendly_appointments(start_time);
+
 -- Table des échantillons de matériaux
 -- Note: utilise sample_types et sample_colors (pas juste samples)
 CREATE TABLE IF NOT EXISTS sample_types (
