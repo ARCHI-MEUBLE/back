@@ -57,6 +57,7 @@ RUN mkdir -p /app/devis \
 # S'assurer que le script d'initialisation est exécutable et avec des fins de ligne Unix
 RUN cp /app/init_db.sh /usr/local/bin/init_db.sh \
     && sed -i 's/\r$//' /usr/local/bin/init_db.sh \
+    && sed -i 's/\r$//' /app/samples_init.sql \
     && chmod +x /usr/local/bin/init_db.sh
 
 # Exposer le port 8000 pour le serveur PHP

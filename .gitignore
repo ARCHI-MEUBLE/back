@@ -6,22 +6,20 @@
 .env.production.local
 .env.*.local
 
-# Base de données (SQLite)
+# Base de données (SQLite) - uniquement dans le dossier database
 database/*.db
 database/*.db-journal
 database/*.db-shm
 database/*.db-wal
-*.db
-*.db-journal
-*.db-shm
-*.db-wal
 
-# Fichiers uploadés et générés
-uploads/
-models/
-pieces/
-textures/
-output/
+# Fichiers uploadés et générés (à la racine uniquement)
+/uploads/
+/models/
+/pieces/
+/textures/
+/output/
+
+# IMPORTANT: Ne pas ignorer backend/models/ qui contient le code PHP!
 
 # Environnement virtuel Python
 .archimeuble/

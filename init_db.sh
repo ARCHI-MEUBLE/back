@@ -159,6 +159,37 @@ CREATE TABLE IF NOT EXISTS admin_notifications (
     FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
 );
 
+-- Table des échantillons de matériaux
+-- Note: utilise sample_types et sample_colors (pas juste samples)
+CREATE TABLE IF NOT EXISTS sample_types (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    material TEXT NOT NULL,
+    description TEXT,
+    active INTEGER DEFAULT 1,
+    position INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS sample_colors (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    hex TEXT,
+    image_url TEXT,
+    active INTEGER DEFAULT 1,
+    position INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (type_id) REFERENCES sample_types(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_sample_types_material ON sample_types(material);
+CREATE INDEX IF NOT EXISTS idx_sample_types_active ON sample_types(active);
+CREATE INDEX IF NOT EXISTS idx_sample_colors_type_id ON sample_colors(type_id);
+CREATE INDEX IF NOT EXISTS idx_sample_colors_active ON sample_colors(active);
+
 -- Index pour améliorer les performances
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_configurations_user_id ON configurations(user_id);
@@ -172,6 +203,10 @@ INSERT OR IGNORE INTO models (id, name, description, prompt, price, image_url) V
 (3, 'Meuble TV Compact', 'Meuble TV compact idéal pour petits espaces', 'M1(1200,350,650)EFbV4(,,T,)', 699.00, '/images/meuble-compact.jpg');
 
 EOF
+
+# Ajouter les tables d'échantillons depuis le fichier SQL dédié
+echo "Ajout des échantillons..."
+sqlite3 "$DB_PATH" < /app/samples_init.sql
 
 # Créer un admin par défaut (mot de passe: admin123)
 # Hash bcrypt pour "admin123": $2y$12$3uQQHtqzlQH5eptxZJkJoudv4TsExrfwl7T22u4gxIlzpJSxBbmtO
