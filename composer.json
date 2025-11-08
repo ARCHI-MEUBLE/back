@@ -1,0 +1,16 @@
+{
+    "name": "archimeuble/backend",
+    "description": "ArchiMeuble Backend API",
+    "type": "project",
+    "require": {
+        "php": ">=8.2",
+        "stripe/stripe-php": "^15.0"
+    },
+    "config": {
+        "vendor-dir": "vendor",
+        "optimize-autoloader": true,
+        "platform": {
+            "php": "8.2"
+        }
+    }
+}

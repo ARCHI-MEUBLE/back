@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     wget \
+    unzip \
     fontconfig \
     libfreetype6 \
     libjpeg62-turbo \
@@ -33,6 +34,9 @@ RUN apt-get update && apt-get install -y \
     tzdata \
     && docker-php-ext-install pdo pdo_sqlite \
     && rm -rf /var/lib/apt/lists/*
+
+# Installer Composer (gestionnaire de dépendances PHP)
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Installer wkhtmltopdf depuis le binaire officiel
 RUN wget -q https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-3/wkhtmltox_0.12.6.1-3.bookworm_amd64.deb \

@@ -77,6 +77,7 @@ docker compose up -d
 ```
 
 **Important** : Au premier démarrage, le conteneur va :
+- Installer automatiquement les dépendances PHP via Composer (Stripe SDK, etc.)
 - Créer automatiquement la base de données SQLite
 - Initialiser toutes les tables nécessaires
 - Insérer les 3 modèles de meubles par défaut
@@ -121,13 +122,50 @@ docker compose build
 docker compose up
 ```
 
+## Gestion des dépendances PHP (Composer)
+
+Les dépendances PHP sont gérées automatiquement par **Composer** :
+
+- **`composer.json`** : Déclare les dépendances nécessaires (Stripe SDK)
+- **`composer.lock`** : Verrouille les versions exactes (doit être commité dans Git)
+- **`vendor/`** : Dossier contenant les dépendances installées (ignoré par Git)
+
+**Au premier démarrage**, Docker exécute automatiquement :
+```bash
+composer install --no-dev --optimize-autoloader
+```
+
+Cela télécharge et installe toutes les dépendances depuis les sources officielles (pas besoin de copier le dossier `vendor/`).
+
+### Ajouter une nouvelle dépendance
+
+```bash
+# Entrer dans le conteneur
+docker exec -it archimeuble-backend bash
+
+# Installer une nouvelle dépendance
+composer require nom-du-package
+
+# Sortir du conteneur
+exit
+
+# Les fichiers composer.json et composer.lock seront automatiquement mis à jour
+# Commitez-les dans Git
+git add composer.json composer.lock
+git commit -m "Add new PHP dependency"
+```
+
 ## Configuration automatique
 
-Au démarrage du conteneur Docker, le script `init_db.sh` s'exécute automatiquement pour :
+Au démarrage du conteneur Docker, les scripts s'exécutent dans cet ordre :
 
-✅ Créer toutes les tables nécessaires (users, admins, models, configurations, etc.)
-✅ Insérer les 3 modèles de meubles TV par défaut
-✅ Créer un administrateur par défaut
+1. **`install_dependencies.sh`** - Installe les dépendances PHP via Composer
+2. **`init_db.sh`** - Initialise la base de données SQLite
+
+Cela crée :
+✅ Toutes les tables nécessaires (users, admins, models, configurations, etc.)
+✅ Les 3 modèles de meubles TV par défaut
+✅ Un administrateur par défaut
 
 ### Identifiants administrateur par défaut
 

@@ -67,4 +67,7 @@ pnpm-lock.yaml
 *.pem
 *.key
 *.cert
+
+# Dépendances PHP (géré par Composer)
 /vendor/
+# IMPORTANT: composer.json et composer.lock DOIVENT être commit!
