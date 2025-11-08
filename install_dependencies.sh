@@ -1,54 +1,39 @@
 #!/bin/bash
 ###############################################################################
 # Script d'installation des dépendances PHP pour ArchiMeuble Backend
-# Ce script utilise Composer pour installer automatiquement les dépendances
+# Les dépendances sont maintenant commitées dans Git pour simplifie
 ###############################################################################
 
 echo "==========================================="
-echo "Installation des dépendances PHP..."
+echo "Vérification des dépendances PHP..."
 echo "==========================================="
 
-cd /app
-
-# Installer les dépendances via Compose
-if [ -f "composer.json" ]; then
-    echo "→ Installation via Composer..."
-    composer install --no-dev --optimize-autoloader --no-interaction
-
-    if [ $? -eq 0 ]; then
-        echo "✓ Dépendances Composer installées avec succès"
-    else
-        echo "⚠ Erreur lors de l'installation avec Composer"
-        exit 1
-    fi
-else
-    echo "⚠ Fichier composer.json introuvable"
-    exit 1
-fi
-
-# Télécharger FPDF manuellement (non disponible via Composer)
 VENDOR_DIR="/app/vendor"
-mkdir -p "$VENDOR_DIR"
+STRIPE_DIR="$VENDOR_DIR/stripe"
 
-if [ -f "$VENDOR_DIR/fpdf/fpdf.php" ]; then
-    echo "✓ FPDF déjà installé"
-else
-    echo "→ Téléchargement de FPDF..."
-    mkdir -p "$VENDOR_DIR/fpdf"
-    cd "$VENDOR_DIR/fpdf"
+# Vérifier si les dépendances sont déjà présentes (commitées dans Git)
+if [ -f "$STRIPE_DIR/init.php" ]; then
+    echo "✓ Stripe SDK déjà présent (depuis Git)"
+    echo "✓ Toutes les dépendances sont installées!"
+    echo "==========================================="
+    exit 0
+fi
 
-    if curl -sL "http://www.fpdf.org/en/download/fpdf186.tgz" | tar xz --strip-components=1 2>/dev/null; then
-        echo "✓ FPDF installé avec succès"
-    else
-        echo "⚠ Échec du téléchargement de FPDF (optionnel)"
+# Si vendor n'existe pas, essayer Composer (fallback)
+if [ -f "/app/composer.json" ]; then
+    echo "→ Installation via Composer..."
+    cd /app
+    composer install --no-dev --optimize-autoloader --no-interaction 2>/dev/null
+
+    if [ -f "$STRIPE_DIR/init.php" ]; then
+        echo "✓ Dépendances Composer installées avec succès"
+        echo "==========================================="
+        exit 0
     fi
 fi
 
-# Créer un alias FPDF.php à la racine de vendor pour compatibilité
-if [ -f "$VENDOR_DIR/fpdf/fpdf.php" ] && [ ! -f "$VENDOR_DIR/FPDF.php" ]; then
-    ln -s fpdf/fpdf.php "$VENDOR_DIR/FPDF.php" 2>/dev/null || cp "$VENDOR_DIR/fpdf/fpdf.php" "$VENDOR_DIR/FPDF.php"
-fi
-
+# Si rien n'a fonctionné
+echo "⚠ ERREUR: Stripe SDK introuvable!"
+echo "⚠ Le dossier vendor/ doit être présent dans le repo Git"
 echo "==========================================="
-echo "✓ Toutes les dépendances sont installées!"
-echo "==========================================="
+exit 1
