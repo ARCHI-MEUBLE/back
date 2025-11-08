@@ -160,6 +160,10 @@ if ($method === 'POST') {
 
         if ($modelId) {
             $createdModel = $model->getById($modelId);
+            // Convertir le chemin de l'image en URL complète
+            if (isset($createdModel['image_url'])) {
+                $createdModel['image_url'] = convertImagePath($createdModel['image_url']);
+            }
             http_response_code(201);
             echo json_encode([
                 'success' => true,
@@ -242,6 +246,10 @@ if ($method === 'PUT') {
 
     if ($model->update($input['id'], $updateData)) {
         $updatedModel = $model->getById($input['id']);
+        // Convertir le chemin de l'image en URL complète
+        if (isset($updatedModel['image_url'])) {
+            $updatedModel['image_url'] = convertImagePath($updatedModel['image_url']);
+        }
         http_response_code(200);
         echo json_encode([
             'success' => true,
