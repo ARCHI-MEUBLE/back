@@ -104,6 +104,7 @@ CREATE TABLE IF NOT EXISTS customers (
     city TEXT,
     postal_code TEXT,
     country TEXT DEFAULT 'France',
+    stripe_customer_id TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
