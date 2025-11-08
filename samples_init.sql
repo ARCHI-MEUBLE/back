@@ -30,13 +30,13 @@ CREATE INDEX IF NOT EXISTS idx_sample_colors_active ON sample_colors(active);
 
 -- Données
 INSERT OR IGNORE INTO sample_types (id, name, material, description, active, position) VALUES
-(7, 'Ambre solaire', 'Agglomere', 'La lumiere du soleil fait ressortir la clarete de votre materiau', 1, 0),
-(9, 'Blanc opalin', 'Agglomere', NULL, 1, 1),
-(8, 'Chene naturel', 'Agglomere', NULL, 1, 2),
-(10, 'Gris galet', 'Agglomere', NULL, 1, 3),
-(11, 'Kaki organique', 'Agglomere', NULL, 1, 4),
-(13, 'Noir profond', 'Agglomere', NULL, 1, 5),
-(12, 'Terracotta solaire', 'Agglomere', NULL, 1, 6);
+(7, 'Ambre solaire', 'Aggloméré', 'La lumière du soleil fait ressortir la clareté de votre matériau', 1, 0),
+(9, 'Blanc opalin', 'Aggloméré', NULL, 1, 1),
+(8, 'Chêne naturel', 'Aggloméré', NULL, 1, 2),
+(10, 'Gris galet', 'Aggloméré', NULL, 1, 3),
+(11, 'Kaki organique', 'Aggloméré', NULL, 1, 4),
+(13, 'Noir profond', 'Aggloméré', NULL, 1, 5),
+(12, 'Terracotta solaire', 'Aggloméré', NULL, 1, 6);
 
 INSERT OR IGNORE INTO sample_colors (type_id, name, hex, active, position) VALUES
 (7, 'Ambre solaire', '#D6A546', 1, 0),
@@ -48,13 +48,13 @@ INSERT OR IGNORE INTO sample_colors (type_id, name, hex, active, position) VALUE
 (12, 'Terracotta solaire', '#d37a4a', 1, 0);
 
 INSERT OR IGNORE INTO sample_types (id, name, material, description, active, position) VALUES
-(14, 'Bleu mineral', 'MDF + revetement (melamine)', NULL, 1, 0),
-(16, 'Bleu nuit velours', 'MDF + revetement (melamine)', NULL, 1, 1),
-(15, 'Brume azur', 'MDF + revetement (melamine)', NULL, 1, 2),
-(20, 'Pourpre imperial', 'MDF + revetement (melamine)', NULL, 1, 3),
-(19, 'Prune velours', 'MDF + revetement (melamine)', NULL, 1, 4),
-(17, 'Turquoise lagon', 'MDF + revetement (melamine)', NULL, 1, 5),
-(18, 'Violet brumeux', 'MDF + revetement (melamine)', NULL, 1, 6);
+(14, 'Bleu minéral', 'MDF + revêtement (mélaminé)', NULL, 1, 0),
+(16, 'Bleu nuit velours', 'MDF + revêtement (mélaminé)', NULL, 1, 1),
+(15, 'Brume azur', 'MDF + revêtement (mélaminé)', NULL, 1, 2),
+(20, 'Pourpre impérial', 'MDF + revêtement (mélaminé)', NULL, 1, 3),
+(19, 'Prune velours', 'MDF + revêtement (mélaminé)', NULL, 1, 4),
+(17, 'Turquoise lagon', 'MDF + revêtement (mélaminé)', NULL, 1, 5),
+(18, 'Violet brumeux', 'MDF + revêtement (mélaminé)', NULL, 1, 6);
 
 INSERT OR IGNORE INTO sample_colors (type_id, name, hex, active, position) VALUES
 (14, 'Bleu mineral', '#6c8ca6', 1, 0),
@@ -66,13 +66,13 @@ INSERT OR IGNORE INTO sample_colors (type_id, name, hex, active, position) VALUE
 (18, 'Violet brumeux', '#7b6a93', 1, 0);
 
 INSERT OR IGNORE INTO sample_types (id, name, material, description, active, position) VALUES
-(27, 'Blush peche', 'Plaque bois', NULL, 1, 0),
-(21, 'Noisette caramelisee', 'Plaque bois', NULL, 1, 1),
-(22, 'Noyer fume', 'Plaque bois', NULL, 1, 2),
-(23, 'Rouge grenat', 'Plaque bois', NULL, 1, 3),
-(24, 'Saule poudre', 'Plaque bois', NULL, 1, 4),
-(25, 'Vert foret profonde', 'Plaque bois', NULL, 1, 5),
-(26, 'Vert sauge', 'Plaque bois', NULL, 1, 6);
+(27, 'Blush pêche', 'Plaqué bois', NULL, 1, 0),
+(21, 'Noisette caramélisée', 'Plaqué bois', NULL, 1, 1),
+(22, 'Noyer fumé', 'Plaqué bois', NULL, 1, 2),
+(23, 'Rouge grenat', 'Plaqué bois', NULL, 1, 3),
+(24, 'Saule poudré', 'Plaqué bois', NULL, 1, 4),
+(25, 'Vert forêt profonde', 'Plaqué bois', NULL, 1, 5),
+(26, 'Vert sauge', 'Plaqué bois', NULL, 1, 6);
 
 INSERT OR IGNORE INTO sample_colors (type_id, name, hex, active, position) VALUES
 (27, 'Blush peche', '#f2b9a8', 1, 0),
