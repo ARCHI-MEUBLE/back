@@ -318,6 +318,14 @@ EOF
 echo "Ajout des échantillons..."
 sqlite3 "$DB_PATH" < /app/samples_init.sql
 
+# Nettoyer les doublons de couleurs (si présents)
+echo "Nettoyage des doublons de couleurs..."
+sqlite3 "$DB_PATH" <<'CLEANUP'
+DELETE FROM sample_colors WHERE id NOT IN (
+    SELECT MIN(id) FROM sample_colors GROUP BY name, type_id
+);
+CLEANUP
+
 # Créer un admin par défaut (mot de passe: admin123)
 # Hash bcrypt pour "admin123": $2y$12$3uQQHtqzlQH5eptxZJkJoudv4TsExrfwl7T22u4gxIlzpJSxBbmtO
 echo "Création de l'administrateur par défaut..."

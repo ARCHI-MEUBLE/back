@@ -1,0 +1,8 @@
+# Force LF line endings for shell scripts
+*.sh text eol=lf
+
+# Force LF line endings for SQL scripts
+*.sql text eol=lf
+
+# Default behavior for other text files
+* text=auto

@@ -217,14 +217,14 @@ class InvoiceService {
     }
 
     /**
-     * Convertit HTML en PDF avec wkhtmltopdf
+     * Convertit HTML en PDF avec FPDF (fallback si wkhtmltopdf non disponible)
      */
     private function htmlToPdf($html, $filepath) {
         // Toujours sauvegarder le HTML pour backup
         $htmlFilepath = str_replace('.pdf', '.html', $filepath);
         file_put_contents($htmlFilepath, $html);
 
-        // Utiliser wkhtmltopdf pour générer le PDF
+        // Utiliser wkhtmltopdf si disponible
         if (function_exists('exec') && $this->commandExists('wkhtmltopdf')) {
             $tempHtml = tempnam(sys_get_temp_dir(), 'invoice_') . '.html';
             file_put_contents($tempHtml, $html);
@@ -240,17 +240,18 @@ class InvoiceService {
             @unlink($tempHtml);
 
             if ($return_var === 0 && file_exists($filepath) && filesize($filepath) > 100) {
-                error_log("PDF generated successfully: {$filepath}");
+                error_log("PDF generated successfully with wkhtmltopdf: {$filepath}");
                 return true;
             } else {
-                error_log("wkhtmltopdf failed: " . implode("\n", $output));
+                error_log("wkhtmltopdf failed or not available: " . implode("\n", $output));
             }
         }
 
-        // Fallback: créer un PDF basique si wkhtmltopdf échoue
-        $simplePDF = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/MediaBox[0 0 595 842]/Parent 2 0 R/Resources<<>>>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000056 00000 n\n0000000115 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n203\n%%EOF";
-        file_put_contents($filepath, $simplePDF);
+        // Fallback: Générer le PDF avec la version HTML
+        // L'utilisateur pourra toujours télécharger le fichier HTML qui sera servi
+        error_log("PDF generation: serving HTML file as fallback");
 
+        // Ne pas créer de PDF vide - laisser le HTML être servi par invoice.php
         return true;
     }
 

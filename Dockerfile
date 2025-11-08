@@ -14,12 +14,31 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-venv \
     git \
+    curl \
+    wget \
+    fontconfig \
+    libfreetype6 \
+    libjpeg62-turbo \
+    libpng16-16t64 \
+    libx11-6 \
+    libxcb1 \
+    libxext6 \
+    libxrender1 \
+    xfonts-75dpi \
+    xfonts-base \
     libosmesa6 \
     libosmesa6-dev \
     libgl1-mesa-dri \
     xvfb \
     tzdata \
     && docker-php-ext-install pdo pdo_sqlite \
+    && rm -rf /var/lib/apt/lists/*
+
+# Installer wkhtmltopdf depuis le binaire officiel
+RUN wget -q https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-3/wkhtmltox_0.12.6.1-3.bookworm_amd64.deb \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends ./wkhtmltox_0.12.6.1-3.bookworm_amd64.deb \
+    && rm wkhtmltox_0.12.6.1-3.bookworm_amd64.deb \
     && rm -rf /var/lib/apt/lists/*
 
 # Créer un environnement virtuel Python
@@ -54,11 +73,13 @@ RUN mkdir -p /app/devis \
     && mkdir -p /app/database \
     && chmod -R 777 /app
 
-# S'assurer que le script d'initialisation est exécutable et avec des fins de ligne Unix
+# S'assurer que les scripts sont exécutables et avec des fins de ligne Unix
 RUN cp /app/init_db.sh /usr/local/bin/init_db.sh \
     && sed -i 's/\r$//' /usr/local/bin/init_db.sh \
     && sed -i 's/\r$//' /app/samples_init.sql \
-    && chmod +x /usr/local/bin/init_db.sh
+    && sed -i 's/\r$//' /app/install_dependencies.sh \
+    && chmod +x /usr/local/bin/init_db.sh \
+    && chmod +x /app/install_dependencies.sh
 
 # Exposer le port 8000 pour le serveur PHP
 EXPOSE 8000

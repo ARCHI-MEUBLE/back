@@ -26,7 +26,7 @@ class Cart {
                 ci.id,
                 ci.configuration_id,
                 ci.quantity,
-                ci.created_at as added_at,
+                ci.added_at,
                 c.id as config_id,
                 c.prompt,
                 c.price,
@@ -36,7 +36,7 @@ class Cart {
             FROM cart_items ci
             JOIN configurations c ON ci.configuration_id = c.id
             WHERE ci.customer_id = :customer_id
-            ORDER BY ci.created_at DESC
+            ORDER BY ci.added_at DESC
         ";
 
         $cartItems = $this->db->query($query, ['customer_id' => $customerId]);

@@ -52,40 +52,93 @@ try {
         ? $kpis['total_revenue'] / $kpis['successful_payments']
         : 0;
 
-    // Revenu par mois (derniers mois selon période)
-    $monthsCount = match($period) {
-        '7d' => 1,
-        '30d' => 3,
-        '90d' => 6,
-        '1y' => 12,
-        default => 3
-    };
+    // Revenu par période (par jour pour 7d/30d, par mois pour 90d/1y)
+    $groupByDay = in_array($period, ['7d', '30d']);
 
-    $revenueByMonthQuery = "SELECT
-        strftime('%Y-%m', created_at) as month,
-        SUM(CASE WHEN payment_status = 'paid' THEN total_amount ELSE 0 END) as revenue
-    FROM orders
-    WHERE created_at >= date('now', '-{$monthsCount} months')
-    GROUP BY month
-    ORDER BY month ASC";
+    if ($groupByDay) {
+        // Grouper par jour pour les périodes courtes
+        $revenueByPeriodQuery = "SELECT
+            strftime('%Y-%m-%d', created_at) as period,
+            SUM(CASE WHEN payment_status = 'paid' THEN total_amount ELSE 0 END) as revenue
+        FROM orders
+        WHERE created_at >= ?
+        GROUP BY period
+        ORDER BY period ASC";
 
-    $revenueByMonth = $db->query($revenueByMonthQuery);
+        $revenueByPeriod = $db->query($revenueByPeriodQuery, [$dateFrom]);
 
-    // Formater les mois en français
-    $monthsMap = [
-        '01' => 'Jan', '02' => 'Fév', '03' => 'Mar', '04' => 'Avr',
-        '05' => 'Mai', '06' => 'Jun', '07' => 'Jul', '08' => 'Aoû',
-        '09' => 'Sep', '10' => 'Oct', '11' => 'Nov', '12' => 'Déc'
-    ];
+        // Créer un index des données existantes
+        $revenueByDay = [];
+        foreach ($revenueByPeriod as $row) {
+            $revenueByDay[$row['period']] = (float) $row['revenue'];
+        }
 
-    $formattedRevenueByMonth = [];
-    foreach ($revenueByMonth as $row) {
-        $parts = explode('-', $row['month']);
-        $monthLabel = $monthsMap[$parts[1]] ?? $parts[1];
-        $formattedRevenueByMonth[] = [
-            'month' => $monthLabel,
-            'revenue' => (float) $row['revenue']
+        // Générer tous les jours de la période (même ceux sans données)
+        $formattedRevenueByMonth = [];
+        $currentDate = new DateTime($dateFrom);
+        $endDate = new DateTime('now');
+
+        while ($currentDate <= $endDate) {
+            $dateKey = $currentDate->format('Y-m-d');
+            $dayLabel = $currentDate->format('d/m');
+            $revenue = $revenueByDay[$dateKey] ?? 0;
+
+            $formattedRevenueByMonth[] = [
+                'month' => $dayLabel,
+                'revenue' => $revenue
+            ];
+
+            $currentDate->modify('+1 day');
+        }
+    } else {
+        // Grouper par mois pour les périodes longues
+        $monthsCount = match($period) {
+            '90d' => 3,
+            '1y' => 12,
+            default => 3
+        };
+
+        $revenueByMonthQuery = "SELECT
+            strftime('%Y-%m', created_at) as month,
+            SUM(CASE WHEN payment_status = 'paid' THEN total_amount ELSE 0 END) as revenue
+        FROM orders
+        WHERE created_at >= date('now', '-{$monthsCount} months')
+        GROUP BY month
+        ORDER BY month ASC";
+
+        $revenueByMonth = $db->query($revenueByMonthQuery);
+
+        // Créer un index des données existantes
+        $revenueByMonthData = [];
+        foreach ($revenueByMonth as $row) {
+            $revenueByMonthData[$row['month']] = (float) $row['revenue'];
+        }
+
+        // Formater les mois en français
+        $monthsMap = [
+            '01' => 'Jan', '02' => 'Fév', '03' => 'Mar', '04' => 'Avr',
+            '05' => 'Mai', '06' => 'Jun', '07' => 'Jul', '08' => 'Aoû',
+            '09' => 'Sep', '10' => 'Oct', '11' => 'Nov', '12' => 'Déc'
         ];
+
+        // Générer tous les mois de la période (même ceux sans données)
+        $formattedRevenueByMonth = [];
+        $currentDate = new DateTime();
+        $currentDate->modify("-{$monthsCount} months");
+
+        for ($i = 0; $i <= $monthsCount; $i++) {
+            $monthKey = $currentDate->format('Y-m');
+            $monthNum = $currentDate->format('m');
+            $monthLabel = $monthsMap[$monthNum] ?? $monthNum;
+            $revenue = $revenueByMonthData[$monthKey] ?? 0;
+
+            $formattedRevenueByMonth[] = [
+                'month' => $monthLabel,
+                'revenue' => $revenue
+            ];
+
+            $currentDate->modify('+1 month');
+        }
     }
 
     // Distribution des moyens de paiement

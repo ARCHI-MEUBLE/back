@@ -43,7 +43,8 @@ services:
       - CRON_SECRET=${CRON_SECRET}
     working_dir: /app
     # Force running the init script with bash to avoid CRLF/shebang issues on Windows
-    command: /bin/bash -lc "bash /usr/local/bin/init_db.sh && php -S 0.0.0.0:8000 router.php"
+    # Convertir les fins de ligne CRLF en LF (important sur Windows), installer les dépendances, initialiser la BDD, puis lancer le serveur
+    command: /bin/bash -lc "sed -i 's/\r$//' /app/install_dependencies.sh && chmod +x /app/install_dependencies.sh && bash /app/install_dependencies.sh && bash /usr/local/bin/init_db.sh && php -S 0.0.0.0:8000 router.php"
     networks:
       - archimeuble-network
     restart: unless-stopped
