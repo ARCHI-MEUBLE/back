@@ -192,6 +192,24 @@ class Order {
     }
 
     /**
+     * Supprimer une commande et ses items
+     */
+    public function delete($orderId) {
+        try {
+            // Supprimer les items de commande d'abord (contraintes de clé étrangère)
+            $deleteItemsQuery = "DELETE FROM order_items WHERE order_id = ?";
+            $this->db->execute($deleteItemsQuery, [$orderId]);
+
+            // Supprimer la commande
+            $deleteOrderQuery = "DELETE FROM orders WHERE id = ?";
+            return $this->db->execute($deleteOrderQuery, [$orderId]);
+        } catch (Exception $e) {
+            error_log("Erreur lors de la suppression de commande {$orderId}: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Formater une commande pour le frontend
      */
     public function formatForFrontend($orderData) {

@@ -64,7 +64,7 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 WORKDIR /app
 
 # Invalider le cache Docker pour forcer la copie des nouveaux fichiers
-ARG CACHEBUST=4
+ARG CACHEBUST=5
 
 # Copier tous les fichiers de l'application
 COPY . /app
@@ -84,9 +84,11 @@ RUN cp /app/init_db.sh /usr/local/bin/init_db.sh \
     && sed -i 's/\r$//' /app/samples_init.sql \
     && sed -i 's/\r$//' /app/init_missing_tables.sql \
     && sed -i 's/\r$//' /app/install_dependencies.sh \
+    && sed -i 's/\r$//' /app/create_missing_tables.py \
     && chmod +x /usr/local/bin/init_db.sh \
     && chmod +x /app/start.sh \
-    && chmod +x /app/install_dependencies.sh
+    && chmod +x /app/install_dependencies.sh \
+    && chmod +x /app/create_missing_tables.py
 
 # Exposer le port 8000 pour le serveur PHP
 EXPOSE 8000

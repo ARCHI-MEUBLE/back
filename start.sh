@@ -31,44 +31,10 @@ if [ -f "$DB_PATH" ]; then
     echo "✓ Database initialized: $DB_PATH"
     echo "  Size: $(du -h $DB_PATH | cut -f1)"
 
-    # Fix: Créer les tables manquantes (calendly_appointments, notifications)
+    # Fix: Créer les tables manquantes avec Python (plus fiable)
     echo ""
-    echo "Ensuring all tables exist..."
-
-    if [ -f "/app/init_missing_tables.sql" ]; then
-        sqlite3 "$DB_PATH" < /app/init_missing_tables.sql
-        echo "✓ Missing tables created from init_missing_tables.sql"
-    else
-        echo "⚠ init_missing_tables.sql not found, using inline SQL"
-        sqlite3 "$DB_PATH" <<'FIXSQL'
-CREATE TABLE IF NOT EXISTS calendly_appointments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    calendly_event_id TEXT UNIQUE NOT NULL,
-    customer_email TEXT NOT NULL,
-    customer_name TEXT NOT NULL,
-    start_time DATETIME NOT NULL,
-    end_time DATETIME NOT NULL,
-    event_type TEXT,
-    location TEXT,
-    status TEXT DEFAULT 'scheduled',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS notifications (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER,
-    type TEXT NOT NULL,
-    title TEXT NOT NULL,
-    message TEXT NOT NULL,
-    is_read BOOLEAN DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES admins(id) ON DELETE CASCADE
-);
-FIXSQL
-    fi
-
-    echo "✓ All tables verified"
+    echo "Ensuring all tables exist with Python..."
+    python3 /app/create_missing_tables.py
 else
     echo "✗ WARNING: Database file not created!"
 fi
