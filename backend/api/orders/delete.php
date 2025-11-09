@@ -24,13 +24,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-session_start();
-
 require_once __DIR__ . '/../../models/Order.php';
-require_once __DIR__ . '/../../core/auth.php';
 
 // Vérifier l'authentification
-if (!isAuthenticated()) {
+if (!isset($_SESSION['customer_id'])) {
     http_response_code(401);
     echo json_encode(['error' => 'Non authentifié']);
     exit;
