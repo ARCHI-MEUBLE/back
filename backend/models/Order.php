@@ -53,8 +53,12 @@ class Order {
         // Insérer les items de commande
         foreach ($cartItems as $item) {
             $configData = json_encode($item['configuration']['config_data']);
-            $insertItemQuery = "INSERT INTO order_items (order_id, configuration_id, prompt, config_data, glb_url, quantity, unit_price)
-                                VALUES (?, ?, ?, ?, ?, ?, ?)";
+            $unitPrice = $item['configuration']['price'];
+            $quantity = $item['quantity'];
+            $totalPrice = $unitPrice * $quantity;
+
+            $insertItemQuery = "INSERT INTO order_items (order_id, configuration_id, prompt, config_data, glb_url, quantity, unit_price, total_price)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
             $this->db->execute($insertItemQuery, [
                 $orderId,
@@ -62,8 +66,9 @@ class Order {
                 $item['configuration']['prompt'],
                 $configData,
                 $item['configuration']['glb_url'],
-                $item['quantity'],
-                $item['configuration']['price']
+                $quantity,
+                $unitPrice,
+                $totalPrice
             ]);
         }
 
