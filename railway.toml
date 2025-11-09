@@ -1,8 +1,27 @@
+# =============================================================================
+# Railway Configuration pour ArchiMeuble Backend
+# =============================================================================
+# Ce fichier configure le déploiement sur Railway
+# Documentation: https://docs.railway.app/deploy/config-as-code
+# =============================================================================
+
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "/bin/bash -c 'cd /app && /usr/local/bin/init_db.sh && php -S 0.0.0.0:8000 router.php'"
+# Commande de démarrage: initialise la DB puis lance le serveur PHP
+startCommand = "/bin/bash -c 'cd /app && /usr/local/bin/init_db.sh && php -S 0.0.0.0:$PORT router.php'"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
+
+# Health check pour vérifier que l'application est opérationnelle
+healthcheckPath = "/backend/api/test.php"
+healthcheckTimeout = 30
+
+# Volume persistant pour la base de données
+# Railway crée automatiquement un volume monté sur /data
+# Assurez-vous que DB_PATH=/data/archimeuble_test.db dans vos variables d'env
+[[deploy.volumes]]
+mountPath = "/data"
+name = "archimeuble_db_volume"
