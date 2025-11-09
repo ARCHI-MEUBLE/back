@@ -15,13 +15,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // L'authentification est gérée par Next.js API route
 // Pas besoin de vérifier $_SESSION ici
 
-try {
-    // Détection de l'environnement
-    $isDocker = file_exists('/app');
-    $dbPath = $isDocker ? '/app/database/archimeuble.db' : __DIR__ . '/../../database/archimeuble.db';
+require_once __DIR__ . '/../../core/Database.php';
 
-    $db = new PDO('sqlite:' . $dbPath);
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+try {
+    $db = Database::getInstance()->getPDO();
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Paramètres de filtrage et pagination
