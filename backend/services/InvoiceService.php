@@ -24,11 +24,14 @@ class InvoiceService {
 
         // Nom du fichier PDF
         $filename = "facture_{$invoiceNumber}.pdf";
-        $filepath = __DIR__ . '/../../invoices/' . $filename;
+
+        // Utiliser /data/invoices pour Railway (volume persistant)
+        $invoicesDir = file_exists('/data') ? '/data/invoices' : __DIR__ . '/../../invoices';
+        $filepath = $invoicesDir . '/' . $filename;
 
         // Créer le dossier invoices s'il n'existe pas
-        if (!file_exists(__DIR__ . '/../../invoices/')) {
-            mkdir(__DIR__ . '/../../invoices/', 0755, true);
+        if (!file_exists($invoicesDir)) {
+            mkdir($invoicesDir, 0777, true);
         }
 
         // Générer le PDF (méthode simplifiée avec wkhtmltopdf ou DomPDF)
@@ -58,13 +61,17 @@ class InvoiceService {
 
         $itemsHTML = '';
         foreach ($items as $item) {
-            $itemPriceHT = ($item['price'] * $item['quantity']) / 1.20;
+            // Utiliser les bons noms de colonnes de order_items
+            $itemName = $item['prompt'] ?? 'Meuble personnalisé';
+            $itemPrice = $item['total_price'] ?? ($item['unit_price'] * $item['quantity']);
+            $itemPriceHT = $itemPrice / 1.20;
+
             $itemsHTML .= "
                 <tr>
-                    <td style='padding: 10px; border-bottom: 1px solid #ddd;'>{$item['name']}</td>
+                    <td style='padding: 10px; border-bottom: 1px solid #ddd;'>{$itemName}</td>
                     <td style='padding: 10px; border-bottom: 1px solid #ddd; text-align: center;'>{$item['quantity']}</td>
                     <td style='padding: 10px; border-bottom: 1px solid #ddd; text-align: right;'>" . number_format($itemPriceHT, 2, ',', ' ') . " €</td>
-                    <td style='padding: 10px; border-bottom: 1px solid #ddd; text-align: right;'>" . number_format($item['price'] * $item['quantity'], 2, ',', ' ') . " €</td>
+                    <td style='padding: 10px; border-bottom: 1px solid #ddd; text-align: right;'>" . number_format($itemPrice, 2, ',', ' ') . " €</td>
                 </tr>
             ";
         }
