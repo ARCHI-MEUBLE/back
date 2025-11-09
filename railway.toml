@@ -10,8 +10,8 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-# Commande de démarrage: initialise la DB puis lance le serveur PHP
-startCommand = "/bin/bash -c 'cd /app && /usr/local/bin/init_db.sh && php -S 0.0.0.0:$PORT router.php'"
+# Commande de démarrage: script qui initialise la DB et lance PHP
+startCommand = "bash /app/start.sh"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
