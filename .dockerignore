@@ -42,5 +42,5 @@ desktop.ini
 
 # Cache PHP
 .phpunit.cache
-vendor/
-composer.lock
+# vendor/ ← Inclus dans Git pour déploiement Railway
+# composer.lock ← Inclus dans Git
