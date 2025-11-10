@@ -13,9 +13,21 @@ Cors::enable();
 $session = Session::getInstance();
 
 // Vérifier l'authentification admin
-if (!$session->has('is_admin') || $session->get('is_admin') !== true) {
+// Vérifier les deux méthodes d'auth: Session class OU $_SESSION natif
+$isAdminSession = $session->has('is_admin') && $session->get('is_admin') === true;
+$isAdminNative = isset($_SESSION['admin_email']) && !empty($_SESSION['admin_email']);
+
+if (!$isAdminSession && !$isAdminNative) {
+    error_log("[UPLOAD] Auth failed - is_admin: " . ($session->has('is_admin') ? 'yes' : 'no') .
+              ", admin_email: " . ($_SESSION['admin_email'] ?? 'not set'));
+    error_log("[UPLOAD] Session ID: " . session_id());
+    error_log("[UPLOAD] Cookies: " . print_r($_COOKIE, true));
     http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized']);
+    echo json_encode(['error' => 'Unauthorized', 'debug' => [
+        'has_is_admin' => $session->has('is_admin'),
+        'has_admin_email' => isset($_SESSION['admin_email']),
+        'session_id' => session_id()
+    ]]);
     exit;
 }
 
