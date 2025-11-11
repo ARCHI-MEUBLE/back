@@ -71,7 +71,6 @@ try {
                        FROM configurations c
                        LEFT JOIN customers cust ON CAST(c.user_id AS INTEGER) = cust.id
                        LEFT JOIN models m ON c.template_id = m.id
-                       WHERE c.user_id IS NOT NULL
                        ORDER BY c.created_at DESC
                        LIMIT $limit OFFSET $offset";
         $rows = $db->query($listQuery);
@@ -83,7 +82,7 @@ try {
             }
         }
 
-        $countRow = $db->queryOne("SELECT COUNT(*) as count FROM configurations WHERE user_id IS NOT NULL");
+        $countRow = $db->queryOne("SELECT COUNT(*) as count FROM configurations");
         $total = $countRow ? (int)$countRow['count'] : 0;
 
         http_response_code(200);
