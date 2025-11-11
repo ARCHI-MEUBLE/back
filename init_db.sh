@@ -293,6 +293,39 @@ CREATE INDEX IF NOT EXISTS idx_sample_types_active ON sample_types(active);
 CREATE INDEX IF NOT EXISTS idx_sample_colors_type_id ON sample_colors(type_id);
 CREATE INDEX IF NOT EXISTS idx_sample_colors_active ON sample_colors(active);
 
+-- Table pour les échantillons dans le panier
+CREATE TABLE IF NOT EXISTS cart_sample_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    customer_id INTEGER NOT NULL,
+    sample_color_id INTEGER NOT NULL,
+    quantity INTEGER NOT NULL DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+    FOREIGN KEY (sample_color_id) REFERENCES sample_colors(id) ON DELETE CASCADE,
+    UNIQUE(customer_id, sample_color_id)
+);
+
+-- Table pour les échantillons dans les commandes
+CREATE TABLE IF NOT EXISTS order_sample_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL,
+    sample_color_id INTEGER NOT NULL,
+    sample_name VARCHAR(255) NOT NULL,
+    sample_type_name VARCHAR(255),
+    material VARCHAR(255),
+    image_url TEXT,
+    hex VARCHAR(20),
+    quantity INTEGER NOT NULL DEFAULT 1,
+    price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_cart_sample_items_customer ON cart_sample_items(customer_id);
+CREATE INDEX IF NOT EXISTS idx_cart_sample_items_color ON cart_sample_items(sample_color_id);
+CREATE INDEX IF NOT EXISTS idx_order_sample_items_order ON order_sample_items(order_id);
+
 -- Index pour améliorer les performances
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_configurations_user_id ON configurations(user_id);
