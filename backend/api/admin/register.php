@@ -19,8 +19,18 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once __DIR__ . '/../../core/Database.php';
 
+// Disable HTML error output
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+
 try {
     $input = json_decode(file_get_contents('php://input'), true);
+
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid JSON']);
+        exit;
+    }
 
     $email = $input['email'] ?? null;
     $password = $input['password'] ?? null;
@@ -51,6 +61,7 @@ try {
         exit;
     }
 
+    require_once __DIR__ . '/../../core/Database.php';
     $db = Database::getInstance();
 
     // Vérifier si l'email existe déjà
@@ -69,12 +80,18 @@ try {
 
     // Insérer le nouvel admin
     $query = "INSERT INTO admins (username, email, password, created_at) VALUES (?, ?, ?, datetime('now'))";
-    $db->execute($query, [$username, $email, $passwordHash]);
+    $success = $db->execute($query, [$username, $email, $passwordHash]);
+
+    if (!$success) {
+        throw new Exception("Failed to insert admin");
+    }
 
     $adminId = $db->lastInsertId();
 
     // Créer une session
-    session_start();
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
     $_SESSION['admin_id'] = $adminId;
     $_SESSION['admin_email'] = $email;
     $_SESSION['admin_username'] = $username;
@@ -92,6 +109,10 @@ try {
 
 } catch (Exception $e) {
     error_log("Register error: " . $e->getMessage());
+    error_log("Register trace: " . $e->getTraceAsString());
     http_response_code(500);
-    echo json_encode(['error' => 'Erreur lors de la création du compte']);
+    echo json_encode([
+        'error' => 'Erreur lors de la création du compte',
+        'details' => $e->getMessage()
+    ]);
 }
