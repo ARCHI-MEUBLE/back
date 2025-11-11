@@ -16,16 +16,29 @@ class Order {
      * Créer une commande à partir du panier
      */
     public function createFromCart($customerId, $shippingAddress, $billingAddress, $paymentMethod = 'card', $notes = null) {
-        // Récupérer les items du panier
+        // Récupérer les items du panier (configurations)
         require_once __DIR__ . '/Cart.php';
         $cart = new Cart();
         $cartItems = $cart->getItems($customerId);
 
-        if (empty($cartItems)) {
+        // Récupérer les échantillons du panier
+        $samplesQuery = "
+            SELECT csi.id, csi.sample_color_id, csi.quantity,
+                   sc.name as color_name, sc.hex, sc.image_url,
+                   st.name as type_name, st.material
+            FROM cart_sample_items csi
+            JOIN sample_colors sc ON csi.sample_color_id = sc.id
+            JOIN sample_types st ON sc.type_id = st.id
+            WHERE csi.customer_id = ?
+        ";
+        $sampleItems = $this->db->query($samplesQuery, [$customerId]);
+
+        // Vérifier qu'il y a au moins des configs OU des échantillons
+        if (empty($cartItems) && empty($sampleItems)) {
             throw new Exception('Panier vide');
         }
 
-        // Calculer le total
+        // Calculer le total (uniquement les configs, échantillons = 0€)
         $total = 0;
         foreach ($cartItems as $item) {
             $total += $item['configuration']['price'] * $item['quantity'];
@@ -50,7 +63,7 @@ class Order {
 
         $orderId = $this->db->lastInsertId();
 
-        // Insérer les items de commande
+        // Insérer les items de commande (configurations)
         foreach ($cartItems as $item) {
             $configData = json_encode($item['configuration']['config_data']);
             $unitPrice = $item['configuration']['price'];
@@ -72,8 +85,28 @@ class Order {
             ]);
         }
 
-        // Vider le panier
+        // Insérer les échantillons de commande
+        foreach ($sampleItems as $sample) {
+            $insertSampleQuery = "INSERT INTO order_sample_items
+                (order_id, sample_color_id, sample_name, sample_type_name, material, image_url, hex, quantity, price)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+            $this->db->execute($insertSampleQuery, [
+                $orderId,
+                $sample['sample_color_id'],
+                $sample['color_name'],
+                $sample['type_name'],
+                $sample['material'],
+                $sample['image_url'],
+                $sample['hex'],
+                $sample['quantity'],
+                0.00 // Prix = 0€ pour échantillons gratuits
+            ]);
+        }
+
+        // Vider le panier (configurations ET échantillons)
         $cart->clear($customerId);
+        $this->db->execute("DELETE FROM cart_sample_items WHERE customer_id = ?", [$customerId]);
 
         // Récupérer les infos du client
         require_once __DIR__ . '/Customer.php';
@@ -84,6 +117,7 @@ class Order {
             'id' => $orderId,
             'order_number' => $orderNumber,
             'total' => $total,
+            'samples_count' => count($sampleItems),
             'customer' => $customerData
         ];
     }
@@ -109,6 +143,14 @@ class Order {
      */
     public function getOrderItems($orderId) {
         $query = "SELECT * FROM order_items WHERE order_id = ? ORDER BY id";
+        return $this->db->query($query, [$orderId]);
+    }
+
+    /**
+     * Récupérer les échantillons d'une commande
+     */
+    public function getOrderSamples($orderId) {
+        $query = "SELECT * FROM order_sample_items WHERE order_id = ? ORDER BY id";
         return $this->db->query($query, [$orderId]);
     }
 

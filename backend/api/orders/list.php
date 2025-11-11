@@ -45,6 +45,10 @@ try {
         $items = $order->getItems($_GET['id']);
         $orderData['items'] = $items;
 
+        // Récupérer les échantillons de la commande
+        $samples = $order->getOrderSamples($_GET['id']);
+        $orderData['samples'] = $samples;
+
         // Formater pour le frontend
         $orderData = $order->formatForFrontend($orderData);
 
@@ -58,9 +62,11 @@ try {
 
         $orders = $order->getByCustomer($customerId, $limit, $offset);
 
-        // Formater chaque commande pour le frontend
+        // Formater chaque commande pour le frontend et ajouter le count échantillons
         $formattedOrders = [];
         foreach ($orders as $ord) {
+            $samples = $order->getOrderSamples($ord['id']);
+            $ord['samples_count'] = count($samples);
             $formattedOrders[] = $order->formatForFrontend($ord);
         }
 

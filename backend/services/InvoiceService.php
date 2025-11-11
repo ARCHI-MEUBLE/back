@@ -15,12 +15,12 @@ class InvoiceService {
     /**
      * Génère une facture PDF pour une commande
      */
-    public function generateInvoice($order, $customer, $items) {
+    public function generateInvoice($order, $customer, $items, $samples = []) {
         $invoiceNumber = $this->getInvoiceNumber($order);
         $invoiceDate = date('d/m/Y', strtotime($order['created_at']));
 
         // Générer le HTML de la facture
-        $html = $this->generateInvoiceHTML($order, $customer, $items, $invoiceNumber, $invoiceDate);
+        $html = $this->generateInvoiceHTML($order, $customer, $items, $samples, $invoiceNumber, $invoiceDate);
 
         // Nom du fichier PDF
         $filename = "facture_{$invoiceNumber}.pdf";
@@ -55,11 +55,13 @@ class InvoiceService {
     /**
      * Génère le HTML de la facture
      */
-    private function generateInvoiceHTML($order, $customer, $items, $invoiceNumber, $invoiceDate) {
+    private function generateInvoiceHTML($order, $customer, $items, $samples, $invoiceNumber, $invoiceDate) {
         $totalHT = $order['total_amount'] / 1.20; // Montant HT (TVA 20%)
         $tva = $order['total_amount'] - $totalHT;
 
         $itemsHTML = '';
+
+        // Ajouter les configurations
         foreach ($items as $item) {
             // Utiliser les bons noms de colonnes de order_items
             $itemName = $item['prompt'] ?? 'Meuble personnalisé';
@@ -72,6 +74,20 @@ class InvoiceService {
                     <td style='padding: 10px; border-bottom: 1px solid #ddd; text-align: center;'>{$item['quantity']}</td>
                     <td style='padding: 10px; border-bottom: 1px solid #ddd; text-align: right;'>" . number_format($itemPriceHT, 2, ',', ' ') . " €</td>
                     <td style='padding: 10px; border-bottom: 1px solid #ddd; text-align: right;'>" . number_format($itemPrice, 2, ',', ' ') . " €</td>
+                </tr>
+            ";
+        }
+
+        // Ajouter les échantillons gratuits
+        foreach ($samples as $sample) {
+            $sampleName = "Échantillon: " . ($sample['sample_name'] ?? 'Échantillon') . " - " . ($sample['material'] ?? '');
+
+            $itemsHTML .= "
+                <tr style='background-color: #f0fdf4;'>
+                    <td style='padding: 10px; border-bottom: 1px solid #ddd;'>{$sampleName}</td>
+                    <td style='padding: 10px; border-bottom: 1px solid #ddd; text-align: center;'>{$sample['quantity']}</td>
+                    <td style='padding: 10px; border-bottom: 1px solid #ddd; text-align: right; color: #16a34a; font-weight: bold;'>GRATUIT</td>
+                    <td style='padding: 10px; border-bottom: 1px solid #ddd; text-align: right; color: #16a34a; font-weight: bold;'>0,00 €</td>
                 </tr>
             ";
         }
@@ -210,7 +226,7 @@ class InvoiceService {
 
             <div style='margin-top: 20px; padding: 12px; background-color: #fef3c7; border-radius: 8px;'>
                 <p style='margin: 0;'><strong>Paiement effectué par:</strong> " . ucfirst($order['payment_method']) . "</p>
-                <p style='margin: 5px 0 0 0;'><strong>Statut:</strong> Payé le " . date('d/m/Y', strtotime($order['confirmed_at'])) . "</p>
+                <p style='margin: 5px 0 0 0;'><strong>Statut:</strong> Payé le " . ($order['confirmed_at'] ? date('d/m/Y', strtotime($order['confirmed_at'])) : date('d/m/Y', strtotime($order['created_at']))) . "</p>
             </div>
 
             <div class='footer'>

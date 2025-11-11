@@ -51,6 +51,10 @@ try {
             $items = $order->getItems($_GET['id']);
             $orderData['items'] = $items;
 
+            // Récupérer les échantillons
+            $samples = $order->getOrderSamples($_GET['id']);
+            $orderData['samples'] = $samples;
+
             // Formater pour le frontend
             $orderData = $order->formatForFrontend($orderData);
 
@@ -75,6 +79,10 @@ try {
                         $ord['customer'] = $customer;
                     }
                 }
+                // Ajouter le count d'échantillons
+                $samples = $order->getOrderSamples($ord['id']);
+                $ord['samples_count'] = count($samples);
+
                 // Formater pour le frontend
                 $formattedOrders[] = $order->formatForFrontend($ord);
             }

@@ -63,12 +63,13 @@ try {
         exit;
     }
 
-    // Récupérer le client et les items
+    // Récupérer le client, les items et les échantillons
     $customer = $customerModel->getById($order['customer_id']);
     $items = $orderModel->getOrderItems($orderId);
+    $samples = $orderModel->getOrderSamples($orderId);
 
     // Générer la facture
-    $invoice = $invoiceService->generateInvoice($order, $customer, $items);
+    $invoice = $invoiceService->generateInvoice($order, $customer, $items, $samples);
 
     // Si on veut retourner JSON avec l'URL
     if (isset($_GET['json']) && $_GET['json'] === 'true') {

@@ -52,12 +52,16 @@ try {
         $notification = new AdminNotification();
         $orderNumber = $result['order_number'];
         $total = $result['total'];
+        $samplesCount = $result['samples_count'] ?? 0;
         $customerName = isset($result['customer']) ?
             trim(($result['customer']['first_name'] ?? '') . ' ' . ($result['customer']['last_name'] ?? '')) :
             'Client';
 
         $message = "Nouvelle commande #{$orderNumber} de {$customerName} pour {$total}€";
-        $notification->create('order', $message, $result['id']);
+        if ($samplesCount > 0) {
+            $message .= " (+ {$samplesCount} échantillon" . ($samplesCount > 1 ? 's' : '') . ")";
+        }
+        $notification->create($samplesCount > 0 ? 'sample_order' : 'order', $message, $result['id']);
     } catch (Exception $e) {
         // Ne pas bloquer la création de commande si la notification échoue
         error_log("Erreur création notification: " . $e->getMessage());

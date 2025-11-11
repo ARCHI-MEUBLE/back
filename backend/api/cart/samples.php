@@ -72,6 +72,13 @@ try {
         $sampleColorId = $input['sample_color_id'];
         $quantity = $input['quantity'] ?? 1;
 
+        // Vérifier la limite de 3 échantillons gratuits
+        $currentCount = $db->query(
+            "SELECT COUNT(*) as count FROM cart_sample_items WHERE customer_id = ?",
+            [$customerId]
+        );
+        $totalSamples = $currentCount[0]['count'] ?? 0;
+
         // Vérifier si l'échantillon existe déjà dans le panier
         $existing = $db->query(
             "SELECT id, quantity FROM cart_sample_items WHERE customer_id = ? AND sample_color_id = ?",
@@ -79,27 +86,37 @@ try {
         );
 
         if (!empty($existing)) {
-            // Mettre à jour la quantité
-            $newQuantity = $existing[0]['quantity'] + $quantity;
-            $db->execute(
-                "UPDATE cart_sample_items SET quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                [$newQuantity, $existing[0]['id']]
-            );
-            $itemId = $existing[0]['id'];
-        } else {
-            // Insérer un nouvel article
-            $db->execute(
-                "INSERT INTO cart_sample_items (customer_id, sample_color_id, quantity) VALUES (?, ?, ?)",
-                [$customerId, $sampleColorId, $quantity]
-            );
-            $itemId = $db->lastInsertId();
+            // Déjà dans le panier
+            http_response_code(400);
+            echo json_encode([
+                'error' => 'Cet échantillon est déjà dans votre panier'
+            ]);
+            exit;
         }
+
+        // Vérifier la limite
+        if ($totalSamples >= 3) {
+            http_response_code(400);
+            echo json_encode([
+                'error' => 'Limite de 3 échantillons gratuits atteinte',
+                'limit_reached' => true
+            ]);
+            exit;
+        }
+
+        // Insérer un nouvel article
+        $db->execute(
+            "INSERT INTO cart_sample_items (customer_id, sample_color_id, quantity) VALUES (?, ?, ?)",
+            [$customerId, $sampleColorId, $quantity]
+        );
+        $itemId = $db->lastInsertId();
 
         http_response_code(201);
         echo json_encode([
             'success' => true,
             'message' => 'Échantillon ajouté au panier',
-            'item_id' => $itemId
+            'item_id' => $itemId,
+            'samples_count' => $totalSamples + 1
         ]);
         exit;
     }
