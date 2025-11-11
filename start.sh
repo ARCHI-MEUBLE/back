@@ -20,24 +20,23 @@ chmod -R 777 /data
 
 echo "✓ /data directory created and writable"
 
-# Initialiser la base de données
-echo ""
-echo "Initializing database..."
-export DB_PATH="$DB_PATH"
-/usr/local/bin/init_db.sh
-
-# Vérifier que la DB existe
-if [ -f "$DB_PATH" ]; then
-    echo "✓ Database initialized: $DB_PATH"
-    echo "  Size: $(du -h $DB_PATH | cut -f1)"
-
-    # Fix: Créer les tables manquantes avec Python (plus fiable)
+# Initialiser la base de données SEULEMENT si elle n'existe pas
+if [ ! -f "$DB_PATH" ]; then
     echo ""
-    echo "Ensuring all tables exist with Python..."
-    python3 /app/create_missing_tables.py
+    echo "Database not found. Initializing new database..."
+    export DB_PATH="$DB_PATH"
+    /usr/local/bin/init_db.sh
 else
-    echo "✗ WARNING: Database file not created!"
+    echo ""
+    echo "✓ Existing database found: $DB_PATH"
+    echo "  Size: $(du -h $DB_PATH | cut -f1)"
+    echo "  Skipping initialization to preserve data"
 fi
+
+# Toujours vérifier que toutes les tables existent (ne supprime pas les données)
+echo ""
+echo "Ensuring all tables exist with Python..."
+python3 /app/create_missing_tables.py
 
 # Créer le répertoire pour les sessions PHP
 mkdir -p /data/sessions
