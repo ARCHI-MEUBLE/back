@@ -225,13 +225,26 @@ try {
         exit();
     }
 
-    // Succès : retourner l'URL du fichier GLB
+    // Vérifier si le fichier DXF a été créé (même nom que GLB mais avec extension .dxf)
+    $dxfFilename = str_replace('.glb', '.dxf', $filename);
+    $dxfPath = $outputDir . $dxfFilename;
+    $dxfUrl = null;
+
+    if (file_exists($dxfPath)) {
+        $dxfUrl = '/models/' . $dxfFilename;
+        error_log("Fichier DXF généré: $dxfPath");
+    } else {
+        error_log("Fichier DXF non trouvé: $dxfPath");
+    }
+
+    // Succès : retourner l'URL du fichier GLB et DXF
     $glbUrl = '/models/' . $filename;
 
     http_response_code(201);
     echo json_encode([
         'success' => true,
         'glb_url' => $glbUrl,
+        'dxf_url' => $dxfUrl,
         'prompt' => $prompt,
         'filename' => $filename,
         'execution_time' => $executionTime . 's'

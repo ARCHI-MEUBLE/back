@@ -62,7 +62,7 @@ try {
 
         // SQLite a des problèmes avec les paramètres PDO sur LIMIT/OFFSET
         // On les caste en int pour la sécurité et on les interpole directement
-        $listQuery = "SELECT c.id, c.user_id, c.template_id, c.prompt, c.config_string, c.price, c.glb_url, c.created_at,
+        $listQuery = "SELECT c.id, c.user_id, c.template_id, c.prompt, c.config_string, c.price, c.glb_url, c.dxf_url, c.created_at,
                               cust.email as customer_email,
                               cust.first_name as customer_first_name,
                               cust.last_name as customer_last_name,

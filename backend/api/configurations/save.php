@@ -77,6 +77,10 @@ try {
             $updateData['glb_url'] = $data['glb_url'] !== '' ? $data['glb_url'] : null;
         }
 
+        if (array_key_exists('dxf_url', $data)) {
+            $updateData['dxf_url'] = $data['dxf_url'] !== '' ? $data['dxf_url'] : null;
+        }
+
         if (array_key_exists('model_id', $data)) {
             $updateData['template_id'] = $data['model_id'] ?: null;
         }
@@ -93,7 +97,7 @@ try {
         exit;
     }
 
-    // Signature: create($userId, $templateId, $configString, $price, $glbUrl = null, $prompt = null, $userSession = null)
+    // Créer la configuration avec dxf_url si fourni
     $configId = $config->create(
         $_SESSION['customer_id'],
         $data['model_id'] ?? null,
@@ -103,6 +107,11 @@ try {
         $data['prompt'],
         session_id()
     );
+
+    // Mettre à jour le dxf_url si fourni
+    if (isset($data['dxf_url']) && $data['dxf_url'] !== '') {
+        $config->update($configId, ['dxf_url' => $data['dxf_url']]);
+    }
     
     // Récupérer la configuration créée
     $savedConfiguration = $config->getById($configId);

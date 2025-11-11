@@ -35,24 +35,18 @@ try {
         exit;
     }
 
-    // Récupérer la configuration
+    // Essayer de récupérer la configuration pour un fichier DXF spécifique
     $db = Database::getInstance();
     $config = $db->queryOne(
         "SELECT id, dxf_url, prompt FROM configurations WHERE id = ?",
         [$configId]
     );
 
-    if (!$config) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Configuration non trouvée']);
-        exit;
-    }
-
-    // Vérifier si un fichier DXF existe déjà
-    if ($config['dxf_url'] && file_exists(__DIR__ . '/../../../' . $config['dxf_url'])) {
+    // Vérifier si un fichier DXF spécifique existe
+    if ($config && $config['dxf_url'] && file_exists(__DIR__ . '/../../../' . $config['dxf_url'])) {
         $dxfPath = __DIR__ . '/../../../' . $config['dxf_url'];
     } else {
-        // Chercher un fichier DXF générique dans le dossier pieces
+        // Sinon, utiliser le fichier DXF générique
         $dxfPath = __DIR__ . '/../../../pieces/piece_general.dxf';
 
         if (!file_exists($dxfPath)) {

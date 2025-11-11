@@ -239,6 +239,25 @@ def create_number_image(number, image_size=(500, 500), font_size=100,
     
     return image
 
+def sectionner_par_texture(planches):
+    """
+    Groupe les planches par texture pour la génération du DXF.
+
+    Parameters:
+    planches (list): Liste des objets Planche
+
+    Returns:
+    list: Liste de listes de planches groupées par texture
+    """
+    groupes = {}
+
+    for planche in planches:
+        if planche.texture.nom not in groupes:
+            groupes[planche.texture.nom] = []  # Créer une nouvelle liste si la texture n'existe pas encore
+        groupes[planche.texture.nom].append(planche)  # Ajouter la planche à la liste correspondante
+
+    return list(groupes.values())
+
 def create_cylinder(d, l, P, normalv): #ENTREE : parametres géometriques # SORTIE objet trimesh cylindirique 
     # Créer un cylindre standard centré sur l'origine avec une orientation verticale
     # Diamètre d, Longueur l
@@ -1835,7 +1854,97 @@ else:
     mesh1.export(output_path, file_type="glb")
     print(f"[SUCCESS] Fichier GLB généré (OUVERT - portes ouvertes, tiroirs ouverts): {output_path}")
 
-# Arrêter ici - pas besoin de générer les SVG/DXF pour le moment
+# Générer le fichier DXF pour la menuiserie
+try:
+    # Créer les groupes de planches par texture (nécessaire pour le DXF)
+    groupes = sectionner_par_texture(planches)
+
+    # Générer le nom du fichier DXF basé sur le nom du fichier GLB
+    dxf_filename = os.path.splitext(os.path.basename(output_path))[0] + ".dxf"
+    dxf_output_dir = os.path.dirname(output_path)
+    dxf_output_path = os.path.join(dxf_output_dir, dxf_filename)
+
+    # Créer un document DXF
+    doc = ezdxf.new('R2010')
+    doc.layers.add("texte", color=9)
+    msp = doc.modelspace()
+
+    marge = 0.1  # marge en mètres
+    X = 0
+    Y = 0
+
+    diameter_layers = {}
+
+    for planches_index, planches_group in enumerate(groupes):
+        for i, planche in enumerate(planches_group):
+            # Projeter les points et convertir en mètres
+            projection = project_points_on_plane(planche.points,
+                                                planche.points[planche.face_usine.contour[0]],
+                                                np.cross(planche.sens_fibres,planche.face_usine.equation[:3]),
+                                                planche.sens_fibres)
+            projection = projection / 1000
+
+            xmax = np.max(projection[:, 0])
+            xmin = np.min(projection[:, 0])
+            ymax = np.max(projection[:, 1])
+            ymin = np.min(projection[:, 1])
+
+            projection[:, 0] = projection[:, 0] - xmin + X
+            projection[:, 1] = projection[:, 1] - ymin + Y
+
+            for face in planche.listface:
+                if planche.biseau:
+                    if not face.chant:
+                        contour_2d = projection[face.contour]
+                        points = [(float(x), float(y)) for x, y in contour_2d]
+                        msp.add_lwpolyline(points, close=True, dxfattribs={"layer": "0"})
+                else:
+                    if face == planche.face_usine:
+                        contour_2d = projection[face.contour]
+                        points = [(float(x), float(y)) for x, y in contour_2d]
+                        msp.add_lwpolyline(points, close=True, dxfattribs={"layer": "0"})
+
+                for alesage in face.alesages:
+                    projectioncentre = project_points_on_plane(alesage.positionxyz,
+                                                              planche.points[planche.face_usine.contour[0]],
+                                                              np.cross(planche.sens_fibres,planche.face_usine.equation[:3]),
+                                                              planche.sens_fibres)
+                    projectioncentre = projectioncentre / 1000
+                    projectioncentre[:, 0] = projectioncentre[:, 0] - xmin + X
+                    projectioncentre[:, 1] = projectioncentre[:, 1] - ymin + Y
+
+                    radius_m = alesage.rayon / 1000
+                    diameter_m = round(2 * radius_m, 3)
+                    layer_name = f"diam_{diameter_m}m"
+
+                    if layer_name not in diameter_layers:
+                        doc.layers.add(layer_name, color=len(diameter_layers) + 2)
+                        diameter_layers[layer_name] = True
+
+                    msp.add_circle(
+                        center=(projectioncentre[0, 0], projectioncentre[0, 1]),
+                        radius=radius_m,
+                        dxfattribs={"layer": layer_name},
+                    )
+
+            X = X + marge + xmax - xmin
+
+        Y = Y + 4
+
+    doc.header['$MENU'] = "Toutes les unités sont en mètres"
+
+    # Sauvegarder aussi dans pieces/ pour compatibilité
+    pieces_dir = os.path.join(script_dir, "pieces")
+    os.makedirs(pieces_dir, exist_ok=True)
+    doc.saveas(os.path.join(pieces_dir, "piece_general.dxf"))
+
+    # Sauvegarder le DXF unique
+    doc.saveas(dxf_output_path)
+    print(f"[INFO] Fichier DXF généré: {dxf_output_path}")
+except Exception as e:
+    print(f"[WARNING] Erreur lors de la génération du DXF: {e}")
+
+# Arrêter ici - pas besoin de générer les SVG pour le moment
 sys.exit(0)
 
 for planche in planches :
@@ -2040,24 +2149,9 @@ for doublet in doublet_contact : # place les alésages en fonction de la configu
 
 
 # %%
-# séparartion des matériaux 
+# séparartion des matériaux (cette section n'est plus utilisée car déplacée avant sys.exit)
 
 planchescopy=deepcopy(planches)
-def sectionner_par_texture(planches):
-    
-    groupes = {}
-
-    for planche in planches:
-        
-        if planche.texture.nom not in groupes:
-            groupes[planche.texture.nom] = []  # Créer une nouvelle liste si la texture n'existe pas encore
-        groupes[planche.texture.nom].append(planche)  # Ajouter la planche à la liste correspondante
-
-    return list(groupes.values())
-
-
-groupes=sectionner_par_texture(planches)
-print(planches)
 
 
 
@@ -2194,9 +2288,19 @@ for planches_index, planches in enumerate(groupes):
 # Ajouter des métadonnées pour clarifier les unités
 doc.header['$MENU'] = "Toutes les unités sont en mètres"
 
+# Générer le nom du fichier DXF basé sur le nom du fichier GLB
+dxf_filename = os.path.splitext(os.path.basename(output_path))[0] + ".dxf"
+dxf_output_dir = os.path.dirname(output_path)
+dxf_output_path = os.path.join(dxf_output_dir, dxf_filename)
+
+# Sauvegarder aussi dans pieces/ pour compatibilité avec l'ancien code
 pieces_dir = os.path.join(script_dir, "pieces")
 os.makedirs(pieces_dir, exist_ok=True)
 doc.saveas(os.path.join(pieces_dir, "piece_general.dxf"))
+
+# Sauvegarder le DXF unique avec le même nom que le GLB
+doc.saveas(dxf_output_path)
+print(f"[INFO] Fichier DXF généré: {dxf_output_path}")
 
 # %%
 #generation de SVG
