@@ -49,8 +49,20 @@ try:
     )
     """)
 
+    # Ajouter la colonne dxf_url à la table configurations si elle n'existe pas
+    print("\nVérification de la colonne dxf_url dans configurations...")
+    cursor.execute("PRAGMA table_info(configurations)")
+    columns = [col[1] for col in cursor.fetchall()]
+
+    if 'dxf_url' not in columns:
+        print("Ajout de la colonne dxf_url...")
+        cursor.execute("ALTER TABLE configurations ADD COLUMN dxf_url TEXT")
+        print("✓ Colonne dxf_url ajoutée avec succès!")
+    else:
+        print("✓ Colonne dxf_url existe déjà")
+
     conn.commit()
-    print("✓ Tables créées avec succès!")
+    print("\n✓ Tables créées avec succès!")
 
     # Vérifier les tables
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")

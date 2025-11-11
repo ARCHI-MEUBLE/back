@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS configurations (
     prompt TEXT NOT NULL,
     price REAL NOT NULL,
     glb_url TEXT,
+    dxf_url TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (template_id) REFERENCES models(id) ON DELETE SET NULL
