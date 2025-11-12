@@ -79,16 +79,21 @@ RUN mkdir -p /app/devis \
 
 # S'assurer que les scripts sont exécutables et avec des fins de ligne Unix
 RUN cp /app/init_db.sh /usr/local/bin/init_db.sh \
+    && cp /app/backup-database.sh /usr/local/bin/backup-database.sh \
     && sed -i 's/\r$//' /usr/local/bin/init_db.sh \
+    && sed -i 's/\r$//' /usr/local/bin/backup-database.sh \
     && sed -i 's/\r$//' /app/start.sh \
     && sed -i 's/\r$//' /app/samples_init.sql \
     && sed -i 's/\r$//' /app/init_missing_tables.sql \
     && sed -i 's/\r$//' /app/install_dependencies.sh \
     && sed -i 's/\r$//' /app/create_missing_tables.py \
+    && sed -i 's/\r$//' /app/setup-backup-cron.sh \
     && chmod +x /usr/local/bin/init_db.sh \
+    && chmod +x /usr/local/bin/backup-database.sh \
     && chmod +x /app/start.sh \
     && chmod +x /app/install_dependencies.sh \
-    && chmod +x /app/create_missing_tables.py
+    && chmod +x /app/create_missing_tables.py \
+    && chmod +x /app/setup-backup-cron.sh
 
 # Exposer le port 8000 pour le serveur PHP
 EXPOSE 8000
