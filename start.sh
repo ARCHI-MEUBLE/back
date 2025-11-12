@@ -42,6 +42,25 @@ python3 /app/create_missing_tables.py
 mkdir -p /data/sessions
 chmod 777 /data/sessions
 
+# Installer le cron de backup automatique (si pas déjà installé)
+echo ""
+echo "Setting up automated backup cron job..."
+if ! crontab -l 2>/dev/null | grep -q "backup-database.sh"; then
+    echo "0 3 * * * /usr/local/bin/backup-database.sh >> /data/backup-cron.log 2>&1" | crontab -
+    echo "✓ Backup cron job installed (runs daily at 3:00 AM)"
+else
+    echo "✓ Backup cron job already installed"
+fi
+
+# Créer le répertoire de backups
+mkdir -p /data/backups
+chmod 777 /data/backups
+
+# Démarrer le service cron en arrière-plan
+echo "Starting cron service..."
+cron
+echo "✓ Cron service started"
+
 # Démarrer le serveur PHP avec les sessions dans /data
 echo ""
 echo "Starting PHP server on port $PORT..."

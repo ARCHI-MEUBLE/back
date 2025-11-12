@@ -29,36 +29,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Configuration
-$BACKUP_DIR = '/data/backups';
-$DB_PATH = getenv('DB_PATH') ?: '/data/archimeuble_test.db';
-$BACKUP_API_KEY = getenv('BACKUP_API_KEY');
-$LOG_FILE = '/data/backup-access.log';
+// Configuration - Using $GLOBALS to ensure cross-scope availability
+$GLOBALS['BACKUP_DIR'] = '/data/backups';
+$GLOBALS['DB_PATH'] = getenv('DB_PATH') ?: '/data/archimeuble_test.db';
+$GLOBALS['BACKUP_API_KEY'] = getenv('BACKUP_API_KEY');
+$GLOBALS['LOG_FILE'] = '/data/backup-access.log';
 
 // Rate limiting (10 requêtes/heure par IP)
-$RATE_LIMIT_FILE = '/data/backup-rate-limit.json';
-$MAX_REQUESTS_PER_HOUR = 10;
+$GLOBALS['RATE_LIMIT_FILE'] = '/data/backup-rate-limit.json';
+$GLOBALS['MAX_REQUESTS_PER_HOUR'] = 10;
 
 /**
  * Log des accès (succès ET échecs)
  */
 function logAccess($action, $success, $ip, $details = '') {
-    global $LOG_FILE;
     $timestamp = date('Y-m-d H:i:s');
     $status = $success ? 'SUCCESS' : 'FAILED';
     $log = "[$timestamp] $status | IP: $ip | Action: $action | $details\n";
-    file_put_contents($LOG_FILE, $log, FILE_APPEND);
+    file_put_contents($GLOBALS['LOG_FILE'], $log, FILE_APPEND);
 }
 
 /**
  * Vérifier le rate limiting
  */
 function checkRateLimit($ip) {
-    global $RATE_LIMIT_FILE, $MAX_REQUESTS_PER_HOUR;
-
     $rateLimits = [];
-    if (file_exists($RATE_LIMIT_FILE)) {
-        $rateLimits = json_decode(file_get_contents($RATE_LIMIT_FILE), true) ?: [];
+    if (file_exists($GLOBALS['RATE_LIMIT_FILE'])) {
+        $rateLimits = json_decode(file_get_contents($GLOBALS['RATE_LIMIT_FILE']), true) ?: [];
     }
 
     $now = time();
@@ -72,7 +69,7 @@ function checkRateLimit($ip) {
     }
 
     // Vérifier la limite
-    if (isset($rateLimits[$ip]) && count($rateLimits[$ip]) >= $MAX_REQUESTS_PER_HOUR) {
+    if (isset($rateLimits[$ip]) && count($rateLimits[$ip]) >= $GLOBALS['MAX_REQUESTS_PER_HOUR']) {
         return false;
     }
 
@@ -83,7 +80,7 @@ function checkRateLimit($ip) {
     $rateLimits[$ip][] = $now;
 
     // Sauvegarder
-    file_put_contents($RATE_LIMIT_FILE, json_encode($rateLimits));
+    file_put_contents($GLOBALS['RATE_LIMIT_FILE'], json_encode($rateLimits));
 
     return true;
 }
@@ -92,12 +89,10 @@ function checkRateLimit($ip) {
  * Vérifier l'authentification par clé API
  */
 function checkAuth() {
-    global $BACKUP_API_KEY;
-
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
     // Vérifier que la clé API est configurée
-    if (empty($BACKUP_API_KEY)) {
+    if (empty($GLOBALS['BACKUP_API_KEY'])) {
         logAccess('AUTH_CHECK', false, $ip, 'BACKUP_API_KEY not configured');
         http_response_code(503);
         echo json_encode(['error' => 'Service temporarily unavailable']);
@@ -115,7 +110,7 @@ function checkAuth() {
     // Vérifier la clé API
     $providedKey = $_GET['key'] ?? '';
 
-    if (empty($providedKey) || $providedKey !== $BACKUP_API_KEY) {
+    if (empty($providedKey) || $providedKey !== $GLOBALS['BACKUP_API_KEY']) {
         logAccess('AUTH', false, $ip, 'Invalid API key');
         http_response_code(403);
         echo json_encode(['error' => 'Forbidden']);
@@ -129,13 +124,11 @@ function checkAuth() {
  * Lister les backups disponibles
  */
 function listBackups() {
-    global $BACKUP_DIR;
-
-    if (!is_dir($BACKUP_DIR)) {
-        mkdir($BACKUP_DIR, 0755, true);
+    if (!is_dir($GLOBALS['BACKUP_DIR'])) {
+        mkdir($GLOBALS['BACKUP_DIR'], 0755, true);
     }
 
-    $files = glob($BACKUP_DIR . '/database-backup-*.db');
+    $files = glob($GLOBALS['BACKUP_DIR'] . '/database-backup-*.db');
     $backups = [];
 
     foreach ($files as $file) {
@@ -164,8 +157,6 @@ function listBackups() {
  * Télécharger un backup
  */
 function downloadBackup($filename) {
-    global $BACKUP_DIR;
-
     // Sécurité: vérifier que le nom de fichier est valide
     if (!preg_match('/^database-backup-[\d_-]+\.db$/', $filename)) {
         http_response_code(400);
@@ -173,7 +164,7 @@ function downloadBackup($filename) {
         exit;
     }
 
-    $filepath = $BACKUP_DIR . '/' . $filename;
+    $filepath = $GLOBALS['BACKUP_DIR'] . '/' . $filename;
 
     if (!file_exists($filepath)) {
         http_response_code(404);
@@ -193,8 +184,6 @@ function downloadBackup($filename) {
  * Restaurer un backup
  */
 function restoreBackup() {
-    global $BACKUP_DIR, $DB_PATH;
-
     $input = json_decode(file_get_contents('php://input'), true);
     $filename = $input['filename'] ?? '';
 
@@ -205,7 +194,7 @@ function restoreBackup() {
         exit;
     }
 
-    $backupPath = $BACKUP_DIR . '/' . $filename;
+    $backupPath = $GLOBALS['BACKUP_DIR'] . '/' . $filename;
 
     if (!file_exists($backupPath)) {
         http_response_code(404);
@@ -214,11 +203,11 @@ function restoreBackup() {
     }
 
     // Créer un backup de sécurité avant restauration
-    $emergencyBackup = $DB_PATH . '.before-restore-' . date('Y-m-d_H-i-s');
-    copy($DB_PATH, $emergencyBackup);
+    $emergencyBackup = $GLOBALS['DB_PATH'] . '.before-restore-' . date('Y-m-d_H-i-s');
+    copy($GLOBALS['DB_PATH'], $emergencyBackup);
 
     // Restaurer
-    if (copy($backupPath, $DB_PATH)) {
+    if (copy($backupPath, $GLOBALS['DB_PATH'])) {
         return [
             'success' => true,
             'message' => 'Database restored successfully',
@@ -227,7 +216,7 @@ function restoreBackup() {
         ];
     } else {
         // Restaurer le backup d'urgence si échec
-        copy($emergencyBackup, $DB_PATH);
+        copy($emergencyBackup, $GLOBALS['DB_PATH']);
         unlink($emergencyBackup);
 
         http_response_code(500);

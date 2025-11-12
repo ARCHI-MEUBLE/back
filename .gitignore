@@ -70,3 +70,4 @@ pnpm-lock.yaml
 
 # Dépendances PHP - COMMITÉ DANS GIT pour simplifier le déploiement
 # /vendor/  ← Commenté pour inclure vendor/ dans Git
+.backup-config.json

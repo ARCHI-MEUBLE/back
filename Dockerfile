@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     wget \
     unzip \
+    cron \
     fontconfig \
     libfreetype6 \
     libjpeg62-turbo \
@@ -64,7 +65,7 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 WORKDIR /app
 
 # Invalider le cache Docker pour forcer la copie des nouveaux fichiers
-ARG CACHEBUST=5
+ARG CACHEBUST=7
 
 # Copier tous les fichiers de l'application
 COPY . /app
