@@ -36,6 +36,11 @@ class Cors {
             $isAllowed = true;
         }
 
+        // Autoriser tous les sous-domaines archimeuble.com
+        if (!$isAllowed && preg_match('/^https:\/\/(.*\.)?archimeuble\.com$/', $origin)) {
+            $isAllowed = true;
+        }
+
         if ($isAllowed) {
             header('Access-Control-Allow-Origin: ' . $origin);
         } else {
