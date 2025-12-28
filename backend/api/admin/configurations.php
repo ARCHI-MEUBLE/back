@@ -22,6 +22,9 @@ if (!isset($_SESSION['admin_email'])) {
 require_once __DIR__ . '/../../core/Database.php';
 
 try {
+    error_log("🔍 Admin configurations API appelée");
+    error_log("👤 Session admin_email: " . (isset($_SESSION['admin_email']) ? $_SESSION['admin_email'] : 'NON DEFINI'));
+
     $db = Database::getInstance();
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -60,9 +63,16 @@ try {
         $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 100;
         $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
 
+        // Filtre par statut si fourni
+        $statusFilter = isset($_GET['status']) ? $_GET['status'] : null;
+        $whereClause = '';
+        if ($statusFilter && in_array($statusFilter, ['en_attente_validation', 'validee', 'payee', 'en_production', 'livree'])) {
+            $whereClause = "WHERE c.status = '$statusFilter'";
+        }
+
         // SQLite a des problèmes avec les paramètres PDO sur LIMIT/OFFSET
         // On les caste en int pour la sécurité et on les interpole directement
-        $listQuery = "SELECT c.id, c.user_id, c.template_id, c.prompt, c.config_string, c.price, c.glb_url, c.dxf_url, c.created_at,
+        $listQuery = "SELECT c.id, c.user_id, c.template_id, c.prompt, c.config_string, c.price, c.glb_url, c.dxf_url, c.created_at, c.status,
                               cust.email as customer_email,
                               cust.first_name as customer_first_name,
                               cust.last_name as customer_last_name,
@@ -71,9 +81,15 @@ try {
                        FROM configurations c
                        LEFT JOIN customers cust ON CAST(c.user_id AS INTEGER) = cust.id
                        LEFT JOIN models m ON c.template_id = m.id
+                       $whereClause
                        ORDER BY c.created_at DESC
                        LIMIT $limit OFFSET $offset";
+
+        error_log("📝 Requête SQL: " . $listQuery);
         $rows = $db->query($listQuery);
+        error_log("🔍 Résultat query(): " . print_r($rows, true));
+
+        error_log("📊 Nombre de configurations trouvées: " . count($rows));
 
         // Ajouter customer_name combiné pour chaque ligne
         foreach ($rows as &$row) {
@@ -82,8 +98,11 @@ try {
             }
         }
 
-        $countRow = $db->queryOne("SELECT COUNT(*) as count FROM configurations");
+        $countQuery = "SELECT COUNT(*) as count FROM configurations c $whereClause";
+        $countRow = $db->queryOne($countQuery);
         $total = $countRow ? (int)$countRow['count'] : 0;
+
+        error_log("✅ Envoi de " . count($rows) . " configurations (total: $total)");
 
         http_response_code(200);
         echo json_encode([

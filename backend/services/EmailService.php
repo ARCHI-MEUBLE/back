@@ -294,6 +294,105 @@ class EmailService {
     }
 
     /**
+     * Envoie un email avec le lien de paiement au client
+     */
+    public function sendPaymentLinkEmail($customerEmail, $customerName, $orderNumber, $paymentUrl, $expiresAt, $totalAmount) {
+        $subject = "Lien de paiement pour votre commande #{$orderNumber}";
+
+        $body = $this->getPaymentLinkTemplate($customerName, $orderNumber, $paymentUrl, $expiresAt, $totalAmount);
+
+        return $this->sendEmail($customerEmail, $subject, $body);
+    }
+
+    /**
+     * Template HTML pour email de lien de paiement
+     */
+    private function getPaymentLinkTemplate($customerName, $orderNumber, $paymentUrl, $expiresAt, $totalAmount) {
+        $totalFormatted = number_format($totalAmount, 2, ',', ' ') . ' €';
+        $expiryDate = date('d/m/Y à H:i', strtotime($expiresAt));
+
+        return "
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='UTF-8'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+        </head>
+        <body style='margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;'>
+            <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #f3f4f6; padding: 20px;'>
+                <tr>
+                    <td align='center'>
+                        <table width='600' cellpadding='0' cellspacing='0' style='background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
+                            <!-- Header -->
+                            <tr>
+                                <td style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;'>
+                                    <h1 style='color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;'>
+                                        {$this->siteName}
+                                    </h1>
+                                </td>
+                            </tr>
+
+                            <!-- Content -->
+                            <tr>
+                                <td style='padding: 40px 30px;'>
+                                    <h2 style='color: #1f2937; margin: 0 0 20px 0; font-size: 24px;'>
+                                        Bonjour {$customerName},
+                                    </h2>
+
+                                    <p style='color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;'>
+                                        Votre lien de paiement sécurisé est prêt ! Vous pouvez maintenant procéder au paiement de votre commande <strong>#{$orderNumber}</strong>.
+                                    </p>
+
+                                    <div style='background-color: #f9fafb; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0; border-radius: 4px;'>
+                                        <p style='margin: 0 0 10px 0; color: #1f2937; font-size: 14px;'>
+                                            <strong>Montant total :</strong> {$totalFormatted}
+                                        </p>
+                                        <p style='margin: 0; color: #6b7280; font-size: 14px;'>
+                                            <strong>Valable jusqu'au :</strong> {$expiryDate}
+                                        </p>
+                                    </div>
+
+                                    <div style='text-align: center; margin: 30px 0;'>
+                                        <a href='{$paymentUrl}' style='display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);'>
+                                            Procéder au paiement
+                                        </a>
+                                    </div>
+
+                                    <p style='color: #6b7280; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;'>
+                                        Si le bouton ne fonctionne pas, copiez et collez ce lien dans votre navigateur :
+                                    </p>
+                                    <p style='color: #667eea; font-size: 14px; word-break: break-all; margin: 10px 0;'>
+                                        {$paymentUrl}
+                                    </p>
+
+                                    <div style='margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;'>
+                                        <p style='color: #6b7280; font-size: 14px; margin: 0;'>
+                                            <strong>Sécurisé par Stripe</strong><br>
+                                            Vos informations de paiement sont protégées et chiffrées.
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Footer -->
+                            <tr>
+                                <td style='background-color: #f9fafb; padding: 20px 30px; text-align: center; border-top: 1px solid #e5e7eb;'>
+                                    <p style='color: #9ca3af; font-size: 12px; margin: 0;'>
+                                        Cet email a été envoyé par {$this->siteName}<br>
+                                        Si vous n'avez pas demandé ce lien, vous pouvez ignorer cet email.
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+        ";
+    }
+
+    /**
      * Envoie un email via SMTP Gmail
      */
     private function sendEmail($to, $subject, $htmlBody) {

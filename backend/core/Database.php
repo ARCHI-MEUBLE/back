@@ -92,9 +92,14 @@ class Database {
         try {
             $stmt = $this->pdo->prepare($query);
             $stmt->execute($params);
-            return $stmt->fetchAll();
+            $results = $stmt->fetchAll();
+            error_log("✅ Query réussie, " . count($results) . " lignes retournées");
+            return $results;
         } catch (PDOException $e) {
-            error_log("Erreur de requête : " . $e->getMessage());
+            error_log("❌❌❌ ERREUR DE REQUÊTE SQL ❌❌❌");
+            error_log("Message: " . $e->getMessage());
+            error_log("Query: " . $query);
+            error_log("Params: " . print_r($params, true));
             return [];
         }
     }

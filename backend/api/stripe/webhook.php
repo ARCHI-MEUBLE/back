@@ -72,9 +72,21 @@ try {
         case 'payment_intent.succeeded':
             $paymentIntent = $event->data->object;
 
-            // Trouver la commande associée via le stripe_payment_intent_id
-            $query = "SELECT id, customer_id FROM orders WHERE stripe_payment_intent_id = ?";
-            $order = $db->queryOne($query, [$paymentIntent->id]);
+            // Vérifier si le paiement provient d'un lien de paiement
+            $paymentLinkToken = $paymentIntent->metadata->payment_link_token ?? null;
+            $orderId = $paymentIntent->metadata->order_id ?? null;
+
+            // Trouver la commande associée
+            $order = null;
+            if ($orderId) {
+                // Si order_id est dans les metadata (cas du payment link)
+                $query = "SELECT id, customer_id FROM orders WHERE id = ?";
+                $order = $db->queryOne($query, [$orderId]);
+            } else {
+                // Sinon, chercher via stripe_payment_intent_id (cas standard)
+                $query = "SELECT id, customer_id FROM orders WHERE stripe_payment_intent_id = ?";
+                $order = $db->queryOne($query, [$paymentIntent->id]);
+            }
 
             if ($order) {
                 // Mettre à jour le statut de paiement
@@ -99,6 +111,14 @@ try {
 
                 // Envoyer notification à l'admin
                 $emailService->sendNewOrderNotificationToAdmin($fullOrder, $customer, $orderItems);
+
+                // Si le paiement provient d'un lien de paiement, marquer le lien comme utilisé
+                if ($paymentLinkToken) {
+                    require_once __DIR__ . '/../../models/PaymentLink.php';
+                    $paymentLinkModel = new PaymentLink();
+                    $paymentLinkModel->markAsUsed($paymentLinkToken);
+                    error_log("Payment link marked as used: {$paymentLinkToken}");
+                }
 
                 // Générer la facture PDF automatiquement
                 try {
