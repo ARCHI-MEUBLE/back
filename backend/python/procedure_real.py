@@ -252,6 +252,8 @@ def sectionner_par_texture(planches):
     groupes = {}
 
     for planche in planches:
+        if not getattr(planche, 'planche', False) or not getattr(planche, 'texture', None):
+            continue
         if planche.texture.nom not in groupes:
             groupes[planche.texture.nom] = []  # Créer une nouvelle liste si la texture n'existe pas encore
         groupes[planche.texture.nom].append(planche)  # Ajouter la planche à la liste correspondante
@@ -1674,6 +1676,54 @@ def process(sequence,zone,textures=textures) : # cette fonction sert à parser u
                 seq1,seq2,seq3,seq4=subsequence(sequence[i:])
                 i=i+len(seq1)+len(seq2)+len(seq3)+len(seq4)+4
                 textures={"exterieur": textures_dict[seq1],"interieur": textures_dict[seq2],"porte": textures_dict[seq3],"tiroir": textures_dict[seq4]}
+        elif char=="c": # c for cable hole
+            print("c")
+            # Calcul du centre de la zone sur le plan du fond
+            z_points = zone.points[np.unique(np.hstack([f.contour for f in zone.listface]))]
+            
+            # Centre horizontal (normalv)
+            v_coords = z_points @ zone.normalv
+            v_mid = (np.max(v_coords) + np.min(v_coords)) / 2
+            
+            # Bas du compartiment + 50mm (normalh)
+            h_coords = z_points @ zone.normalh
+            h_pos = np.min(h_coords) + 50
+            
+            # Profondeur (normala) -> on veut le fond (mina)
+            a_coords = z_points @ zone.normala
+            a_back = np.min(a_coords)
+            
+            point_trou = v_mid * zone.normalv + h_pos * zone.normalh + a_back * zone.normala
+            
+            # Rayon du passe-câble (30mm)
+            rayon_trou = 30
+            
+            # 1. Ajouter l'alésage sur le fond pour le DXF
+            for p in Listplanches:
+                if getattr(p, 'type', '') == 'enveloppe_f':
+                    if p.face_usine:
+                        origin = p.points[p.face_usine.contour[0]]
+                        u_vec = p.sens_fibres
+                        normal = p.face_usine.equation[:3]
+                        v_vec = np.cross(normal, u_vec)
+                        rel = point_trou - origin
+                        
+                        new_alesage = Alesage(
+                            positionxyz=point_trou,
+                            positionsnu=np.array([np.dot(rel, u_vec), np.dot(rel, v_vec), 0]),
+                            rayon=rayon_trou,
+                            profondeur=p.epaisseur + 5,
+                            face_usinage="plat",
+                            couleur="blue"
+                        )
+                        p.face_usine.alesages.append(new_alesage)
+            
+            # 2. Ajouter une représentation visuelle pour le GLB (disque noir)
+            disque = create_cylinder(rayon_trou*2, 2, point_trou + 1 * zone.normala, zone.normala)
+            trou_visuel = Zone(None, None, None, None, None, type="cable_hole_visual", mesh=disque)
+            trou_visuel.bloc = "cable_hole"
+            Listplanches.append(trou_visuel)
+            
         elif char=="D":
             print("D")
 
@@ -1796,9 +1846,10 @@ if custom_colors:
         if not hasattr(planche, 'mesh') or planche.mesh is None:
             continue
 
-        # Déterminer quelle couleur appliquer selon le type de bloc
+        # Déterminer quelle couleur appliquer selon le type de bloc ou le type de zone
         color_key = None
         bloc_type = getattr(planche, 'bloc', None)
+        zone_type = getattr(planche, 'type', None)
 
         if bloc_type == "tiroir":
             color_key = "drawers"
@@ -1806,6 +1857,17 @@ if custom_colors:
             color_key = "doors"
         elif bloc_type == "socle":
             color_key = "base"
+        elif zone_type == "cloisonnement_horizontale":
+            color_key = "shelves"
+        elif zone_type == "enveloppe_f":
+            color_key = "back"
+        elif bloc_type == "cable_hole":
+            # Le passe-câble est toujours noir
+            planche.mesh.visual = trimesh.visual.ColorVisuals(
+                mesh=planche.mesh,
+                vertex_colors=[20, 20, 20, 255]
+            )
+            continue
         else:
             # Structure (planches du corps du meuble)
             color_key = "structure"
@@ -1876,6 +1938,14 @@ try:
     diameter_layers = {}
 
     for planches_index, planches_group in enumerate(groupes):
+        X = 0
+        # Titre du groupe (Matériau)
+        if planches_group:
+            texture_nom = planches_group[0].texture.nom
+            epaisseur = planches_group[0].texture.epaisseur
+            msp.add_text(f"MATÉRIAU : {texture_nom.upper()} ({epaisseur}mm)", 
+                         dxfattribs={'layer': "texte", 'height': 0.1}).set_pos((0, Y + 3.8))
+
         for i, planche in enumerate(planches_group):
             # Projeter les points et convertir en mètres
             projection = project_points_on_plane(planche.points,
@@ -1927,11 +1997,42 @@ try:
                         dxfattribs={"layer": layer_name},
                     )
 
+            # --- Ajout des dimensions et annotations ---
+            board_width = xmax - xmin
+            board_height = ymax - ymin
+            
+            # Label central
+            label = f"P{i+1}"
+            if hasattr(planche, 'bloc') and planche.bloc:
+                label += f" ({planche.bloc})"
+            
+            msp.add_text(label, 
+                         dxfattribs={'layer': "texte", 'height': 0.02}
+                         ).set_pos((X + board_width/2, Y + board_height/2), align='CENTER')
+            
+            # Dimension Horizontale (Largeur)
+            msp.add_line((X, Y - 0.02), (X + board_width, Y - 0.02), dxfattribs={'layer': "texte"})
+            msp.add_text(f"{int(round(board_width*1000))}mm",
+                         dxfattribs={'layer': "texte", 'height': 0.015}
+                         ).set_pos((X + board_width/2, Y - 0.045), align='CENTER')
+            
+            # Dimension Verticale (Hauteur)
+            msp.add_line((X - 0.02, Y), (X - 0.02, Y + board_height), dxfattribs={'layer': "texte"})
+            msp.add_text(f"{int(round(board_height*1000))}mm",
+                         dxfattribs={'layer': "texte", 'height': 0.015, 'rotation': 90}
+                         ).set_pos((X - 0.045, Y + board_height/2), align='CENTER')
+            
+            # Epaisseur
+            msp.add_text(f"Ep: {int(planche.epaisseur)}mm",
+                         dxfattribs={'layer': "texte", 'height': 0.012}
+                         ).set_pos((X + board_width/2, Y + board_height/2 - 0.03), align='CENTER')
+
             X = X + marge + xmax - xmin
 
         Y = Y + 4
 
-    doc.header['$MENU'] = "Toutes les unités sont en mètres"
+    doc.header['$MEASUREMENT'] = 1  # Metric
+    doc.header['$INSUNITS'] = 6     # Meters
 
     # Sauvegarder aussi dans pieces/ pour compatibilité
     pieces_dir = os.path.join(script_dir, "pieces")
