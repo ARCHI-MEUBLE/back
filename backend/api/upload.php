@@ -53,7 +53,7 @@ try {
     $base64Data = $data['data'];
 
     // Vérifier le type de fichier
-    $allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+    $allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
     if (!in_array($fileType, $allowedTypes)) {
         http_response_code(400);
         echo json_encode(['error' => 'Unsupported file type']);

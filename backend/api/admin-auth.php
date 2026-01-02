@@ -87,10 +87,15 @@ if ($method === 'POST' && $action === 'logout') {
  */
 if ($method === 'GET' && $action === 'session') {
     if (isset($_SESSION['admin_email']) && !empty($_SESSION['admin_email'])) {
+        // Récupérer les infos complètes de l'admin
+        $adminData = $admin->getByEmail($_SESSION['admin_email']);
+
         http_response_code(200);
         echo json_encode([
             'admin' => [
-                'email' => $_SESSION['admin_email']
+                'email' => $adminData['email'] ?? $_SESSION['admin_email'],
+                'username' => $adminData['username'] ?? 'Admin',
+                'id' => $adminData['id'] ?? $_SESSION['admin_id'] ?? null
             ]
         ]);
     } else {

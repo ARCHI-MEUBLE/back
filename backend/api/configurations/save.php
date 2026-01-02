@@ -17,12 +17,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Vérifier l'authentification
-if (!isset($_SESSION['customer_id'])) {
+// Vérifier l'authentification (Client OU Admin)
+if (!isset($_SESSION['customer_id']) && !isset($_SESSION['admin_email'])) {
     http_response_code(401);
     echo json_encode(['error' => 'Non authentifié']);
     exit;
 }
+
+$isAdmin = isset($_SESSION['admin_email']);
+$userId = $_SESSION['customer_id'] ?? null;
 
 require_once __DIR__ . '/../../models/Configuration.php';
 
@@ -61,7 +64,8 @@ try {
             exit;
         }
 
-        if (strval($existing['user_id']) !== strval($_SESSION['customer_id'])) {
+        // L'admin peut tout modifier, le client seulement sa config
+        if (!$isAdmin && strval($existing['user_id']) !== strval($userId)) {
             http_response_code(403);
             echo json_encode(['error' => 'Accès refusé']);
             exit;
@@ -72,6 +76,14 @@ try {
             'prompt' => $data['prompt'],
             'price' => $data['price']
         ];
+
+        // Pour un client, toute modification remet le statut en attente
+        // Pour un admin, on garde le statut actuel ou on utilise celui passé en paramètre
+        if (!$isAdmin) {
+            $updateData['status'] = 'en_attente_validation';
+        } elseif (isset($data['status'])) {
+            $updateData['status'] = $data['status'];
+        }
 
         if (array_key_exists('glb_url', $data)) {
             $updateData['glb_url'] = $data['glb_url'] !== '' ? $data['glb_url'] : null;
@@ -88,6 +100,37 @@ try {
         $config->update($configId, $updateData);
         $savedConfiguration = $config->getById($configId);
 
+        // Notification Admin
+        try {
+            error_log("Triggering admin notification for config update (ID: $configId). UserID: " . ($userId ?: 'ADMIN'));
+            require_once __DIR__ . '/../../models/Customer.php';
+            require_once __DIR__ . '/../../services/EmailService.php';
+            
+            $emailService = new EmailService();
+            
+            // Si c'est un client, on récupère ses infos
+            $customer = null;
+            if ($userId) {
+                $customerModel = new Customer();
+                $customer = $customerModel->getById($userId);
+            }
+            
+            // Si pas de client (ex: admin qui crée), on simule un client avec les infos de session ou génériques
+            if (!$customer) {
+                $customer = [
+                    'first_name' => $isAdmin ? 'Admin' : 'Visiteur',
+                    'last_name' => $_SESSION['admin_email'] ?? 'Système',
+                    'email' => $_SESSION['admin_email'] ?? 'noreply@archimeuble.com',
+                    'phone' => ''
+                ];
+            }
+
+            $sent = $emailService->sendNewConfigurationNotificationToAdmin($savedConfiguration, $customer);
+            error_log("Notification sent result: " . ($sent ? 'SUCCESS' : 'FAILURE'));
+        } catch (Exception $e) {
+            error_log("Failed to send admin notification (update): " . $e->getMessage());
+        }
+
         http_response_code(200);
         echo json_encode([
             'success' => true,
@@ -99,13 +142,14 @@ try {
 
     // Créer la configuration avec dxf_url si fourni
     $configId = $config->create(
-        $_SESSION['customer_id'],
+        $userId,
         $data['model_id'] ?? null,
         json_encode($configData),
         $data['price'],
         $data['glb_url'] ?? null,
         $data['prompt'],
-        session_id()
+        session_id(),
+        $isAdmin && isset($data['status']) ? $data['status'] : 'en_attente_validation'
     );
 
     // Mettre à jour le dxf_url si fourni
@@ -115,6 +159,37 @@ try {
     
     // Récupérer la configuration créée
     $savedConfiguration = $config->getById($configId);
+
+    // Notification Admin
+    try {
+        error_log("Triggering admin notification for new config (ID: $configId). UserID: " . ($userId ?: 'ADMIN'));
+        require_once __DIR__ . '/../../models/Customer.php';
+        require_once __DIR__ . '/../../services/EmailService.php';
+        
+        $emailService = new EmailService();
+        
+        // Si c'est un client, on récupère ses infos
+        $customer = null;
+        if ($userId) {
+            $customerModel = new Customer();
+            $customer = $customerModel->getById($userId);
+        }
+        
+        // Si pas de client (ex: admin qui crée), on simule un client avec les infos de session ou génériques
+        if (!$customer) {
+            $customer = [
+                'first_name' => $isAdmin ? 'Admin' : 'Visiteur',
+                'last_name' => $_SESSION['admin_email'] ?? 'Système',
+                'email' => $_SESSION['admin_email'] ?? 'noreply@archimeuble.com',
+                'phone' => ''
+            ];
+        }
+
+        $sent = $emailService->sendNewConfigurationNotificationToAdmin($savedConfiguration, $customer);
+        error_log("Notification sent result: " . ($sent ? 'SUCCESS' : 'FAILURE'));
+    } catch (Exception $e) {
+        error_log("Failed to send admin notification (create): " . $e->getMessage());
+    }
     
     http_response_code(201);
     echo json_encode([

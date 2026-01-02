@@ -225,16 +225,18 @@ try {
         exit();
     }
 
-    // Vérifier si le fichier DXF a été créé (même nom que GLB mais avec extension .dxf)
-    $dxfFilename = str_replace('.glb', '.dxf', $filename);
+    // Vérifier si le fichier DXF a été créé
+    $dxfFilename = pathinfo($filename, PATHINFO_FILENAME) . '.dxf';
     $dxfPath = $outputDir . $dxfFilename;
     $dxfUrl = null;
 
     if (file_exists($dxfPath)) {
         $dxfUrl = '/models/' . $dxfFilename;
-        error_log("Fichier DXF généré: $dxfPath");
+        error_log("Fichier DXF trouvé: $dxfPath");
     } else {
-        error_log("Fichier DXF non trouvé: $dxfPath");
+        error_log("Fichier DXF NON TROUVE après exécution Python: $dxfPath");
+        // Essayer de voir si Python a loggé une erreur spécifique
+        error_log("Dernières lignes de sortie Python: " . substr($outputText, -500));
     }
 
     // Succès : retourner l'URL du fichier GLB et DXF

@@ -83,6 +83,9 @@ class Order {
                 $unitPrice,
                 $totalPrice
             ]);
+
+            // Mettre à jour le statut de la configuration
+            $this->db->execute("UPDATE configurations SET status = 'en_commande' WHERE id = ?", [$item['configuration_id']]);
         }
 
         // Insérer les échantillons de commande

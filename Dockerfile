@@ -39,12 +39,9 @@ RUN apt-get update && apt-get install -y \
 # Installer Composer (gestionnaire de dépendances PHP)
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Installer wkhtmltopdf depuis le binaire officiel
-RUN wget -q https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-3/wkhtmltox_0.12.6.1-3.bookworm_amd64.deb \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends ./wkhtmltox_0.12.6.1-3.bookworm_amd64.deb \
-    && rm wkhtmltox_0.12.6.1-3.bookworm_amd64.deb \
-    && rm -rf /var/lib/apt/lists/*
+# Note: wkhtmltopdf n'est pas disponible dans Debian Trixie ARM64
+# Le code utilise automatiquement un fallback (FPDF/DomPDF) si wkhtmltopdf n'est pas installé
+# Si nécessaire, installer manuellement : https://wkhtmltopdf.org/downloads.html
 
 # Créer un environnement virtuel Python
 RUN python3 -m venv /opt/venv

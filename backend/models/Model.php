@@ -51,31 +51,33 @@ class Model {
      * @param string $prompt
      * @param float|null $price
      * @param string|null $imageUrl
+     * @param string|null $category
+     * @param string|null $configData
      * @return int|false ID du modèle créé ou false en cas d'erreur
      */
-    public function create($name, $description, $prompt, $price = null, $imageUrl = null) {
-        // Utiliser une requête qui retourne l'ID dans le même appel
-        $query = "INSERT INTO models (name, description, prompt, price, image_url)
-                  VALUES (:name, :description, :prompt, :price, :image_url)
-                  RETURNING id";
+    public function create($name, $description, $prompt, $price = null, $imageUrl = null, $category = null, $configData = null) {
+        $query = "INSERT INTO models (name, description, prompt, price, image_url, category, config_data)
+                  VALUES (:name, :description, :prompt, :price, :image_url, :category, :config_data)";
 
         error_log("SQL Query: " . $query);
-        error_log("SQL Params: name=$name, description=$description, prompt=$prompt, price=$price, image_url=$imageUrl");
+        error_log("SQL Params: name=$name, prompt=$prompt, config_data=" . (strlen($configData) > 50 ? substr($configData, 0, 50) . '...' : $configData));
 
-        $result = $this->db->queryOne($query, [
+        $success = $this->db->execute($query, [
             'name' => $name,
             'description' => $description,
             'prompt' => $prompt,
             'price' => $price,
-            'image_url' => $imageUrl
+            'image_url' => $imageUrl,
+            'category' => $category,
+            'config_data' => $configData
         ]);
 
-        if (!$result) {
+        if (!$success) {
             error_log("SQL Error: Failed to insert model");
             return false;
         }
 
-        return (int)$result['id'];
+        return $this->db->lastInsertId();
     }
 
     /**
@@ -88,7 +90,7 @@ class Model {
         $fields = [];
         $params = ['id' => $id];
 
-        $allowedFields = ['name', 'description', 'prompt', 'price', 'image_url'];
+        $allowedFields = ['name', 'description', 'prompt', 'price', 'image_url', 'category', 'config_data'];
 
         foreach ($data as $key => $value) {
             if (in_array($key, $allowedFields)) {

@@ -6,6 +6,20 @@
  * Génère une facture PDF pour une commande payée
  */
 
+// Activer l'affichage des erreurs pour le débogage (UNIQUEMENT SI PAS EN TÉLÉCHARGEMENT)
+if (!isset($_GET['download']) || $_GET['download'] !== 'true') {
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+} else {
+    ini_set('display_errors', 0);
+    error_reporting(E_ALL & ~E_DEPRECATED);
+}
+
+// Log des erreurs dans un fichier local
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/php_error.log');
+
 require_once __DIR__ . '/../../config/cors.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
@@ -35,6 +49,10 @@ require_once __DIR__ . '/../../services/InvoiceService.php';
 require_once __DIR__ . '/../../core/Database.php';
 
 try {
+    // Activer l'affichage des erreurs pour le débogage
+    // error_reporting(E_ALL);
+    // ini_set('display_errors', 1);
+
     $orderId = (int)$_GET['id'];
     $orderModel = new Order();
     $customerModel = new Customer();
@@ -83,13 +101,15 @@ try {
         exit;
     }
 
-    // Sinon, télécharger directement le fichier
+    // 1. Tenter de servir le PDF s'il est valide
     if (isset($_GET['download']) && $_GET['download'] === 'true') {
         $pdfPath = $invoice['filepath'];
+        $htmlPath = str_replace('.pdf', '.html', $pdfPath);
 
-        // Vérifier si le PDF existe et est valide (> 100 bytes)
-        if (file_exists($pdfPath) && filesize($pdfPath) > 100) {
-            // Servir le PDF
+        // Force cleanup of output buffer to avoid any noise in PDF/HTML
+        if (ob_get_level()) ob_end_clean();
+
+        if (file_exists($pdfPath) && filesize($pdfPath) > 500) {
             header('Content-Type: application/pdf');
             header('Content-Disposition: inline; filename="' . $invoice['filename'] . '"');
             header('Content-Length: ' . filesize($pdfPath));
@@ -97,17 +117,17 @@ try {
             exit;
         }
 
-        // Fallback: servir le HTML si le PDF n'existe pas
-        $htmlFilepath = str_replace('.pdf', '.html', $pdfPath);
-        if (file_exists($htmlFilepath)) {
+        // 2. Fallback: servir le HTML si le PDF n'est pas disponible ou invalide
+        if (file_exists($htmlPath)) {
             header('Content-Type: text/html; charset=UTF-8');
             header('Content-Disposition: inline; filename="' . str_replace('.pdf', '.html', $invoice['filename']) . '"');
-            readfile($htmlFilepath);
+            header('Content-Length: ' . filesize($htmlPath));
+            readfile($htmlPath);
             exit;
         }
 
-        http_response_code(500);
-        echo json_encode(['error' => 'Facture introuvable']);
+        http_response_code(404);
+        echo json_encode(['error' => 'Fichiers de facture introuvables']);
         exit;
     }
 
