@@ -73,8 +73,21 @@ class Cart {
      * @param int $configurationId
      * @param int $quantity
      * @return bool
+     * @throws Exception Si la configuration n'est pas validée
      */
     public function addItem($customerId, $configurationId, $quantity = 1) {
+        // Vérifier le statut de la configuration
+        $checkQuery = "SELECT status FROM configurations WHERE id = :id";
+        $config = $this->db->queryOne($checkQuery, ['id' => $configurationId]);
+        
+        if (!$config) {
+            throw new Exception("Configuration introuvable");
+        }
+        
+        if ($config['status'] !== 'validee') {
+            throw new Exception("Cette configuration doit être validée par un menuisier avant d'être ajoutée au panier.");
+        }
+
         // Vérifier si l'item existe déjà
         $query = "SELECT id, quantity FROM cart_items WHERE customer_id = :customer_id AND configuration_id = :configuration_id";
         $existing = $this->db->queryOne($query, [

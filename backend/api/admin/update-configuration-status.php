@@ -34,7 +34,7 @@ try {
         $status = $input['status'];
 
         // Valider le statut
-        $validStatuses = ['en_attente_validation', 'validee', 'payee', 'en_production', 'livree', 'annulee'];
+        $validStatuses = ['en_attente_validation', 'validee', 'payee', 'en_production', 'livree', 'annulee', 'en_commande'];
         if (!in_array($status, $validStatuses)) {
             http_response_code(400);
             echo json_encode(['error' => 'Statut invalide']);

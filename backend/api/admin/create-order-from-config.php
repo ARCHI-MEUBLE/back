@@ -182,6 +182,39 @@ try {
         $orderId
     );
 
+    // --- GÉNÉRATION DU LIEN DE PAIEMENT ET ENVOI EMAIL ---
+    $paymentLinkUrl = null;
+    try {
+        require_once __DIR__ . '/../../models/PaymentLink.php';
+        require_once __DIR__ . '/../../services/EmailService.php';
+        
+        $paymentLinkModel = new PaymentLink();
+        $emailService = new EmailService();
+        
+        // Générer le lien (valable 30 jours par défaut)
+        $paymentLink = $paymentLinkModel->generateLink($orderId, $_SESSION['admin_email']);
+        
+        if ($paymentLink) {
+            // Construire l'URL du lien
+            $baseUrl = getenv('FRONTEND_URL') ?: 'http://localhost:3000';
+            $paymentLinkUrl = $baseUrl . '/paiement/' . $paymentLink['token'];
+            
+            // Envoyer l'email au client
+            $customerName = trim(($config['first_name'] ?? '') . ' ' . ($config['last_name'] ?? ''));
+            $emailService->sendPaymentLinkEmail(
+                $config['customer_email'],
+                $customerName ?: 'Client',
+                $orderNumber,
+                $paymentLinkUrl,
+                $paymentLink['expires_at'],
+                $config['price']
+            );
+        }
+    } catch (Exception $paymentError) {
+        // On logge l'erreur mais on ne bloque pas la réponse (la commande est créée)
+        error_log("Erreur lors de la génération du lien de paiement: " . $paymentError->getMessage());
+    }
+
     // Retourner la commande créée
     http_response_code(201);
     echo json_encode([
@@ -191,9 +224,10 @@ try {
             'order_number' => $orderNumber,
             'total_amount' => $config['price'],
             'customer_email' => $config['customer_email'],
-            'customer_name' => trim($config['first_name'] . ' ' . $config['last_name'])
+            'customer_name' => trim($config['first_name'] . ' ' . $config['last_name']),
+            'payment_link' => $paymentLinkUrl
         ],
-        'message' => 'Commande créée avec succès'
+        'message' => 'Commande créée avec succès et lien de paiement envoyé'
     ]);
 
 } catch (Exception $e) {

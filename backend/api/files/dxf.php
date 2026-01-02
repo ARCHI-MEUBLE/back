@@ -42,16 +42,38 @@ try {
         [$configId]
     );
 
-    // Vérifier si un fichier DXF spécifique existe
-    if ($config && $config['dxf_url'] && file_exists(__DIR__ . '/../../../' . $config['dxf_url'])) {
-        $dxfPath = __DIR__ . '/../../../' . $config['dxf_url'];
-    } else {
-        // Sinon, utiliser le fichier DXF générique
+    // Check if a specific DXF file exists
+    // The path in database is relative to public folder usually (e.g. /models/meuble_XYZ.dxf)
+    // We need to point to front/public/... if it's there
+    if ($config && $config['dxf_url']) {
+        // Nettoyer l'URL au cas où elle contient le protocole
+        $cleanPath = parse_url($config['dxf_url'], PHP_URL_PATH);
+        
+        // Try multiple possible paths
+        $possiblePaths = [
+            __DIR__ . '/../../../../front/public' . $cleanPath,
+            __DIR__ . '/../../../' . $cleanPath,
+            __DIR__ . '/../../../../public' . $cleanPath,
+            __DIR__ . '/../../' . $cleanPath,
+            '/app' . $cleanPath // Docker production
+        ];
+        
+        foreach ($possiblePaths as $path) {
+            if (file_exists($path)) {
+                $dxfPath = $path;
+                error_log("DXF spécifique trouvé à : $path");
+                break;
+            }
+        }
+    }
+
+    if (!isset($dxfPath)) {
+        // Otherwise, use the generic DXF file or show error
         $dxfPath = __DIR__ . '/../../../pieces/piece_general.dxf';
 
         if (!file_exists($dxfPath)) {
             http_response_code(404);
-            echo json_encode(['error' => 'Fichier DXF non trouvé']);
+            echo json_encode(['error' => 'DXF file not found. Please regenerate the configuration.']);
             exit;
         }
     }

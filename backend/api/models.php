@@ -174,7 +174,9 @@ if ($method === 'POST') {
             $input['description'] ?? null,
             $input['prompt'],
             $price,
-            $imageUrl
+            $imageUrl,
+            $input['category'] ?? null,
+            isset($input['config_data']) ? (is_string($input['config_data']) ? $input['config_data'] : json_encode($input['config_data'])) : null
         );
 
         if ($modelId) {

@@ -7,6 +7,9 @@
  * Sécurisé par le token unique du lien de paiement
  */
 
+// Charger les variables d'environnement depuis .env (DOIT être en premier)
+require_once __DIR__ . '/../../config/env.php';
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: http://localhost:3000');
 header('Access-Control-Allow-Credentials: true');

@@ -205,7 +205,7 @@ class Router {
      * @return bool
      */
     private function isStaticFile($path) {
-        $extensions = ['css', 'js', 'jpg', 'jpeg', 'png', 'gif', 'svg', 'glb', 'gltf', 'ico', 'woff', 'woff2', 'ttf', 'eot'];
+        $extensions = ['css', 'js', 'jpg', 'jpeg', 'png', 'gif', 'svg', 'glb', 'gltf', 'ico', 'woff', 'woff2', 'ttf', 'eot', 'dxf'];
         $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
         return in_array($ext, $extensions);
     }
@@ -299,7 +299,8 @@ class Router {
             'woff' => 'font/woff',
             'woff2' => 'font/woff2',
             'ttf' => 'font/ttf',
-            'eot' => 'application/vnd.ms-fontobject'
+            'eot' => 'application/vnd.ms-fontobject',
+            'dxf' => 'application/dxf'
         ];
 
         return isset($mimeTypes[$ext]) ? $mimeTypes[$ext] : 'application/octet-stream';
