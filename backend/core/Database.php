@@ -16,25 +16,37 @@ class Database {
      */
     private function __construct() {
         // Vérifier si on est dans Docker ou en local
-        // Production Railway: /data/database/archimeuble.db (volume persistant)
-        // Local: ../database/archimeuble.db (depuis back/)
+        // Production Railway: /data/archimeuble.db (volume persistant recommandé)
+        // Local: /app/database/archimeuble.db
         $dbPath = getenv('DB_PATH');
 
         if (!$dbPath || empty($dbPath)) {
-            // Chemin par défaut pour Docker et Railway
-            $dbPath = '/app/database/archimeuble.db';
-
-            // Si le fichier n'existe pas, essayer le chemin local
-            if (!file_exists($dbPath)) {
+            // Priorité 1: Chemin standard Railway Volume
+            if (file_exists('/data/archimeuble.db')) {
+                $dbPath = '/data/archimeuble.db';
+            } 
+            // Priorité 2: Dossier database de l'application
+            elseif (file_exists('/app/database/archimeuble.db')) {
+                $dbPath = '/app/database/archimeuble.db';
+            }
+            // Priorité 3: Chemin relatif au projet
+            else {
                 $dbPath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'database' . DIRECTORY_SEPARATOR . 'archimeuble.db';
             }
         }
 
         $this->dbPath = $dbPath;
+        error_log("Database: Loading SQLite DB from: " . $this->dbPath);
 
         if (!file_exists($this->dbPath)) {
-            error_log("Erreur : Base de données introuvable à : " . $this->dbPath);
-            throw new Exception("Base de données introuvable à : " . $this->dbPath);
+            error_log("CRITICAL: Database file not found at " . $this->dbPath);
+            // Tentative de création si le dossier existe
+            $dir = dirname($this->dbPath);
+            if (is_writable($dir)) {
+                error_log("Database: Folder is writable, file will be created on first connection.");
+            } else {
+                throw new Exception("Base de données introuvable et dossier non scriptable : " . $this->dbPath);
+            }
         }
 
         // Créer la connexion PDO

@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../../config/cors.php';
+require_once __DIR__ . '/../../config/env.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -199,6 +200,12 @@ try {
     ]);
     
 } catch (Exception $e) {
+    error_log("CRITICAL ERROR in save.php: " . $e->getMessage());
+    error_log("Trace: " . $e->getTraceAsString());
     http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode([
+        'error' => 'Erreur interne du serveur',
+        'message' => $e->getMessage(),
+        'debug_hint' => 'Consultez les logs du serveur pour plus de détails'
+    ]);
 }
