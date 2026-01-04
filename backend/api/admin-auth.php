@@ -99,8 +99,9 @@ if ($method === 'GET' && $action === 'session') {
             ]
         ]);
     } else {
-        http_response_code(401);
-        echo json_encode(['error' => 'Non authentifié']);
+        // Retourner 200 avec admin null au lieu de 401 pour éviter les erreurs console
+        http_response_code(200);
+        echo json_encode(['admin' => null]);
     }
     exit;
 }
