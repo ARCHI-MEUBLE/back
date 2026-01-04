@@ -71,11 +71,13 @@ class SMTPMailer {
             ]
         ]);
 
+        $protocol = ($this->port == 465) ? "ssl://" : "tcp://";
+
         $this->socket = stream_socket_client(
-            "tcp://{$this->host}:{$this->port}",
+            "{$protocol}{$this->host}:{$this->port}",
             $errno,
             $errstr,
-            15, // Augmenté de 5s à 15s pour éviter les timeouts avec Gmail TLS
+            10, // Timeout réduit à 10s
             STREAM_CLIENT_CONNECT,
             $context
         );
@@ -99,7 +101,7 @@ class SMTPMailer {
 
             $this->sendCommand("EHLO {$this->host}");
         } else {
-            $this->sendCommand("HELO {$this->host}");
+            $this->sendCommand("EHLO {$this->host}");
         }
     }
 
