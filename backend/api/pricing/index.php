@@ -26,7 +26,22 @@ try {
             $pricing = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$pricing) {
-                throw new Exception('Tarif non trouvé');
+                // Si le tarif demandé n'existe pas, retourner le premier tarif actif ou un tarif par défaut
+                $stmt = $db->query('SELECT * FROM pricing WHERE is_active = 1 ORDER BY id ASC LIMIT 1');
+                $pricing = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                // Si toujours aucun tarif, créer un tarif par défaut
+                if (!$pricing) {
+                    $pricing = [
+                        'id' => 0,
+                        'name' => 'default',
+                        'description' => 'Tarif par défaut',
+                        'price_per_m3' => 2500.00,
+                        'is_active' => 1,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s')
+                    ];
+                }
             }
 
             echo json_encode([
