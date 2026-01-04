@@ -232,7 +232,7 @@ class EmailService {
                     <div style='height: 2px; width: 40px; margin: 0 auto 16px auto; background-color: #8B7355;'></div>
                     <p style='color: #A8A7A3; font-size: 13px; line-height: 1.5;'>Détails des aménagements par compartiment pour la mise en production.</p>
                 </div>
-                
+
                 <div style='background-color: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 20px; margin-bottom: 24px;'>
                     <table width='100%' cellpadding='0' cellspacing='0'>
                         " . (!empty($accessoriesList) ? implode('', array_map(function($acc) {
