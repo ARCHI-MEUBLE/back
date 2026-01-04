@@ -49,8 +49,8 @@ try:
     )
     """)
 
-    # Ajouter la colonne dxf_url à la table configurations si elle n'existe pas
-    print("\nVérification de la colonne dxf_url dans configurations...")
+    # Ajouter les colonnes manquantes à la table configurations
+    print("\nVérification des colonnes dans configurations...")
     cursor.execute("PRAGMA table_info(configurations)")
     columns = [col[1] for col in cursor.fetchall()]
 
@@ -60,6 +60,15 @@ try:
         print("✓ Colonne dxf_url ajoutée avec succès!")
     else:
         print("✓ Colonne dxf_url existe déjà")
+
+    if 'status' not in columns:
+        print("Ajout de la colonne status...")
+        cursor.execute("ALTER TABLE configurations ADD COLUMN status TEXT DEFAULT 'en_attente_validation'")
+        cursor.execute("UPDATE configurations SET status = 'en_attente_validation' WHERE status IS NULL")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_configurations_status ON configurations(status)")
+        print("✓ Colonne status ajoutée avec succès!")
+    else:
+        print("✓ Colonne status existe déjà")
 
     conn.commit()
     print("\n✓ Tables créées avec succès!")

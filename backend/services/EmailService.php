@@ -22,6 +22,11 @@ class EmailService {
      * Envoie une notification de nouvelle configuration à l'admin
      */
     public function sendNewConfigurationNotificationToAdmin($config, $customer) {
+        if (!$config || !isset($config['id'])) {
+            error_log("Cannot send notification: invalid config data");
+            return false;
+        }
+
         $configName = $config['name'] ?? "Configuration #{$config['id']}";
         $subject = "Nouveau projet client : {$configName} - {$customer['first_name']} {$customer['last_name']}";
 
@@ -35,7 +40,8 @@ class EmailService {
      * Template HTML pour notification admin de nouvelle configuration
      */
     private function getAdminConfigurationNotificationTemplate($config, $customer) {
-        $priceFormatted = number_format($config['price'], 2, ',', ' ') . ' €';
+        $price = $config['price'] ?? 0;
+        $priceFormatted = number_format($price, 2, ',', ' ') . ' €';
         $frontendUrl = getenv('FRONTEND_URL') ?: 'http://localhost:3000';
         $backendUrl = getenv('BACKEND_URL') ?: 'http://localhost:8000';
 
