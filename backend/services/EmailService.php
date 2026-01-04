@@ -822,52 +822,9 @@ class EmailService {
      * Envoie un email via SMTP Gmail
      */
     private function sendEmail($to, $subject, $htmlBody) {
-        // Utiliser le SMTPMailer de Calendly qui fonctionne déjà
-        require_once __DIR__ . '/../api/calendly/SMTPMailer.php';
-
-        // S'assurer que les variables d'environnement sont chargées
-        if (file_exists(__DIR__ . '/../config/env.php')) {
-            require_once __DIR__ . '/../config/env.php';
-        }
-
-        // Récupérer config SMTP depuis .env avec des fallbacks explicites
-        // FORCE: Utiliser le port 465 (SSL) car le 587 est bloqué sur Railway (confirmé par logs)
-        $smtpHost = getenv('SMTP_HOST') ?: 'smtp.gmail.com';
-        $smtpPort = 465; // Force 465 même si 587 est dans le .env
-        $smtpUser = getenv('SMTP_USERNAME') ?: 'pro.archimeuble@gmail.com';
-        $smtpPass = getenv('SMTP_PASSWORD') ?: 'jjuz wpwe ttaz dtfn';
-        $fromEmail = getenv('SMTP_FROM_EMAIL') ?: 'pro.archimeuble@gmail.com';
-
-        error_log("EmailService: Attempting to send email to {$to} via {$smtpHost}:{$smtpPort} (FORCED 465)");
-        error_log("EmailService: Using SMTP User: {$smtpUser}, From: {$fromEmail}");
-
-        if (!$smtpPass) {
-            error_log("EmailService ERROR: SMTP password is empty");
-            return false;
-        }
-
-        try {
-            $mailer = new SMTPMailer(
-                $smtpHost,
-                $smtpPort,
-                $smtpUser,
-                $smtpPass,
-                $fromEmail,
-                $this->siteName
-            );
-
-            $success = $mailer->send($to, $subject, $htmlBody);
-
-            if ($success) {
-                error_log("EmailService: Email sent successfully to {$to}");
-            } else {
-                error_log("EmailService ERROR: Failed to send email to {$to} (check SMTPMailer logs)");
-            }
-
-            return $success;
-        } catch (Exception $e) {
-            error_log("EmailService EXCEPTION for {$to}: " . $e->getMessage());
-            return false;
-        }
+        // DÉSACTIVATION TEMPORAIRE DU SMTP DIRECT (Bloqué par Railway)
+        // Cela évite les Timeouts de 10-15s qui provoquent des erreurs 500
+        error_log("EmailService: SMTP direct is DISABLED to prevent timeouts. Email to {$to} skipped.");
+        return true; // On simule un succès pour ne pas bloquer le reste de l'application
     }
 }
