@@ -21,7 +21,11 @@ function loadEnvFile($filePath = null) {
 
     // Vérifier que le fichier existe
     if (!file_exists($filePath)) {
-        error_log("Warning: .env file not found at $filePath");
+        // En production (Railway/Docker), le fichier .env peut ne pas exister car les variables 
+        // sont injectées directement dans l'environnement. On ne logue l'avertissement que si nécessaire.
+        if (getenv('ADMIN_EMAIL') === false) {
+            error_log("Note: .env file not found at $filePath and no environment variables detected.");
+        }
         return;
     }
 

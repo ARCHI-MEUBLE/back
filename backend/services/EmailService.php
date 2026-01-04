@@ -831,14 +831,14 @@ class EmailService {
         }
 
         // Récupérer config SMTP depuis .env avec des fallbacks explicites
-        // TEST: Utiliser le port 465 (SSL) par défaut car le 587 semble bloqué sur Railway
+        // FORCE: Utiliser le port 465 (SSL) car le 587 est bloqué sur Railway (confirmé par logs)
         $smtpHost = getenv('SMTP_HOST') ?: 'smtp.gmail.com';
-        $smtpPort = getenv('SMTP_PORT') ?: 465; // Changé de 587 à 465
+        $smtpPort = 465; // Force 465 même si 587 est dans le .env
         $smtpUser = getenv('SMTP_USERNAME') ?: 'pro.archimeuble@gmail.com';
         $smtpPass = getenv('SMTP_PASSWORD') ?: 'jjuz wpwe ttaz dtfn';
         $fromEmail = getenv('SMTP_FROM_EMAIL') ?: 'pro.archimeuble@gmail.com';
 
-        error_log("EmailService: Attempting to send email to {$to} via {$smtpHost}:{$smtpPort}");
+        error_log("EmailService: Attempting to send email to {$to} via {$smtpHost}:{$smtpPort} (FORCED 465)");
         error_log("EmailService: Using SMTP User: {$smtpUser}, From: {$fromEmail}");
 
         if (!$smtpPass) {
