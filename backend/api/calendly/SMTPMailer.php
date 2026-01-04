@@ -75,7 +75,7 @@ class SMTPMailer {
             "tcp://{$this->host}:{$this->port}",
             $errno,
             $errstr,
-            30,
+            5, // Reduced from 30s to 5s to prevent frontend timeouts
             STREAM_CLIENT_CONNECT,
             $context
         );
