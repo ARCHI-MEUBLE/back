@@ -821,10 +821,42 @@ class EmailService {
     /**
      * Envoie un email via SMTP Gmail
      */
+    /**
+     * Envoie un email via l'API Resend (contourne les blocages SMTP de Railway)
+     */
     private function sendEmail($to, $subject, $htmlBody) {
-        // DÉSACTIVATION TEMPORAIRE DU SMTP DIRECT (Bloqué par Railway)
-        // Cela évite les Timeouts de 10-15s qui provoquent des erreurs 500
-        error_log("EmailService: SMTP direct is DISABLED to prevent timeouts. Email to {$to} skipped.");
-        return true; // On simule un succès pour ne pas bloquer le reste de l'application
+        $apiKey = 're_SXgtNrku_NZEYpqfmmLtiXTfvmPegn5HB';
+        $from = 'contact@archimeuble.com'; // Domaine vérifié sur Resend !
+        
+        error_log("EmailService: Attempting to send email to {$to} via Resend API (from {$from})");
+
+        $data = [
+            'from' => "ArchiMeuble <{$from}>",
+            'to' => [$to],
+            'subject' => $subject,
+            'html' => $htmlBody,
+        ];
+
+        $ch = curl_init('https://api.resend.com/emails');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $apiKey,
+            'Content-Type: application/json',
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($httpCode >= 200 && $httpCode < 300) {
+            error_log("EmailService: Email sent successfully via Resend API to {$to}");
+            return true;
+        } else {
+            error_log("EmailService ERROR: Resend API failed with code {$httpCode}. Response: {$response}. Curl Error: {$error}");
+            return false;
+        }
     }
 }
