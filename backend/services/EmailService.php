@@ -55,6 +55,7 @@ class EmailService {
         $accessoriesHtml = "";
         $dimensionsHtml = "";
         $multiColorHtml = "";
+        $accessoriesList = []; // Initialize to prevent undefined variable errors
 
         if (isset($config['config_string'])) {
             $data = json_decode($config['config_string'], true);
@@ -228,11 +229,11 @@ class EmailService {
             <div style='background-color: #1A1917; padding: 32px; border-radius: 4px; margin-bottom: 24px;'>
                 <div style='text-align: center; margin-bottom: 24px;'>
                     <h4 style='margin: 0 0 8px 0; color: #FFFFFF; font-size: 16px; font-weight: 600;'>PLAN DE FABRICATION 2D</h4>
-                    <div style='height: 2px; width: 40px; bg-color: #8B7355; margin: 0 auto 16px auto; background-color: #8B7355;'></div>
+                    <div style='height: 2px; width: 40px; margin: 0 auto 16px auto; background-color: #8B7355;'></div>
                     <p style='color: #A8A7A3; font-size: 13px; line-height: 1.5;'>Détails des aménagements par compartiment pour la mise en production.</p>
                 </div>
                 
-                <div style='background-color: rgba(255,255,255,0.03); border: 1px border-style: solid; border-color: rgba(255,255,255,0.1); padding: 20px; margin-bottom: 24px;'>
+                <div style='background-color: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 20px; margin-bottom: 24px;'>
                     <table width='100%' cellpadding='0' cellspacing='0'>
                         " . (!empty($accessoriesList) ? implode('', array_map(function($acc) {
                             return "<tr>
