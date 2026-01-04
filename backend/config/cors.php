@@ -50,17 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 // Démarrer la session si elle n'est pas déjà active
 if (session_status() === PHP_SESSION_NONE) {
-    // Optimisation: réduire la probabilité de garbage collection
-    ini_set('session.gc_probability', 0);
-
-    // Définir un chemin de session si non défini
-    if (empty(ini_get('session.save_path'))) {
-        ini_set('session.save_path', '/tmp');
-    }
-
-    // Utiliser des cookies sécurisés
-    ini_set('session.cookie_httponly', 1);
-    ini_set('session.use_strict_mode', 1);
-
-    session_start();
+    // Utiliser la classe Session pour garantir les bons paramètres de cookies
+    require_once __DIR__ . '/../core/Session.php';
+    Session::getInstance();
 }

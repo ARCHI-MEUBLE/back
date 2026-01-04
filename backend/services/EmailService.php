@@ -825,7 +825,7 @@ class EmailService {
      * Envoie un email via l'API Resend (contourne les blocages SMTP de Railway)
      */
     private function sendEmail($to, $subject, $htmlBody) {
-        $apiKey = 're_SXgtNrku_NZEYpqfmmLtiXTfvmPegn5HB';
+        $apiKey = getenv('RESEND_API_KEY');
         $from = 'contact@archimeuble.com'; // Domaine vérifié sur Resend !
         
         error_log("EmailService: Attempting to send email to {$to} via Resend API (from {$from})");

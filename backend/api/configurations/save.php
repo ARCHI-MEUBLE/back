@@ -19,7 +19,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Vérifier l'authentification (Client OU Admin)
+error_log("SAVE.PHP - Session data: " . print_r($_SESSION, true));
 if (!isset($_SESSION['customer_id']) && !isset($_SESSION['admin_email'])) {
+    error_log("SAVE.PHP - Unauthorized access attempt");
     http_response_code(401);
     echo json_encode(['error' => 'Non authentifié']);
     exit;
@@ -27,11 +29,14 @@ if (!isset($_SESSION['customer_id']) && !isset($_SESSION['admin_email'])) {
 
 $isAdmin = isset($_SESSION['admin_email']);
 $userId = $_SESSION['customer_id'] ?? null;
+error_log("SAVE.PHP - Authenticated: isAdmin=" . ($isAdmin ? 'YES' : 'NO') . ", userId=" . ($userId ?: 'NULL'));
 
 require_once __DIR__ . '/../../models/Configuration.php';
 
 try {
-    $data = json_decode(file_get_contents('php://input'), true);
+    $input = file_get_contents('php://input');
+    error_log("SAVE.PHP - Raw input: " . $input);
+    $data = json_decode($input, true);
 
     // Validation
     $required = ['prompt', 'price'];
@@ -153,6 +158,7 @@ try {
     }
 
     // Créer la configuration avec dxf_url si fourni
+    error_log("SAVE.PHP - Creating new configuration for user: " . ($userId ?: 'GUEST'));
     $configId = $config->create(
         $userId,
         $data['model_id'] ?? null,
@@ -163,6 +169,13 @@ try {
         session_id(),
         $isAdmin && isset($data['status']) ? $data['status'] : 'en_attente_validation'
     );
+
+    if (!$configId) {
+        error_log("SAVE.PHP - FAILED to create configuration in database");
+        throw new Exception("Erreur lors de l'insertion en base de données");
+    }
+    
+    error_log("SAVE.PHP - Configuration created with ID: $configId");
 
     // Mettre à jour le dxf_url si fourni
     if (isset($data['dxf_url']) && $data['dxf_url'] !== '') {
@@ -175,7 +188,9 @@ try {
     // RÉPONSE RAPIDE AU CLIENT (Découplage de l'email)
     // On envoie le succès immédiatement pour éviter le timeout du navigateur
     // même si l'envoi de l'email prend du temps ou échoue.
+    error_log("SAVE.PHP - Attempting fastcgi_finish_request");
     if (function_exists('fastcgi_finish_request')) {
+        error_log("SAVE.PHP - Sending rapid JSON response");
         echo json_encode([
             'success' => true,
             'message' => 'Configuration sauvegardée avec succès',
@@ -183,9 +198,10 @@ try {
         ]);
         session_write_close();
         fastcgi_finish_request(); // Libère le navigateur immédiatement
+        error_log("SAVE.PHP - Browser released, continuing in background");
     } else {
         // Fallback si pas en FastCGI (on continue normalement, mais le risque de timeout client persiste)
-        error_log("fastcgi_finish_request not available, email may delay response");
+        error_log("SAVE.PHP - fastcgi_finish_request not available, continuing synchronously");
     }
 
     // Notification Admin (s'exécute après que le client ait reçu sa réponse si fastcgi_finish_request est dispo)
