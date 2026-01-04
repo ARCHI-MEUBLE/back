@@ -49,6 +49,30 @@ try:
     )
     """)
 
+    print("Création de la table pricing...")
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS pricing (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        description TEXT,
+        price_per_m3 REAL NOT NULL DEFAULT 1000.0,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # Insert default pricing data
+    cursor.execute("""
+    INSERT OR IGNORE INTO pricing (name, description, price_per_m3, is_active) VALUES
+    ('default', 'Prix par défaut pour tous les meubles', 1500.0, 1),
+    ('premium', 'Prix premium pour meubles haut de gamme', 2500.0, 1),
+    ('budget', 'Prix économique', 1000.0, 1)
+    """)
+
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_pricing_active ON pricing(is_active)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_pricing_name ON pricing(name)")
+
     # Ajouter les colonnes manquantes à la table configurations
     print("\nVérification des colonnes dans configurations...")
     cursor.execute("PRAGMA table_info(configurations)")
