@@ -15,7 +15,13 @@ class EmailService {
             require_once __DIR__ . '/../config/env.php';
         }
         $this->from = getenv('SMTP_FROM_EMAIL') ?: 'noreply@archimeuble.com';
-        $this->adminEmail = getenv('ADMIN_EMAIL') ?: 'admin@archimeuble.com';
+        $this->adminEmail = getenv('ADMIN_EMAIL') ?: 'pro.archimeuble@gmail.com';
+        
+        if (getenv('ADMIN_EMAIL')) {
+            error_log("EmailService: Admin email loaded from ENV: " . getenv('ADMIN_EMAIL'));
+        } else {
+            error_log("EmailService: ADMIN_EMAIL not found in ENV, using default: " . $this->adminEmail);
+        }
     }
 
     /**
@@ -819,16 +825,23 @@ class EmailService {
         // Utiliser le SMTPMailer de Calendly qui fonctionne déjà
         require_once __DIR__ . '/../api/calendly/SMTPMailer.php';
 
-        // Récupérer config SMTP depuis .env
+        // S'assurer que les variables d'environnement sont chargées
+        if (file_exists(__DIR__ . '/../config/env.php')) {
+            require_once __DIR__ . '/../config/env.php';
+        }
+
+        // Récupérer config SMTP depuis .env avec des fallbacks explicites
         $smtpHost = getenv('SMTP_HOST') ?: 'smtp.gmail.com';
         $smtpPort = getenv('SMTP_PORT') ?: 587;
-        $smtpUser = getenv('SMTP_USERNAME') ?: getenv('SMTP_FROM_EMAIL');
-        $smtpPass = getenv('SMTP_PASSWORD');
+        $smtpUser = getenv('SMTP_USERNAME') ?: 'pro.archimeuble@gmail.com';
+        $smtpPass = getenv('SMTP_PASSWORD') ?: 'jjuz wpwe ttaz dtfn';
+        $fromEmail = getenv('SMTP_FROM_EMAIL') ?: 'pro.archimeuble@gmail.com';
 
-        error_log("Attempting to send email to {$to} via {$smtpHost}");
+        error_log("EmailService: Attempting to send email to {$to} via {$smtpHost}");
+        error_log("EmailService: Using SMTP User: {$smtpUser}, From: {$fromEmail}");
 
-        if (!$smtpUser || !$smtpPass) {
-            error_log("SMTP credentials not configured (User: " . ($smtpUser ? 'YES' : 'NO') . ", Pass: " . ($smtpPass ? 'YES' : 'NO') . ")");
+        if (!$smtpPass) {
+            error_log("EmailService ERROR: SMTP password is empty");
             return false;
         }
 
@@ -838,21 +851,21 @@ class EmailService {
                 $smtpPort,
                 $smtpUser,
                 $smtpPass,
-                $this->from,
+                $fromEmail,
                 $this->siteName
             );
 
             $success = $mailer->send($to, $subject, $htmlBody);
 
             if ($success) {
-                error_log("Email sent successfully to {$to}");
+                error_log("EmailService: Email sent successfully to {$to}");
             } else {
-                error_log("Failed to send email to {$to} - check SMTPMailer logs");
+                error_log("EmailService ERROR: Failed to send email to {$to} (check SMTPMailer logs)");
             }
 
             return $success;
         } catch (Exception $e) {
-            error_log("SMTP Exception for {$to}: " . $e->getMessage());
+            error_log("EmailService EXCEPTION for {$to}: " . $e->getMessage());
             return false;
         }
     }

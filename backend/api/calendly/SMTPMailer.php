@@ -75,7 +75,7 @@ class SMTPMailer {
             "tcp://{$this->host}:{$this->port}",
             $errno,
             $errstr,
-            5, // Reduced from 30s to 5s to prevent frontend timeouts
+            15, // Augmenté de 5s à 15s pour éviter les timeouts avec Gmail TLS
             STREAM_CLIENT_CONNECT,
             $context
         );
@@ -116,8 +116,11 @@ class SMTPMailer {
      * Envoie une commande SMTP
      */
     private function sendCommand($command) {
+        error_log("SMTP OUT: " . $command);
         fwrite($this->socket, $command . "\r\n");
-        return $this->getResponse();
+        $response = $this->getResponse();
+        error_log("SMTP IN: " . $response);
+        return $response;
     }
 
     /**
