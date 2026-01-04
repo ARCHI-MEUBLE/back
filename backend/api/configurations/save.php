@@ -101,6 +101,17 @@ try {
         $config->update($configId, $updateData);
         $savedConfiguration = $config->getById($configId);
 
+        // RÉPONSE RAPIDE AU CLIENT (Découplage de l'email)
+        if (function_exists('fastcgi_finish_request')) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Configuration mise à jour avec succès',
+                'configuration' => $savedConfiguration
+            ]);
+            session_write_close();
+            fastcgi_finish_request();
+        }
+
         // Notification Admin
         try {
             error_log("Triggering admin notification for config update (ID: $configId). UserID: " . ($userId ?: 'ADMIN'));
@@ -161,7 +172,23 @@ try {
     // Récupérer la configuration créée
     $savedConfiguration = $config->getById($configId);
 
-    // Notification Admin
+    // RÉPONSE RAPIDE AU CLIENT (Découplage de l'email)
+    // On envoie le succès immédiatement pour éviter le timeout du navigateur
+    // même si l'envoi de l'email prend du temps ou échoue.
+    if (function_exists('fastcgi_finish_request')) {
+        echo json_encode([
+            'success' => true,
+            'message' => 'Configuration sauvegardée avec succès',
+            'configuration' => $savedConfiguration
+        ]);
+        session_write_close();
+        fastcgi_finish_request(); // Libère le navigateur immédiatement
+    } else {
+        // Fallback si pas en FastCGI (on continue normalement, mais le risque de timeout client persiste)
+        error_log("fastcgi_finish_request not available, email may delay response");
+    }
+
+    // Notification Admin (s'exécute après que le client ait reçu sa réponse si fastcgi_finish_request est dispo)
     try {
         error_log("Triggering admin notification for new config (ID: $configId). UserID: " . ($userId ?: 'ADMIN'));
         require_once __DIR__ . '/../../models/Customer.php';
