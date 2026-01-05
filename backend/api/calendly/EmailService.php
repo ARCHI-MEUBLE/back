@@ -1,38 +1,15 @@
 <?php
 /**
  * Service d'envoi d'emails pour les rendez-vous Calendly
- * Gère les emails de confirmation et de rappel via SMTP
+ * Gère les emails de confirmation et de rappel via Resend API
  */
 
-require_once __DIR__ . '/SMTPMailer.php';
-
 class EmailService {
-    private $smtpMailer;
     private $adminEmail;
 
     public function __construct() {
-        // Configuration SMTP depuis les variables d'environnement UNIQUEMENT
-        $smtpHost = getenv('SMTP_HOST');
-        $smtpPort = getenv('SMTP_PORT');
-        $smtpUsername = getenv('SMTP_USERNAME');
-        $smtpPassword = getenv('SMTP_PASSWORD');
-        $fromEmail = getenv('SMTP_FROM_EMAIL');
-        $fromName = getenv('SMTP_FROM_NAME');
-        $this->adminEmail = getenv('ADMIN_EMAIL');
-
-        // Vérification que toutes les variables sont configurées
-        if (!$smtpHost || !$smtpPort || !$smtpUsername || !$smtpPassword || !$fromEmail || !$fromName || !$this->adminEmail) {
-            throw new Exception('Configuration SMTP incomplète. Vérifiez les variables d\'environnement dans le fichier .env.local');
-        }
-
-        $this->smtpMailer = new SMTPMailer(
-            $smtpHost,
-            $smtpPort,
-            $smtpUsername,
-            $smtpPassword,
-            $fromEmail,
-            $fromName
-        );
+        // Configuration Resend API - plus simple et plus fiable que SMTP
+        $this->adminEmail = getenv('ADMIN_EMAIL') ?: 'admin@archimeuble.com';
     }
 
     /**
@@ -366,10 +343,47 @@ class EmailService {
     }
 
     /**
-     * Fonction d'envoi d'email générique via SMTP
+     * Fonction d'envoi d'email générique via Resend API (remplace SMTP)
      */
     private function sendEmail($to, $subject, $htmlMessage) {
-        return $this->smtpMailer->send($to, $subject, $htmlMessage);
+        $apiKey = getenv('RESEND_API_KEY');
+        $from = 'contact@archimeuble.com'; // Domaine vérifié sur Resend
+
+        if (!$apiKey) {
+            error_log("Calendly EmailService ERROR: RESEND_API_KEY not configured");
+            return false;
+        }
+
+        error_log("Calendly EmailService: Sending email to {$to} via Resend API");
+
+        $data = [
+            'from' => $from,
+            'to' => [$to],
+            'subject' => $subject,
+            'html' => $htmlMessage,
+        ];
+
+        $ch = curl_init('https://api.resend.com/emails');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $apiKey,
+            'Content-Type: application/json',
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($httpCode >= 200 && $httpCode < 300) {
+            error_log("Calendly EmailService: Email sent successfully to {$to}");
+            return true;
+        } else {
+            error_log("Calendly EmailService ERROR: Resend API failed with code {$httpCode}. Response: {$response}. Curl Error: {$error}");
+            return false;
+        }
     }
 }
 ?>
