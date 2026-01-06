@@ -4,12 +4,22 @@
  * À exécuter une seule fois pour créer la table sur Railway
  */
 
-require_once __DIR__ . '/../../core/Database.php';
+// Afficher les erreurs pour debug
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
 
 header('Content-Type: application/json');
 
 try {
-    $db = Database::getInstance()->getConnection();
+    // Connexion directe à SQLite sans passer par la classe Database
+    $dbPath = getenv('DB_PATH') ?: '/app/database/archimeuble.db';
+
+    if (!file_exists($dbPath)) {
+        throw new Exception("Base de données introuvable: $dbPath");
+    }
+
+    $db = new PDO('sqlite:' . $dbPath);
+    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // Créer la table calendly_appointments
     $sql = "CREATE TABLE IF NOT EXISTS calendly_appointments (
