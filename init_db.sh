@@ -48,6 +48,8 @@ CREATE TABLE IF NOT EXISTS models (
     description TEXT,
     price REAL DEFAULT 0.0,
     image_url TEXT,
+    category TEXT,
+    config_data TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
