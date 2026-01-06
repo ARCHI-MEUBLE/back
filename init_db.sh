@@ -381,4 +381,27 @@ echo "Identifiants admin par défaut:"
 echo "  Username: admin"
 echo "  Password: admin123"
 echo "  Email: admin@archimeuble.com"
- 
+
+# Migration: Ajouter les colonnes manquantes à la table models
+echo "Migration de la table models..."
+
+# Vérifier et ajouter category si elle n'existe pas
+if ! sqlite3 "$DB_PATH" "PRAGMA table_info(models)" | grep -q "category"; then
+    echo "  Ajout de la colonne category..."
+    sqlite3 "$DB_PATH" "ALTER TABLE models ADD COLUMN category TEXT"
+    echo "  ✓ Colonne category ajoutée"
+else
+    echo "  ✓ Colonne category existe déjà"
+fi
+
+# Vérifier et ajouter config_data si elle n'existe pas
+if ! sqlite3 "$DB_PATH" "PRAGMA table_info(models)" | grep -q "config_data"; then
+    echo "  Ajout de la colonne config_data..."
+    sqlite3 "$DB_PATH" "ALTER TABLE models ADD COLUMN config_data TEXT"
+    echo "  ✓ Colonne config_data ajoutée"
+else
+    echo "  ✓ Colonne config_data existe déjà"
+fi
+
+echo "✓ Migration de la table models terminée"
+
