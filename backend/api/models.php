@@ -293,15 +293,24 @@ if ($method === 'DELETE') {
         exit;
     }
 
-    $input = json_decode(file_get_contents('php://input'), true);
+    // Accepter l'ID soit dans la query string, soit dans le body
+    $id = null;
+    if (isset($_GET['id'])) {
+        $id = $_GET['id'];
+    } else {
+        $input = json_decode(file_get_contents('php://input'), true);
+        if (isset($input['id'])) {
+            $id = $input['id'];
+        }
+    }
 
-    if (!isset($input['id'])) {
+    if (!$id) {
         http_response_code(400);
         echo json_encode(['error' => 'ID du modèle requis']);
         exit;
     }
 
-    if ($model->delete($input['id'])) {
+    if ($model->delete($id)) {
         http_response_code(200);
         echo json_encode(['success' => true]);
     } else {
