@@ -193,6 +193,25 @@ try:
     else:
         print("✓ Colonne status existe déjà")
 
+    # Ajouter les colonnes manquantes à la table models
+    print("\nVérification des colonnes dans models...")
+    cursor.execute("PRAGMA table_info(models)")
+    model_columns = [col[1] for col in cursor.fetchall()]
+
+    if 'category' not in model_columns:
+        print("Ajout de la colonne category à la table models...")
+        cursor.execute("ALTER TABLE models ADD COLUMN category TEXT")
+        print("✓ Colonne category ajoutée avec succès!")
+    else:
+        print("✓ Colonne category existe déjà")
+
+    if 'config_data' not in model_columns:
+        print("Ajout de la colonne config_data à la table models...")
+        cursor.execute("ALTER TABLE models ADD COLUMN config_data TEXT")
+        print("✓ Colonne config_data ajoutée avec succès!")
+    else:
+        print("✓ Colonne config_data existe déjà")
+
     conn.commit()
     print("\n✓ Tables créées avec succès!")
 

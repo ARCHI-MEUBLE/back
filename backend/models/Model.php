@@ -60,7 +60,7 @@ class Model {
                   VALUES (:name, :description, :prompt, :price, :image_url, :category, :config_data)";
 
         error_log("SQL Query: " . $query);
-        error_log("SQL Params: name=$name, prompt=$prompt, config_data=" . (strlen($configData) > 50 ? substr($configData, 0, 50) . '...' : $configData));
+        error_log("SQL Params: name=$name, prompt=$prompt, config_data=" . ($configData && is_string($configData) && strlen($configData) > 50 ? substr($configData, 0, 50) . '...' : ($configData ?? 'null')));
 
         $success = $this->db->execute($query, [
             'name' => $name,
