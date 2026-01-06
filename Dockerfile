@@ -93,8 +93,8 @@ RUN cp /app/init_db.sh /usr/local/bin/init_db.sh \
     && chmod +x /app/create_missing_tables.py \
     && chmod +x /app/setup-backup-cron.sh
 
-# Exposer le port 8000 pour le serveur PHP
-EXPOSE 8000
+# Exposer le port 8080 pour le serveur PHP (Railway utilise 8080)
+EXPOSE 8080
 
 # Script de démarrage qui initialise la BDD puis lance PHP
 CMD ["/bin/bash", "/app/start.sh"]
