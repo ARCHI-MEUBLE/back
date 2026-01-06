@@ -249,18 +249,24 @@ CREATE TABLE IF NOT EXISTS admin_notifications (
 -- Table des rendez-vous Calendly
 CREATE TABLE IF NOT EXISTS calendly_appointments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    event_id TEXT UNIQUE NOT NULL,
-    customer_email TEXT NOT NULL,
-    customer_name TEXT,
+    calendly_event_id TEXT UNIQUE NOT NULL,
+    client_name TEXT NOT NULL,
+    client_email TEXT NOT NULL,
     event_type TEXT,
     start_time DATETIME NOT NULL,
     end_time DATETIME NOT NULL,
+    timezone TEXT DEFAULT 'Europe/Paris',
+    config_url TEXT,
+    additional_notes TEXT,
+    meeting_url TEXT,
+    phone_number TEXT,
     status TEXT DEFAULT 'scheduled',
+    confirmation_sent INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_calendly_appointments_email ON calendly_appointments(customer_email);
+CREATE INDEX IF NOT EXISTS idx_calendly_appointments_email ON calendly_appointments(client_email);
 CREATE INDEX IF NOT EXISTS idx_calendly_appointments_start_time ON calendly_appointments(start_time);
 
 -- Table des échantillons de matériaux

@@ -23,17 +23,116 @@ try:
     CREATE TABLE IF NOT EXISTS calendly_appointments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         calendly_event_id TEXT UNIQUE NOT NULL,
-        customer_email TEXT NOT NULL,
-        customer_name TEXT NOT NULL,
+        client_name TEXT NOT NULL,
+        client_email TEXT NOT NULL,
+        event_type TEXT,
         start_time DATETIME NOT NULL,
         end_time DATETIME NOT NULL,
-        event_type TEXT,
-        location TEXT,
+        timezone TEXT DEFAULT 'Europe/Paris',
+        config_url TEXT,
+        additional_notes TEXT,
+        meeting_url TEXT,
+        phone_number TEXT,
         status TEXT DEFAULT 'scheduled',
+        confirmation_sent INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
     """)
+
+    # Migration: vérifier si table a l'ancien schéma
+    print("\nVérification des colonnes dans calendly_appointments...")
+    cursor.execute("PRAGMA table_info(calendly_appointments)")
+    cal_columns = {col[1]: col for col in cursor.fetchall()}
+
+    # Si anciennes colonnes existent OU colonnes manquantes, recréer la table
+    needs_migration = (
+        'customer_name' in cal_columns or
+        'customer_email' in cal_columns or
+        'client_name' not in cal_columns or
+        'timezone' not in cal_columns or
+        'confirmation_sent' not in cal_columns
+    )
+
+    if needs_migration:
+        print("Migration: Mise à jour du schéma de la table...")
+
+        # Compter les lignes existantes
+        cursor.execute("SELECT COUNT(*) FROM calendly_appointments")
+        count = cursor.fetchone()[0]
+
+        if count > 0:
+            print(f"⚠️  Attention: {count} rendez-vous existants seront migrés")
+
+            # Identifier les colonnes communes pour la migration
+            old_has_customer = 'customer_name' in cal_columns
+            old_has_client = 'client_name' in cal_columns
+            old_has_event_id = 'calendly_event_id' in cal_columns
+
+            # Créer nouvelle table
+            cursor.execute("""
+            CREATE TABLE calendly_appointments_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                calendly_event_id TEXT UNIQUE,
+                client_name TEXT NOT NULL,
+                client_email TEXT NOT NULL,
+                event_type TEXT,
+                start_time DATETIME NOT NULL,
+                end_time DATETIME NOT NULL,
+                timezone TEXT DEFAULT 'Europe/Paris',
+                config_url TEXT,
+                additional_notes TEXT,
+                meeting_url TEXT,
+                phone_number TEXT,
+                status TEXT DEFAULT 'scheduled',
+                confirmation_sent INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+            """)
+
+            # Construire la requête de copie basée sur les colonnes disponibles
+            name_col = 'customer_name' if old_has_customer else 'client_name'
+            email_col = 'customer_email' if old_has_customer else 'client_email'
+            event_id_col = 'calendly_event_id' if old_has_event_id else "'unknown_' || id"
+
+            cursor.execute(f"""
+            INSERT INTO calendly_appointments_new
+            (id, calendly_event_id, client_name, client_email, event_type, start_time, end_time, status, created_at, updated_at)
+            SELECT id, {event_id_col}, {name_col}, {email_col}, event_type, start_time, end_time, status, created_at, updated_at
+            FROM calendly_appointments
+            """)
+
+            # Supprimer ancienne table et renommer
+            cursor.execute("DROP TABLE calendly_appointments")
+            cursor.execute("ALTER TABLE calendly_appointments_new RENAME TO calendly_appointments")
+            print(f"✓ Migration terminée ({count} rendez-vous migrés)")
+        else:
+            # Table vide, on peut la supprimer et recréer
+            cursor.execute("DROP TABLE calendly_appointments")
+            cursor.execute("""
+            CREATE TABLE calendly_appointments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                calendly_event_id TEXT UNIQUE NOT NULL,
+                client_name TEXT NOT NULL,
+                client_email TEXT NOT NULL,
+                event_type TEXT,
+                start_time DATETIME NOT NULL,
+                end_time DATETIME NOT NULL,
+                timezone TEXT DEFAULT 'Europe/Paris',
+                config_url TEXT,
+                additional_notes TEXT,
+                meeting_url TEXT,
+                phone_number TEXT,
+                status TEXT DEFAULT 'scheduled',
+                confirmation_sent INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+            """)
+            print("✓ Table recréée avec le nouveau schéma")
+    else:
+        print("✓ Schéma déjà à jour")
 
     print("Création de la table notifications...")
     cursor.execute("""

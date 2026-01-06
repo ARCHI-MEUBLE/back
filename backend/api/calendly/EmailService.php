@@ -345,6 +345,9 @@ class EmailService {
     /**
      * Fonction d'envoi d'email générique via Resend API (remplace SMTP)
      */
+    /**
+     * Envoie un email via Resend API (remplace SMTP)
+     */
     private function sendEmail($to, $subject, $htmlMessage) {
         $apiKey = getenv('RESEND_API_KEY');
         $from = 'contact@archimeuble.com'; // Domaine vérifié sur Resend
