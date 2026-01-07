@@ -38,6 +38,8 @@ try {
                 sc.name as color_name,
                 sc.hex,
                 sc.image_url,
+                sc.price_per_m2,
+                sc.unit_price,
                 st.name as type_name,
                 st.material,
                 st.description as type_description
@@ -72,13 +74,6 @@ try {
         $sampleColorId = $input['sample_color_id'];
         $quantity = $input['quantity'] ?? 1;
 
-        // Vérifier la limite de 3 échantillons gratuits
-        $currentCount = $db->query(
-            "SELECT COUNT(*) as count FROM cart_sample_items WHERE customer_id = ?",
-            [$customerId]
-        );
-        $totalSamples = $currentCount[0]['count'] ?? 0;
-
         // Vérifier si l'échantillon existe déjà dans le panier
         $existing = $db->query(
             "SELECT id, quantity FROM cart_sample_items WHERE customer_id = ? AND sample_color_id = ?",
@@ -94,16 +89,6 @@ try {
             exit;
         }
 
-        // Vérifier la limite
-        if ($totalSamples >= 3) {
-            http_response_code(400);
-            echo json_encode([
-                'error' => 'Limite de 3 échantillons gratuits atteinte',
-                'limit_reached' => true
-            ]);
-            exit;
-        }
-
         // Insérer un nouvel article
         $db->execute(
             "INSERT INTO cart_sample_items (customer_id, sample_color_id, quantity) VALUES (?, ?, ?)",
@@ -115,8 +100,7 @@ try {
         echo json_encode([
             'success' => true,
             'message' => 'Échantillon ajouté au panier',
-            'item_id' => $itemId,
-            'samples_count' => $totalSamples + 1
+            'item_id' => $itemId
         ]);
         exit;
     }

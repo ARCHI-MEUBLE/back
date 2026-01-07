@@ -47,7 +47,12 @@ try {
                     echo json_encode(['error' => 'name et material requis']);
                     exit;
                 }
-                $id = $sample->createType($input['name'], $input['material'], $input['description'] ?? null, $input['position'] ?? 0);
+                $id = $sample->createType(
+                    $input['name'], 
+                    $input['material'], 
+                    $input['description'] ?? null, 
+                    $input['position'] ?? 0
+                );
                 if (!$id) throw new Exception('Échec création type');
                 http_response_code(201);
                 echo json_encode(['success' => true, 'id' => $id]);
@@ -73,7 +78,15 @@ try {
                     echo json_encode(['error' => 'type_id et name requis']);
                     exit;
                 }
-                $cid = $sample->createColor((int)$input['type_id'], $input['name'], $input['hex'] ?? null, $input['image_url'] ?? null, $input['position'] ?? 0);
+                $cid = $sample->createColor(
+                    (int)$input['type_id'], 
+                    $input['name'], 
+                    $input['hex'] ?? null, 
+                    $input['image_url'] ?? null, 
+                    $input['position'] ?? 0,
+                    $input['price_per_m2'] ?? 0,
+                    $input['unit_price'] ?? 0
+                );
                 if (!$cid) throw new Exception('Échec création couleur');
                 http_response_code(201);
                 echo json_encode(['success' => true, 'id' => $cid]);

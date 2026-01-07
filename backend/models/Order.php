@@ -25,6 +25,7 @@ class Order {
         $samplesQuery = "
             SELECT csi.id, csi.sample_color_id, csi.quantity,
                    sc.name as color_name, sc.hex, sc.image_url,
+                   sc.unit_price, sc.price_per_m2,
                    st.name as type_name, st.material
             FROM cart_sample_items csi
             JOIN sample_colors sc ON csi.sample_color_id = sc.id
@@ -38,10 +39,13 @@ class Order {
             throw new Exception('Panier vide');
         }
 
-        // Calculer le total (uniquement les configs, échantillons = 0€)
+        // Calculer le total
         $total = 0;
         foreach ($cartItems as $item) {
             $total += $item['configuration']['price'] * $item['quantity'];
+        }
+        foreach ($sampleItems as $sample) {
+            $total += ($sample['unit_price'] ?? 0) * $sample['quantity'];
         }
 
         // Générer un numéro de commande unique
@@ -103,7 +107,7 @@ class Order {
                 $sample['image_url'],
                 $sample['hex'],
                 $sample['quantity'],
-                0.00 // Prix = 0€ pour échantillons gratuits
+                $sample['unit_price'] ?? 0.00
             ]);
         }
 
