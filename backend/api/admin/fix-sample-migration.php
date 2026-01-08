@@ -30,15 +30,9 @@ try {
     $pdo = $db->getPDO();
     $messages = [];
 
-    // Liste des tables et colonnes à ajouter
-    $migrations = [
-        'sample_types' => ['price_per_m2', 'unit_price'],
-        'sample_colors' => ['price_per_m2', 'unit_price']
-    ];
-
-    // --- NOUVELLE SECTION : TABLES MANQUANTES ---
+    // --- SECTION CRITIQUE : CREATION DES TABLES ---
     
-    // 1. Table calendly_appointments
+    // 1. Table calendly_appointments (avec structure robuste)
     $pdo->exec("CREATE TABLE IF NOT EXISTS calendly_appointments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         event_uri TEXT UNIQUE,
@@ -51,9 +45,9 @@ try {
         status TEXT DEFAULT 'active',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
-    $messages[] = "✅ Table 'calendly_appointments' vérifiée/créée";
+    $messages[] = "✅ Table 'calendly_appointments' créée ou déjà présente";
 
-    // 2. Table categories
+    // 2. Table categories (nécessaire pour le configurateur)
     $pdo->exec("CREATE TABLE IF NOT EXISTS categories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
@@ -64,9 +58,23 @@ try {
         display_order INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
-    $messages[] = "✅ Table 'categories' vérifiée/créée";
+    $messages[] = "✅ Table 'categories' créée ou déjà présente";
 
-    // --------------------------------------------
+    // 3. Table pricing (pour les prix dynamiques)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS pricing (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE,
+        value REAL,
+        description TEXT,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+    $messages[] = "✅ Table 'pricing' créée ou déjà présente";
+
+    // --- SECTION MIGRATIONS COLONNES ---
+    $migrations = [
+        'sample_types' => ['price_per_m2', 'unit_price'],
+        'sample_colors' => ['price_per_m2', 'unit_price']
+    ];
 
     foreach ($migrations as $table => $columns) {
         // Récupérer les colonnes existantes
