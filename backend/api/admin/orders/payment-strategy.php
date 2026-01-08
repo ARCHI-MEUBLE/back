@@ -14,7 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Vérifier l'authentification admin
-if (!isset($_SESSION['admin_email']) || empty($_SESSION['admin_email'])) {
+$session = Session::getInstance();
+if (!$session->has('admin_email')) {
     http_response_code(403);
     echo json_encode(['error' => 'Accès non autorisé']);
     exit;

@@ -37,10 +37,14 @@ try {
 
         $links = $db->query($query, [$orderId]);
 
+        if ($links === false) {
+            $links = [];
+        }
+
         // Ajouter l'URL complète pour chaque lien
         foreach ($links as &$link) {
             $frontendUrl = getenv('FRONTEND_URL') ?: 'http://localhost:3000';
-            $link['url'] = $frontendUrl . '/paiement/' . $link['token'];
+            $link['url'] = rtrim($frontendUrl, '/') . '/paiement/' . $link['token'];
         }
 
         http_response_code(200);

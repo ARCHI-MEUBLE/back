@@ -70,14 +70,19 @@ class PaymentLink {
         $query = "INSERT INTO payment_links (order_id, token, expires_at, created_by_admin, status, payment_type, amount)
                   VALUES (?, ?, ?, ?, 'active', ?, ?)";
 
-        $this->db->execute($query, [
-            $orderId,
-            $token,
-            $expiresAt,
-            $adminEmail,
-            $paymentType,
-            $amount
-        ]);
+        try {
+            $this->db->execute($query, [
+                $orderId,
+                $token,
+                $expiresAt,
+                $adminEmail,
+                $paymentType,
+                $amount
+            ]);
+        } catch (Exception $e) {
+            error_log("PaymentLink Error: " . $e->getMessage());
+            throw new Exception("Erreur lors de l'enregistrement du lien en base: " . $e->getMessage());
+        }
 
         $linkId = $this->db->lastInsertId();
 

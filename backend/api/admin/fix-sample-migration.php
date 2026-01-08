@@ -74,14 +74,20 @@ try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS payment_links (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         order_id INTEGER NOT NULL,
-        stripe_link_id TEXT UNIQUE,
+        token TEXT UNIQUE,
+        stripe_link_id TEXT,
         url TEXT,
         amount REAL,
-        status TEXT DEFAULT 'pending',
+        status TEXT DEFAULT 'active',
+        payment_type TEXT DEFAULT 'full',
+        created_by_admin TEXT,
+        accessed_at DATETIME,
+        paid_at DATETIME,
+        expires_at DATETIME,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (order_id) REFERENCES orders(id)
     )");
-    $messages[] = "✅ Table 'payment_links' créée ou déjà présente";
+    $messages[] = "✅ Table 'payment_links' synchronisée avec le modèle PHP";
 
     // --- SECTION MIGRATIONS COLONNES ---
     $migrations = [

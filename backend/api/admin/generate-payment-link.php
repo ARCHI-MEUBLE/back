@@ -40,6 +40,7 @@ try {
 
     // Récupérer les données de la requête
     $data = json_decode(file_get_contents('php://input'), true);
+    error_log("GENERATE LINK - Data received: " . json_encode($data));
 
     if (!isset($data['order_id'])) {
         http_response_code(400);
@@ -54,13 +55,26 @@ try {
     $expiryDays = isset($data['expiry_days']) ? intval($data['expiry_days']) : 30;
     $paymentType = $data['payment_type'] ?? 'full';
     $amount = isset($data['amount']) ? floatval($data['amount']) : null;
-    $adminEmail = $_SESSION['admin_email'];
+    $adminEmail = $session->get('admin_email');
+
+    error_log("GENERATE LINK - Params: Order=$orderId, Type=$paymentType, Amount=$amount, Admin=$adminEmail");
 
     // Générer le lien de paiement
     $paymentLink = new PaymentLink();
-    $link = $paymentLink->generateLink($orderId, $adminEmail, $expiryDays, $paymentType, $amount);
+    try {
+        $link = $paymentLink->generateLink($orderId, $adminEmail, $expiryDays, $paymentType, $amount);
+    } catch (Exception $e) {
+        error_log("GENERATE LINK - Model Exception: " . $e->getMessage());
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'error' => $e->getMessage()
+        ]);
+        exit;
+    }
 
     if (!$link) {
+        error_log("GENERATE LINK - Failed to generate link (returned false)");
         http_response_code(500);
         echo json_encode([
             'success' => false,
@@ -69,19 +83,13 @@ try {
         exit;
     }
 
+    error_log("GENERATE LINK - Link generated successfully: ID=" . $link['id']);
+
     // Construire l'URL complète du lien
-    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'];
+    $frontendUrl = getenv('FRONTEND_URL') ?: 'http://localhost:3000';
+    $fullUrl = rtrim($frontendUrl, '/') . '/paiement/' . $link['token'];
 
-    // Pour le développement local, utiliser localhost:3000
-    $baseUrl = 'http://localhost:3000';
-
-    // En production, utiliser le domaine réel
-    if (strpos($host, 'localhost') === false && strpos($host, '127.0.0.1') === false) {
-        $baseUrl = $protocol . '://' . $host;
-    }
-
-    $fullUrl = $baseUrl . '/paiement/' . $link['token'];
+    error_log("GENERATE LINK - URL built: " . $fullUrl);
 
     // Enregistrer une notification admin
     require_once __DIR__ . '/../../models/Notification.php';
@@ -113,14 +121,20 @@ try {
     if ($orderDetails && !empty($orderDetails['customer_email'])) {
         $customerName = trim(($orderDetails['first_name'] ?? '') . ' ' . ($orderDetails['last_name'] ?? ''));
 
-        $emailService->sendPaymentLinkEmail(
-            $orderDetails['customer_email'],
-            $customerName ?: 'Client',
-            $orderDetails['order_number'],
-            $fullUrl,
-            $link['expires_at'],
-            $link['amount'] ?? $orderDetails['total_amount']
-        );
+        try {
+            $emailService->sendPaymentLinkEmail(
+                $orderDetails['customer_email'],
+                $customerName ?: 'Client',
+                $orderDetails['order_number'],
+                $fullUrl,
+                $link['expires_at'],
+                $link['amount'] ?? $orderDetails['total_amount']
+            );
+            error_log("GENERATE LINK - Email sent to: " . $orderDetails['customer_email']);
+        } catch (Exception $e) {
+            error_log("GENERATE LINK - Email Error: " . $e->getMessage());
+            // On ne bloque pas la réponse si seul l'email échoue
+        }
     }
 
     // Retourner le lien créé
