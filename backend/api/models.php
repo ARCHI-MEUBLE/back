@@ -225,8 +225,9 @@ if ($method === 'PUT') {
     }
 
     $input = json_decode(file_get_contents('php://input'), true);
+    $id = $_GET['id'] ?? $input['id'] ?? null;
 
-    if (!isset($input['id'])) {
+    if (!$id) {
         http_response_code(400);
         echo json_encode(['error' => 'ID du modèle requis']);
         exit;
@@ -240,7 +241,7 @@ if ($method === 'PUT') {
     }
 
     $updateData = [];
-    $allowedFields = ['name', 'description', 'prompt', 'price', 'image_url'];
+    $allowedFields = ['name', 'description', 'prompt', 'price', 'image_url', 'category', 'config_data'];
 
     // Convertir camelCase en snake_case si nécessaire
     if (isset($input['imageUrl'])) {
@@ -265,8 +266,8 @@ if ($method === 'PUT') {
         exit;
     }
 
-    if ($model->update($input['id'], $updateData)) {
-        $updatedModel = $model->getById($input['id']);
+    if ($model->update($id, $updateData)) {
+        $updatedModel = $model->getById($id);
         // Convertir le chemin de l'image en URL complète
         if (isset($updatedModel['image_url'])) {
             $updatedModel['image_url'] = convertImagePath($updatedModel['image_url']);
