@@ -87,7 +87,7 @@ try {
     $migrations = [
         'sample_types' => ['price_per_m2', 'unit_price'],
         'sample_colors' => ['price_per_m2', 'unit_price'],
-        'orders' => ['payment_strategy']
+        'orders' => ['payment_strategy', 'deposit_percentage', 'deposit_amount', 'remaining_amount', 'deposit_payment_status']
     ];
 
     foreach ($migrations as $table => $columns) {
