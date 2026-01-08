@@ -150,5 +150,44 @@ class Database {
     public function lastInsertId() {
         return (int)$this->pdo->lastInsertId();
     }
+
+    /**
+     * Démarre une transaction
+     * @return bool
+     */
+    public function beginTransaction() {
+        try {
+            return $this->pdo->beginTransaction();
+        } catch (PDOException $e) {
+            error_log("Erreur beginTransaction : " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Valide une transaction
+     * @return bool
+     */
+    public function commit() {
+        try {
+            return $this->pdo->commit();
+        } catch (PDOException $e) {
+            error_log("Erreur commit : " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Annule une transaction
+     * @return bool
+     */
+    public function rollback() {
+        try {
+            return $this->pdo->rollBack();
+        } catch (PDOException $e) {
+            error_log("Erreur rollback : " . $e->getMessage());
+            return false;
+        }
+    }
 }
 //

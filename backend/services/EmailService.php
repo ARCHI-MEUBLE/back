@@ -4,6 +4,8 @@
  * Gère l'envoi d'emails transactionnels via SMTP
  */
 
+require_once __DIR__ . '/../models/Order.php';
+
 class EmailService {
     private $from;
     private $adminEmail;
@@ -533,7 +535,6 @@ class EmailService {
         }
 
         // Ajouter les échantillons si présents
-        require_once __DIR__ . '/../models/Order.php';
         $orderModel = new Order();
         $samples = $orderModel->getOrderSamples($order['id']);
         foreach ($samples as $sample) {

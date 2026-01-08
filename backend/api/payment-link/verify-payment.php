@@ -147,19 +147,20 @@ try {
     $alreadyProcessed = false;
     if ($paymentType === 'deposit' && ($order['deposit_payment_status'] ?? 'pending') === 'paid') {
         $alreadyProcessed = true;
-        error_log("VERIFY-PAYMENT: Deposit already processed for order #{$order['id']}");
+        error_log("VERIFY-PAYMENT DEBUG: Deposit already processed for order #{$order['id']}");
     } elseif ($paymentType === 'balance' && ($order['balance_payment_status'] ?? 'pending') === 'paid') {
         $alreadyProcessed = true;
-        error_log("VERIFY-PAYMENT: Balance already processed for order #{$order['id']}");
-    } elseif ($paymentType === 'full' && $order['payment_status'] === 'paid') {
+        error_log("VERIFY-PAYMENT DEBUG: Balance already processed for order #{$order['id']}");
+    } elseif ($paymentType === 'full' && ($order['payment_status'] ?? 'pending') === 'paid') {
         $alreadyProcessed = true;
-        error_log("VERIFY-PAYMENT: Full payment already processed for order #{$order['id']}");
+        error_log("VERIFY-PAYMENT DEBUG: Full payment already processed for order #{$order['id']}");
     }
 
     if (!$alreadyProcessed) {
+        error_log("VERIFY-PAYMENT DEBUG: Order not already processed. Updating database...");
         // Mettre à jour le statut de paiement selon le type
         if ($paymentType === 'deposit') {
-            error_log("VERIFY-PAYMENT: Updating order #{$order['id']} as partially_paid (deposit paid)");
+            error_log("VERIFY-PAYMENT DEBUG: Updating as deposit paid");
             $updateQuery = "UPDATE orders
                            SET deposit_payment_status = 'paid',
                                payment_status = 'partially_paid',
@@ -170,7 +171,7 @@ try {
                            WHERE id = ?";
             $db->execute($updateQuery, [$paymentIntentId, $order['id']]);
         } elseif ($paymentType === 'balance') {
-            error_log("VERIFY-PAYMENT: Updating order #{$order['id']} as fully paid (balance paid)");
+            error_log("VERIFY-PAYMENT DEBUG: Updating as balance paid");
             $updateQuery = "UPDATE orders
                            SET balance_payment_status = 'paid',
                                payment_status = 'paid',
@@ -179,7 +180,7 @@ try {
                            WHERE id = ?";
             $db->execute($updateQuery, [$paymentIntentId, $order['id']]);
         } else {
-            error_log("VERIFY-PAYMENT: Updating order #{$order['id']} as fully paid (full payment)");
+            error_log("VERIFY-PAYMENT DEBUG: Updating as full payment");
             $updateQuery = "UPDATE orders
                            SET payment_status = 'paid',
                                status = 'confirmed',
@@ -189,43 +190,57 @@ try {
                            WHERE id = ?";
             $db->execute($updateQuery, [$paymentIntentId, $order['id']]);
         }
+        error_log("VERIFY-PAYMENT DEBUG: Database update successful");
 
         // Vider le panier uniquement sur premier paiement (full ou deposit)
         if ($paymentType === 'full' || $paymentType === 'deposit') {
+            error_log("VERIFY-PAYMENT DEBUG: Clearing cart for customer {$order['customer_id']}");
             $cart->clear($order['customer_id']);
         }
 
         // Récupérer les détails pour l'email
+        error_log("VERIFY-PAYMENT DEBUG: Fetching order details for emails...");
         $customer = $customerModel->getById($order['customer_id']);
         $orderItems = $orderModel->getOrderItems($order['id']);
         $fullOrder = $orderModel->getById($order['id']);
+        
+        if (!$customer || !$fullOrder) {
+            error_log("VERIFY-PAYMENT ERROR: Customer or FullOrder not found!");
+            throw new Exception("Erreur lors de la récupération des données de commande");
+        }
 
         $orderNumber = $fullOrder['order_number'];
-        error_log("VERIFY-PAYMENT: Sending confirmation for order #{$orderNumber}. Type: {$paymentType}");
+        error_log("VERIFY-PAYMENT DEBUG: Sending confirmation for order #{$orderNumber}. Type: {$paymentType}");
 
         // Envoyer l'email de confirmation
-        $emailService->sendOrderConfirmation($fullOrder, $customer, $orderItems, $paymentType);
+        error_log("VERIFY-PAYMENT DEBUG: Calling EmailService::sendOrderConfirmation");
+        $emailStatus = $emailService->sendOrderConfirmation($fullOrder, $customer, $orderItems, $paymentType);
+        error_log("VERIFY-PAYMENT DEBUG: Email confirmation sent (Status: " . ($emailStatus ? 'SUCCESS' : 'FAILED') . ")");
 
         // Notifier l'admin
-        $emailService->sendNewOrderNotificationToAdmin($fullOrder, $customer, $orderItems);
+        error_log("VERIFY-PAYMENT DEBUG: Calling EmailService::sendNewOrderNotificationToAdmin");
+        $adminEmailStatus = $emailService->sendNewOrderNotificationToAdmin($fullOrder, $customer, $orderItems);
+        error_log("VERIFY-PAYMENT DEBUG: Admin notification sent (Status: " . ($adminEmailStatus ? 'SUCCESS' : 'FAILED') . ")");
 
         // Marquer le lien de paiement comme utilisé
         if ($paymentLinkToken) {
             require_once __DIR__ . '/../../models/PaymentLink.php';
             $paymentLinkModel = new PaymentLink();
             $paymentLinkModel->markAsUsed($paymentLinkToken);
-            error_log("VERIFY-PAYMENT: Payment link marked as used: {$paymentLinkToken}");
+            error_log("VERIFY-PAYMENT DEBUG: Payment link marked as used: {$paymentLinkToken}");
         }
 
         // Générer la facture PDF
+        error_log("VERIFY-PAYMENT DEBUG: Calling InvoiceService::generateInvoice");
         try {
             $invoice = $invoiceService->generateInvoice($fullOrder, $customer, $orderItems);
-            error_log("VERIFY-PAYMENT: Invoice generated: {$invoice['filename']} for order ID: {$order['id']}");
+            error_log("VERIFY-PAYMENT DEBUG: Invoice generated: {$invoice['filename']} for order ID: {$order['id']}");
         } catch (Exception $e) {
-            error_log("VERIFY-PAYMENT: Failed to generate invoice for order ID: {$order['id']}: " . $e->getMessage());
+            error_log("VERIFY-PAYMENT ERROR: Failed to generate invoice for order ID: {$order['id']}: " . $e->getMessage());
         }
 
         // Créer une notification admin
+        error_log("VERIFY-PAYMENT DEBUG: Creating admin notification...");
         require_once __DIR__ . '/../../models/AdminNotification.php';
         $notification = new AdminNotification();
         $notificationText = "Paiement confirmé pour la commande #{$order['id']}";
@@ -237,8 +252,11 @@ try {
             $notificationText,
             $order['id']
         );
+        error_log("VERIFY-PAYMENT DEBUG: Admin notification created");
 
-        error_log("VERIFY-PAYMENT: Payment processing completed for order ID: {$order['id']}");
+        error_log("VERIFY-PAYMENT DEBUG: All processing steps completed");
+    } else {
+        error_log("VERIFY-PAYMENT DEBUG: Payment already processed by another process (Webhook or previous request). Skipping side effects.");
     }
 
     // Récupérer l'état final directement depuis la base de données

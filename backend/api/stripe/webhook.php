@@ -126,6 +126,24 @@ try {
                         $paymentType = 'balance';
                     }
                 }
+
+                // Check if already processed to avoid double emails/invoices
+                $alreadyProcessed = false;
+                if ($paymentType === 'deposit' && ($order['deposit_payment_status'] ?? 'pending') === 'paid') {
+                    $alreadyProcessed = true;
+                } elseif ($paymentType === 'balance' && ($order['balance_payment_status'] ?? 'pending') === 'paid') {
+                    $alreadyProcessed = true;
+                } elseif ($paymentType === 'full' && $order['payment_status'] === 'paid') {
+                    $alreadyProcessed = true;
+                }
+
+                if ($alreadyProcessed) {
+                    error_log("WEBHOOK: Payment for order #{$order['id']} already processed ($paymentType). Skipping notifications.");
+                    http_response_code(200);
+                    echo json_encode(['success' => true, 'message' => 'Already processed']);
+                    exit;
+                }
+
                 // Update payment status based on type
                 if ($paymentType === 'deposit') {
                     error_log("WEBHOOK: Updating order #{$order['id']} as partially_paid (deposit paid)");
