@@ -27,6 +27,10 @@ $method = $_SERVER['REQUEST_METHOD'];
  * Vérifie si l'utilisateur est admin
  */
 function isAdmin() {
+    if (session_status() === PHP_SESSION_NONE) {
+        require_once __DIR__ . '/../core/Session.php';
+        Session::getInstance();
+    }
     $isAdmin = isset($_SESSION['admin_email']) && !empty($_SESSION['admin_email']);
     error_log("Admin check - admin_email: " . ($_SESSION['admin_email'] ?? 'not set'));
     error_log("Result: " . ($isAdmin ? 'true' : 'false'));
