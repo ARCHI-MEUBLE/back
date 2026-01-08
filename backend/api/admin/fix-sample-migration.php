@@ -70,10 +70,24 @@ try {
     )");
     $messages[] = "✅ Table 'pricing' créée ou déjà présente";
 
+    // 4. Table payment_links (pour les liens de paiement Stripe)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS payment_links (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_id INTEGER NOT NULL,
+        stripe_link_id TEXT UNIQUE,
+        url TEXT,
+        amount REAL,
+        status TEXT DEFAULT 'pending',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (order_id) REFERENCES orders(id)
+    )");
+    $messages[] = "✅ Table 'payment_links' créée ou déjà présente";
+
     // --- SECTION MIGRATIONS COLONNES ---
     $migrations = [
         'sample_types' => ['price_per_m2', 'unit_price'],
-        'sample_colors' => ['price_per_m2', 'unit_price']
+        'sample_colors' => ['price_per_m2', 'unit_price'],
+        'orders' => ['payment_strategy']
     ];
 
     foreach ($migrations as $table => $columns) {
