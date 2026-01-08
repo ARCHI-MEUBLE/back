@@ -162,6 +162,75 @@ class Order {
     }
 
     /**
+     * Mettre à jour la stratégie de paiement pour une commande
+     */
+    public function updatePaymentStrategy($orderId, $strategy, $depositPercentage = 0) {
+        $allowedStrategies = ['full', 'deposit'];
+        if (!in_array($strategy, $allowedStrategies)) {
+            throw new Exception('Stratégie de paiement invalide');
+        }
+
+        $order = $this->getById($orderId);
+        if (!$order) {
+            throw new Exception('Commande introuvable');
+        }
+
+        // Bloquer si un paiement a déjà été effectué
+        if (($order['deposit_payment_status'] ?? '') === 'paid' || ($order['payment_status'] ?? '') === 'paid') {
+            throw new Exception('Impossible de modifier la stratégie après un paiement');
+        }
+
+        // Calculer les montants si c'est un acompte
+        $depositAmount = 0;
+        $remainingAmount = $order['total_amount'] ?? $order['total'] ?? 0;
+
+        if ($strategy === 'deposit') {
+            $depositPercentage = (float)$depositPercentage;
+            if ($depositPercentage <= 0 || $depositPercentage >= 100) {
+                throw new Exception('Le pourcentage d\'acompte doit être entre 1 et 99');
+            }
+            
+            // On ne calcule l'acompte que sur la partie meuble ? 
+            // L'utilisateur a dit "uniquement pour les configurations 3D et non pour les échantillons"
+            // Récupérer le total des meubles
+            $items = $this->getOrderItems($orderId);
+            $furnitureTotal = 0;
+            foreach ($items as $item) {
+                $furnitureTotal += $item['total_price'];
+            }
+
+            // Récupérer le total des échantillons
+            $samples = $this->getOrderSamples($orderId);
+            $samplesTotal = 0;
+            foreach ($samples as $sample) {
+                $samplesTotal += ($sample['price'] * $sample['quantity']);
+            }
+
+            $depositAmount = ($furnitureTotal * ($depositPercentage / 100)) + $samplesTotal; // Les échantillons sont payés direct ? Ou pas du tout ? 
+            // "non pour les échantillons" peut vouloir dire qu'on ne fait pas d'acompte sur eux, 
+            // donc on les fait payer 100% dès le premier paiement.
+            
+            $remainingAmount = ($order['total_amount'] ?? $order['total'] ?? 0) - $depositAmount;
+        }
+
+        $query = "UPDATE orders SET 
+                    payment_strategy = ?, 
+                    deposit_percentage = ?, 
+                    deposit_amount = ?, 
+                    remaining_amount = ?, 
+                    updated_at = CURRENT_TIMESTAMP 
+                  WHERE id = ?";
+        
+        return $this->db->execute($query, [
+            $strategy, 
+            $depositPercentage, 
+            $depositAmount, 
+            $remainingAmount, 
+            $orderId
+        ]);
+    }
+
+    /**
      * Mettre à jour le statut d'une commande
      */
     public function updateStatus($orderId, $status, $adminNotes = null) {
@@ -169,6 +238,36 @@ class Order {
 
         if (!in_array($status, $allowedStatuses)) {
             throw new Exception('Statut invalide');
+        }
+
+        // Si la commande est annulée, révoquer les liens de paiement actifs
+        if ($status === 'cancelled') {
+            $this->db->execute("UPDATE payment_links SET status = 'revoked' WHERE order_id = ? AND status = 'active'", [$orderId]);
+            
+            // Et libérer les configurations
+            $items = $this->getOrderItems($orderId);
+            foreach ($items as $item) {
+                if (isset($item['configuration_id'])) {
+                    // Si on annule, la config redevient 'termine' pour pouvoir être commandée à nouveau
+                    $this->db->execute("UPDATE configurations SET status = 'termine' WHERE id = ?", [$item['configuration_id']]);
+                }
+            }
+
+            // Envoyer un email d'annulation au client
+            try {
+                require_once __DIR__ . '/../services/EmailService.php';
+                $emailService = new EmailService();
+                $orderData = $this->getById($orderId);
+                
+                // Récupérer les infos du client
+                $customer = $this->db->queryOne("SELECT email, first_name FROM customers WHERE id = ?", [$orderData['customer_id']]);
+                
+                if ($customer) {
+                    $emailService->sendOrderCancelledEmail($customer['email'], $customer['first_name'], $orderData['order_number']);
+                }
+            } catch (Exception $e) {
+                error_log("Erreur lors de l'envoi de l'email d'annulation: " . $e->getMessage());
+            }
         }
 
         if ($adminNotes) {
@@ -241,19 +340,37 @@ class Order {
     }
 
     /**
-     * Supprimer une commande et ses items
+     * Supprimer une commande et ses items, libérer les configurations et révoquer les liens
      */
     public function delete($orderId) {
         try {
-            // Supprimer les items de commande d'abord (contraintes de clé étrangère)
+            // 1. Récupérer les items de la commande pour libérer les configurations
+            $items = $this->getOrderItems($orderId);
+            foreach ($items as $item) {
+                if (isset($item['configuration_id'])) {
+                    // Remettre la configuration à un statut 'pret' ou 'termine' 
+                    // (le statut 'en_commande' l'empêchait d'être commandée à nouveau)
+                    $this->db->execute("UPDATE configurations SET status = 'termine' WHERE id = ?", [$item['configuration_id']]);
+                }
+            }
+
+            // 2. Supprimer les items de commande de meubles
             $deleteItemsQuery = "DELETE FROM order_items WHERE order_id = ?";
             $this->db->execute($deleteItemsQuery, [$orderId]);
 
-            // Supprimer la commande
+            // 3. Supprimer les items d'échantillons
+            $deleteSamplesQuery = "DELETE FROM order_sample_items WHERE order_id = ?";
+            $this->db->execute($deleteSamplesQuery, [$orderId]);
+
+            // 4. Révoquer tous les liens de paiement actifs pour cette commande
+            $revokeLinksQuery = "UPDATE payment_links SET status = 'revoked' WHERE order_id = ? AND status = 'active'";
+            $this->db->execute($revokeLinksQuery, [$orderId]);
+
+            // 5. Supprimer la commande elle-même
             $deleteOrderQuery = "DELETE FROM orders WHERE id = ?";
             return $this->db->execute($deleteOrderQuery, [$orderId]);
         } catch (Exception $e) {
-            error_log("Erreur lors de la suppression de commande {$orderId}: " . $e->getMessage());
+            error_log("Erreur lors de la suppression complète de commande {$orderId}: " . $e->getMessage());
             return false;
         }
     }
@@ -273,6 +390,12 @@ class Order {
             'billing_address' => $orderData['billing_address'] ?? '',
             'payment_method' => $orderData['payment_method'] ?? 'card',
             'payment_status' => $orderData['payment_status'] ?? 'pending',
+            'payment_strategy' => $orderData['payment_strategy'] ?? 'full',
+            'deposit_percentage' => $orderData['deposit_percentage'] ?? 0,
+            'deposit_amount' => $orderData['deposit_amount'] ?? 0,
+            'remaining_amount' => $orderData['remaining_amount'] ?? 0,
+            'deposit_payment_status' => $orderData['deposit_payment_status'] ?? 'pending',
+            'balance_payment_status' => $orderData['balance_payment_status'] ?? 'pending',
             'notes' => $orderData['notes'] ?? '',
             'admin_notes' => $orderData['admin_notes'] ?? '',
             'created_at' => $orderData['created_at'],

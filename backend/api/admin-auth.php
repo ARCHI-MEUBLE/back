@@ -16,8 +16,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/../core/Database.php';
+require_once __DIR__ . '/../core/Session.php';
 require_once __DIR__ . '/../models/Admin.php';
 
+$session = Session::getInstance();
 $admin = new Admin();
 $method = $_SERVER['REQUEST_METHOD'];
 $requestUri = $_SERVER['REQUEST_URI'];
@@ -44,9 +46,13 @@ if ($method === 'POST' && $action === 'login') {
     $adminData = $admin->verifyCredentials($input['email'], $input['password']);
 
     if ($adminData) {
-        // Créer une session admin en utilisant $_SESSION natif
-        $_SESSION['admin_email'] = $adminData['email'];
-        $_SESSION['admin_id'] = $adminData['id'];
+        // Régénérer l'ID de session pour prévenir la fixation de session
+        $session->regenerate();
+        
+        // Créer une session admin
+        $session->set('admin_email', $adminData['email']);
+        $session->set('admin_id', $adminData['id']);
+        $session->set('is_admin', true);
 
         http_response_code(200);
         echo json_encode([
@@ -67,15 +73,7 @@ if ($method === 'POST' && $action === 'login') {
  */
 if ($method === 'POST' && $action === 'logout') {
     // Détruire la session
-    $_SESSION = [];
-    if (ini_get("session.use_cookies")) {
-        $params = session_get_cookie_params();
-        setcookie(session_name(), '', time() - 42000,
-            $params["path"], $params["domain"],
-            $params["secure"], $params["httponly"]
-        );
-    }
-    session_destroy();
+    $session->destroy();
 
     http_response_code(200);
     echo json_encode(['success' => true]);
@@ -86,16 +84,16 @@ if ($method === 'POST' && $action === 'logout') {
  * GET /api/admin-auth/session
  */
 if ($method === 'GET' && $action === 'session') {
-    if (isset($_SESSION['admin_email']) && !empty($_SESSION['admin_email'])) {
+    if ($session->has('admin_email') && !empty($session->get('admin_email'))) {
         // Récupérer les infos complètes de l'admin
-        $adminData = $admin->getByEmail($_SESSION['admin_email']);
+        $adminData = $admin->getByEmail($session->get('admin_email'));
 
         http_response_code(200);
         echo json_encode([
             'admin' => [
-                'email' => $adminData['email'] ?? $_SESSION['admin_email'],
+                'email' => $adminData['email'] ?? $session->get('admin_email'),
                 'username' => $adminData['username'] ?? 'Admin',
-                'id' => $adminData['id'] ?? $_SESSION['admin_id'] ?? null
+                'id' => $adminData['id'] ?? $session->get('admin_id') ?? null
             ]
         ]);
     } else {

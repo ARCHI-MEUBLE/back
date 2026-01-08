@@ -443,10 +443,15 @@ class EmailService {
     /**
      * Envoie un email de confirmation de commande au client
      */
-    public function sendOrderConfirmation($order, $customer, $items) {
+    public function sendOrderConfirmation($order, $customer, $items, $paymentType = 'full') {
         $subject = "Confirmation de votre commande #{$order['order_number']}";
+        if ($paymentType === 'deposit') {
+            $subject = "Confirmation de paiement de l'acompte - Commande #{$order['order_number']}";
+        } elseif ($paymentType === 'balance') {
+            $subject = "Confirmation de paiement du solde - Commande #{$order['order_number']}";
+        }
 
-        $body = $this->getOrderConfirmationTemplate($order, $customer, $items);
+        $body = $this->getOrderConfirmationTemplate($order, $customer, $items, $paymentType);
 
         return $this->sendEmail($customer['email'], $subject, $body);
     }
@@ -454,10 +459,15 @@ class EmailService {
     /**
      * Envoie une notification de nouvelle commande à l'admin
      */
-    public function sendNewOrderNotificationToAdmin($order, $customer, $items) {
+    public function sendNewOrderNotificationToAdmin($order, $customer, $items, $paymentType = 'full') {
         $subject = "Nouvelle commande #{$order['order_number']} - {$customer['first_name']} {$customer['last_name']}";
+        if ($paymentType === 'deposit') {
+            $subject = "Acompte reçu pour la commande #{$order['order_number']} - {$customer['first_name']} {$customer['last_name']}";
+        } elseif ($paymentType === 'balance') {
+            $subject = "Solde reçu pour la commande #{$order['order_number']} - {$customer['first_name']} {$customer['last_name']}";
+        }
 
-        $body = $this->getAdminOrderNotificationTemplate($order, $customer, $items);
+        $body = $this->getAdminOrderNotificationTemplate($order, $customer, $items, $paymentType);
 
         return $this->sendEmail($this->adminEmail, $subject, $body);
     }
@@ -476,20 +486,73 @@ class EmailService {
     /**
      * Template HTML pour confirmation de commande client
      */
-    private function getOrderConfirmationTemplate($order, $customer, $items) {
-        $totalFormatted = number_format($order['total_amount'], 2, ',', ' ') . ' €';
+    private function getOrderConfirmationTemplate($order, $customer, $items, $paymentType = 'full') {
+        $totalOrder = $order['total_amount'] ?? $order['total'] ?? 0;
+        $totalFormatted = number_format($totalOrder, 2, ',', ' ') . ' €';
+        
+        $amountPaid = $totalOrder;
+        $paymentLabel = "Paiement intégral";
+        $remainingHtml = "";
+
+        // Fallback check: if paymentType is full but amount matches deposit
+        if ($paymentType === 'full' && ($order['payment_strategy'] ?? '') === 'deposit' && ($order['deposit_payment_status'] ?? '') === 'paid') {
+            // Check if we just paid the deposit (common if metadata was missing)
+            // We can't know for sure which intent triggered this without metadata, 
+            // but the webhook now forces the type.
+        }
+
+        if ($paymentType === 'deposit') {
+            $amountPaid = $order['deposit_amount'] ?? 0;
+            $paymentLabel = "Acompte (" . ($order['deposit_percentage'] ?? 0) . "%)";
+            $remainingAmount = $order['remaining_amount'] ?? ($totalOrder - $amountPaid);
+            $remainingHtml = "
+                <p style='margin: 10px 0 0 0; color: #ef4444; font-size: 16px;'>
+                    <strong>Reste à payer : " . number_format($remainingAmount, 2, ',', ' ') . " €</strong>
+                </p>
+            ";
+        } elseif ($paymentType === 'balance') {
+            $amountPaid = $order['remaining_amount'] ?? 0;
+            $paymentLabel = "Solde restant";
+        }
+
+        $paidFormatted = number_format($amountPaid, 2, ',', ' ') . ' €';
         $orderDate = date('d/m/Y à H:i', strtotime($order['created_at']));
 
         $itemsHtml = '';
         foreach ($items as $item) {
-            $itemPrice = number_format($item['price'] * $item['quantity'], 2, ',', ' ') . ' €';
+            $price = $item['price'] ?? $item['unit_price'] ?? 0;
+            $name = $item['name'] ?? $item['prompt'] ?? 'Article';
+            $itemPrice = number_format($price * $item['quantity'], 2, ',', ' ') . ' €';
             $itemsHtml .= "
                 <tr>
-                    <td style='padding: 12px; border-bottom: 1px solid #e5e7eb;'>{$item['name']}</td>
+                    <td style='padding: 12px; border-bottom: 1px solid #e5e7eb;'>{$name}</td>
                     <td style='padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;'>{$item['quantity']}</td>
                     <td style='padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;'>{$itemPrice}</td>
                 </tr>
             ";
+        }
+
+        // Ajouter les échantillons si présents
+        require_once __DIR__ . '/../models/Order.php';
+        $orderModel = new Order();
+        $samples = $orderModel->getOrderSamples($order['id']);
+        foreach ($samples as $sample) {
+            $sampleName = "Échantillon : " . ($sample['sample_name'] ?? 'Échantillon') . " (" . ($sample['material'] ?? '') . ")";
+            $samplePrice = number_format($sample['price'] * $sample['quantity'], 2, ',', ' ') . ' €';
+            $itemsHtml .= "
+                <tr>
+                    <td style='padding: 12px; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-style: italic;'>{$sampleName}</td>
+                    <td style='padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center; color: #6b7280;'>{$sample['quantity']}</td>
+                    <td style='padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right; color: #6b7280;'>{$samplePrice}</td>
+                </tr>
+            ";
+        }
+
+        $statusText = "Nous avons bien reçu votre paiement et votre commande est maintenant confirmée.";
+        if ($paymentType === 'deposit') {
+            $statusText = "Nous avons bien reçu le paiement de votre acompte. Votre commande est maintenant confirmée et entrera prochainement en production.";
+        } elseif ($paymentType === 'balance') {
+            $statusText = "Nous avons bien reçu le paiement du solde de votre commande. Votre commande est maintenant intégralement payée.";
         }
 
         return "
@@ -523,9 +586,19 @@ class EmailService {
                                     </p>
 
                                     <p style='margin: 0 0 30px 0; color: #4b5563; font-size: 16px; line-height: 1.6;'>
-                                        Nous avons bien reçu votre paiement et votre commande est maintenant confirmée.
+                                        {$statusText}
                                         Nous allons la préparer dans les plus brefs délais.
                                     </p>
+
+                                    <div style='background-color: #fef3c7; border-left: 4px solid #d97706; padding: 20px; margin-bottom: 30px; border-radius: 4px;'>
+                                        <p style='margin: 0; color: #92400e; font-size: 16px; font-weight: bold;'>
+                                            Type de paiement : {$paymentLabel}
+                                        </p>
+                                        <p style='margin: 5px 0 0 0; color: #92400e; font-size: 18px;'>
+                                            Montant payé : <strong>{$paidFormatted}</strong>
+                                        </p>
+                                        {$remainingHtml}
+                                    </div>
 
                                     <!-- Order Info -->
                                     <table width='100%' cellpadding='0' cellspacing='0' style='margin: 0 0 30px 0; background-color: #f9fafb; border-radius: 8px; padding: 20px;'>
@@ -555,7 +628,7 @@ class EmailService {
                                         </tbody>
                                         <tfoot>
                                             <tr>
-                                                <td colspan='2' style='padding: 16px; text-align: right; font-weight: bold; color: #111827; font-size: 18px;'>Total</td>
+                                                <td colspan='2' style='padding: 16px; text-align: right; font-weight: bold; color: #111827; font-size: 18px;'>Total Commande</td>
                                                 <td style='padding: 16px; text-align: right; font-weight: bold; color: #d97706; font-size: 18px;'>{$totalFormatted}</td>
                                             </tr>
                                         </tfoot>
@@ -599,13 +672,23 @@ class EmailService {
     /**
      * Template HTML pour notification admin
      */
-    private function getAdminOrderNotificationTemplate($order, $customer, $items) {
+    private function getAdminOrderNotificationTemplate($order, $customer, $items, $paymentType = 'full') {
         $totalFormatted = number_format($order['total_amount'], 2, ',', ' ') . ' €';
         $orderDate = date('d/m/Y à H:i', strtotime($order['created_at']));
 
+        $paymentInfo = "<strong>Paiement:</strong> Intégral";
+        if ($paymentType === 'deposit') {
+            $depositAmount = number_format($order['deposit_amount'] ?? 0, 2, ',', ' ') . ' €';
+            $paymentInfo = "<strong>Paiement:</strong> ACOMPTE REÇU ({$depositAmount})";
+        } elseif ($paymentType === 'balance') {
+            $balanceAmount = number_format($order['remaining_amount'] ?? 0, 2, ',', ' ') . ' €';
+            $paymentInfo = "<strong>Paiement:</strong> SOLDE REÇU ({$balanceAmount})";
+        }
+
         $itemsList = '';
         foreach ($items as $item) {
-            $itemsList .= "• {$item['name']} (x{$item['quantity']})\n";
+            $itemName = $item['name'] ?? $item['prompt'] ?? 'Configuration personnalisée';
+            $itemsList .= "• {$itemName} (x{$item['quantity']})\n";
         }
 
         return "
@@ -638,6 +721,7 @@ class EmailService {
                                     <pre style='background-color: #f9fafb; padding: 15px; border-radius: 8px; margin: 0 0 20px 0;'>{$itemsList}</pre>
 
                                     <p style='margin: 0 0 20px 0; color: #111827; font-size: 18px;'><strong>Montant total: {$totalFormatted}</strong></p>
+                                    <p style='margin: 0 0 20px 0; color: #111827; font-size: 18px;'>{$paymentInfo}</p>
 
                                     <h3 style='margin: 0 0 10px 0; color: #111827;'>Adresse de livraison:</h3>
                                     <p style='margin: 0; color: #4b5563;'>{$order['shipping_address']}</p>
@@ -819,11 +903,116 @@ class EmailService {
     }
 
     /**
-     * Envoie un email via SMTP Gmail
+     * Envoie un email de réinitialisation de mot de passe
      */
+    public function sendPasswordResetEmail($to, $name, $resetUrl) {
+        $subject = "Réinitialisation de votre mot de passe - ArchiMeuble";
+        $body = $this->getPasswordResetTemplate($name, $resetUrl);
+        return $this->sendEmail($to, $subject, $body);
+    }
+
     /**
-     * Envoie un email via l'API Resend (contourne les blocages SMTP de Railway)
+     * Template pour réinitialisation de mot de passe
      */
+    private function getPasswordResetTemplate($name, $resetUrl) {
+        $year = date('Y');
+        
+        return "
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='utf-8'>
+            <style>
+                body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 1.6; color: #1A1917; margin: 0; padding: 0; }
+                .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+                .header { text-align: center; margin-bottom: 40px; }
+                .logo { font-size: 24px; font-weight: bold; text-decoration: none; color: #1A1917; }
+                .content { background-color: #FAFAF9; padding: 40px; border: 1px solid #E8E6E3; }
+                .button { display: inline-block; padding: 16px 32px; background-color: #1A1917; color: #FFFFFF !important; text-decoration: none; font-weight: 600; margin-top: 30px; }
+                .footer { text-align: center; margin-top: 40px; font-size: 12px; color: #706F6C; }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <span class='logo'>ArchiMeuble</span>
+                </div>
+                <div class='content'>
+                    <h2 style='margin-top: 0;'>Bonjour {$name},</h2>
+                    <p>Vous avez demandé la réinitialisation de votre mot de passe pour votre compte ArchiMeuble.</p>
+                    <p>Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe. Ce lien est valable pendant 1 heure.</p>
+                    <div style='text-align: center;'>
+                        <a href='{$resetUrl}' class='button'>Réinitialiser mon mot de passe</a>
+                    </div>
+                    <p style='margin-top: 30px; font-size: 14px; color: #706F6C;'>
+                        Si vous n'avez pas demandé cette réinitialisation, vous pouvez ignorer cet email en toute sécurité. 
+                        Votre mot de passe restera inchangé.
+                    </p>
+                </div>
+                <div class='footer'>
+                    <p>&copy; {$year} ArchiMeuble. Tous droits réservés.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        ";
+    }
+
+    /**
+     * Envoie un email d'annulation de commande
+     */
+    public function sendOrderCancelledEmail($to, $name, $orderNumber) {
+        $subject = "Annulation de votre commande #{$orderNumber} - ArchiMeuble";
+        $body = $this->getOrderCancelledTemplate($name, $orderNumber);
+        return $this->sendEmail($to, $subject, $body);
+    }
+
+    /**
+     * Template pour annulation de commande
+     */
+    private function getOrderCancelledTemplate($name, $orderNumber) {
+        $year = date('Y');
+        
+        return "
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='utf-8'>
+            <style>
+                body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 1.6; color: #1A1917; margin: 0; padding: 0; }
+                .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+                .header { text-align: center; margin-bottom: 40px; }
+                .logo { font-size: 24px; font-weight: bold; text-decoration: none; color: #1A1917; }
+                .content { background-color: #FAFAF9; padding: 40px; border: 1px solid #E8E6E3; }
+                .footer { text-align: center; margin-top: 40px; font-size: 12px; color: #706F6C; }
+                .status-badge { display: inline-block; padding: 4px 12px; background-color: #FEE2E2; color: #B91C1C; font-size: 12px; font-weight: bold; border-radius: 9999px; text-transform: uppercase; margin-bottom: 16px; }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <span class='logo'>ArchiMeuble</span>
+                </div>
+                <div class='content'>
+                    <div class='status-badge'>Annulée</div>
+                    <h2 style='margin-top: 0;'>Bonjour {$name},</h2>
+                    <p>Nous vous informons que votre commande <strong>#{$orderNumber}</strong> a été annulée.</p>
+                    <p>Si vous aviez des liens de paiement en attente pour cette commande, ils ont été désactivés par mesure de sécurité.</p>
+                    <p>Si vous avez des questions concernant cette annulation ou si vous souhaitez passer une nouvelle commande, notre équipe reste à votre entière disposition.</p>
+                    <p style='margin-top: 30px; font-size: 14px; color: #706F6C;'>
+                        Cordialement,<br>
+                        L'équipe ArchiMeuble
+                    </p>
+                </div>
+                <div class='footer'>
+                    <p>&copy; {$year} ArchiMeuble. Tous droits réservés.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        ";
+    }
+
     private function sendEmail($to, $subject, $htmlBody) {
         $apiKey = getenv('RESEND_API_KEY');
         $from = 'contact@archimeuble.com'; // Domaine vérifié sur Resend !

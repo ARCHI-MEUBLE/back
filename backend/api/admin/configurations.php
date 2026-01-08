@@ -13,7 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Vérifier l'authentification admin
-if (!isset($_SESSION['admin_email'])) {
+$session = Session::getInstance();
+if (!$session->has('admin_email') || $session->get('is_admin') !== true) {
     http_response_code(401);
     echo json_encode(['error' => 'Non authentifié']);
     exit;
@@ -23,7 +24,7 @@ require_once __DIR__ . '/../../core/Database.php';
 
 try {
     error_log("🔍 Admin configurations API appelée");
-    error_log("👤 Session admin_email: " . (isset($_SESSION['admin_email']) ? $_SESSION['admin_email'] : 'NON DEFINI'));
+    error_log("👤 Session admin_email: " . ($session->get('admin_email') ?? 'NON DEFINI'));
 
     $db = Database::getInstance();
 

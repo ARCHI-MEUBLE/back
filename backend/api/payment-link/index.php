@@ -85,6 +85,9 @@ try {
             'order' => [
                 'order_number' => $orderData['order']['order_number'],
                 'total_amount' => floatval($orderData['order']['total_amount']),
+                'amount' => floatval($orderData['order']['amount']),
+                'payment_type' => $orderData['order']['payment_type'],
+                'deposit_percentage' => floatval($orderData['order']['deposit_percentage'] ?? 0),
                 'status' => $orderData['order']['order_status'],
                 'payment_status' => $orderData['order']['payment_status'],
                 'created_at' => $orderData['order']['order_created_at'],

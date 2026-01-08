@@ -43,6 +43,8 @@ try {
         exit;
     }
 
+    $paymentType = $data['payment_type'] ?? 'full';
+
     $db = Database::getInstance();
 
     // Vérifier que la commande appartient au client
@@ -56,11 +58,25 @@ try {
     }
 
     // Mettre à jour avec le payment intent ID
-    $updateQuery = "UPDATE orders
-                    SET stripe_payment_intent_id = ?,
-                        payment_status = 'pending',
-                        updated_at = CURRENT_TIMESTAMP
-                    WHERE id = ?";
+    if ($paymentType === 'deposit') {
+        $updateQuery = "UPDATE orders
+                        SET deposit_stripe_intent_id = ?,
+                            deposit_payment_status = 'pending',
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE id = ?";
+    } elseif ($paymentType === 'balance') {
+        $updateQuery = "UPDATE orders
+                        SET balance_stripe_intent_id = ?,
+                            balance_payment_status = 'pending',
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE id = ?";
+    } else {
+        $updateQuery = "UPDATE orders
+                        SET stripe_payment_intent_id = ?,
+                            payment_status = 'pending',
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE id = ?";
+    }
 
     $db->execute($updateQuery, [$data['payment_intent_id'], $orderId]);
 

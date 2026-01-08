@@ -18,10 +18,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 require_once __DIR__ . '/../../core/Database.php';
+require_once __DIR__ . '/../../core/Session.php';
 
 // Disable HTML error output
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
+
+$session = Session::getInstance();
 
 try {
     $input = json_decode(file_get_contents('php://input'), true);
@@ -88,13 +91,14 @@ try {
 
     $adminId = $db->lastInsertId();
 
+    // Régénérer l'ID de session pour prévenir la fixation de session
+    $session->regenerate();
+
     // Créer une session
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
-    $_SESSION['admin_id'] = $adminId;
-    $_SESSION['admin_email'] = $email;
-    $_SESSION['admin_username'] = $username;
+    $session->set('admin_id', $adminId);
+    $session->set('admin_email', $email);
+    $session->set('admin_username', $username);
+    $session->set('is_admin', true);
 
     http_response_code(201);
     echo json_encode([

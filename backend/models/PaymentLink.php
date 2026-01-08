@@ -19,17 +19,45 @@ class PaymentLink {
      * @param int $orderId ID de la commande
      * @param string $adminEmail Email de l'admin qui crée le lien
      * @param int $expiryDays Nombre de jours avant expiration (défaut: 30)
+     * @param string $paymentType Type de paiement (full, deposit, balance)
+     * @param float|null $amount Montant spécifique pour ce lien
      * @return array|false Informations du lien créé ou false en cas d'erreur
      */
-    public function generateLink($orderId, $adminEmail, $expiryDays = 30) {
-        // Vérifier que la commande existe et est en attente de paiement
+    public function generateLink($orderId, $adminEmail, $expiryDays = 30, $paymentType = 'full', $amount = null) {
+        // Vérifier que la commande existe
         $order = $this->getOrderById($orderId);
         if (!$order) {
             throw new Exception("Commande introuvable");
         }
 
-        if ($order['payment_status'] === 'paid') {
-            throw new Exception("Cette commande a déjà été payée");
+        // Si c'est un lien de paiement intégral, vérifier s'il est déjà payé
+        if ($paymentType === 'full' && $order['payment_status'] === 'paid') {
+            throw new Exception("Cette commande a déjà été payée intégralement");
+        }
+        
+        // Si c'est un lien d'acompte, vérifier s'il est déjà payé
+        if ($paymentType === 'deposit' && ($order['deposit_payment_status'] ?? 'pending') === 'paid') {
+            throw new Exception("L'acompte pour cette commande a déjà été payé");
+        }
+
+        // Si c'est un lien de solde, vérifier s'il est déjà payé
+        if ($paymentType === 'balance' && ($order['balance_payment_status'] ?? 'pending') === 'paid') {
+            throw new Exception("Le solde pour cette commande a déjà été payé");
+        }
+
+        // Si aucun montant n'est spécifié, le calculer en fonction du type
+        if ($amount === null) {
+            if ($paymentType === 'deposit') {
+                $amount = $order['deposit_amount'] ?? 0;
+            } elseif ($paymentType === 'balance') {
+                $amount = $order['remaining_amount'] ?? 0;
+            } else {
+                $amount = $order['total_amount'] ?? $order['total'] ?? 0;
+            }
+        }
+
+        if ($amount <= 0) {
+            throw new Exception("Le montant à payer doit être supérieur à 0€");
         }
 
         // Générer un token unique sécurisé (UUID v4)
@@ -39,14 +67,16 @@ class PaymentLink {
         $expiresAt = date('Y-m-d H:i:s', strtotime("+{$expiryDays} days"));
 
         // Insérer le lien de paiement
-        $query = "INSERT INTO payment_links (order_id, token, expires_at, created_by_admin, status)
-                  VALUES (?, ?, ?, ?, 'active')";
+        $query = "INSERT INTO payment_links (order_id, token, expires_at, created_by_admin, status, payment_type, amount)
+                  VALUES (?, ?, ?, ?, 'active', ?, ?)";
 
         $this->db->execute($query, [
             $orderId,
             $token,
             $expiresAt,
-            $adminEmail
+            $adminEmail,
+            $paymentType,
+            $amount
         ]);
 
         $linkId = $this->db->lastInsertId();
@@ -57,7 +87,9 @@ class PaymentLink {
             'order_id' => $orderId,
             'expires_at' => $expiresAt,
             'status' => 'active',
-            'created_by_admin' => $adminEmail
+            'created_by_admin' => $adminEmail,
+            'payment_type' => $paymentType,
+            'amount' => $amount
         ];
     }
 
@@ -68,9 +100,10 @@ class PaymentLink {
      * @return array|false Informations du lien et de la commande associée
      */
     public function getLinkByToken($token) {
-        $query = "SELECT pl.*,
-                         o.order_number, o.total_amount, o.status as order_status,
+        $query = "SELECT pl.*, pl.id as link_id,
+                         o.id as order_id, o.order_number, o.total_amount, o.status as order_status,
                          o.shipping_address, o.billing_address, o.payment_status,
+                         o.deposit_percentage, o.deposit_amount, o.remaining_amount,
                          o.created_at as order_created_at,
                          c.email, c.first_name, c.last_name, c.phone
                   FROM payment_links pl

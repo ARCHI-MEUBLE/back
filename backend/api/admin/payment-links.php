@@ -13,7 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Vérifier l'authentification admin
-if (!isset($_SESSION['admin_email'])) {
+$session = Session::getInstance();
+if (!$session->has('admin_email') || $session->get('is_admin') !== true) {
     http_response_code(401);
     echo json_encode(['success' => false, 'error' => 'Non authentifié']);
     exit;
@@ -45,7 +46,7 @@ try {
         http_response_code(200);
         echo json_encode([
             'success' => true,
-            'data' => $links
+            'links' => $links
         ]);
         exit;
     }

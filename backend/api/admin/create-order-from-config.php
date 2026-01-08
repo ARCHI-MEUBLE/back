@@ -17,7 +17,8 @@ require_once __DIR__ . '/../../core/Database.php';
 
 try {
     // Vérifier l'authentification admin
-    if (!isset($_SESSION['admin_email'])) {
+    $session = Session::getInstance();
+    if (!$session->has('admin_email') || $session->get('is_admin') !== true) {
         http_response_code(401);
         echo json_encode([
             'success' => false,
@@ -182,8 +183,11 @@ try {
         $orderId
     );
 
-    // --- GÉNÉRATION DU LIEN DE PAIEMENT ET ENVOI EMAIL ---
+    // --- GÉNÉRATION DU LIEN DE PAIEMENT DÉSACTIVÉE ---
+    // L'admin doit maintenant générer le lien manuellement depuis le dashboard
+    // pour choisir la stratégie de paiement (Acompte ou Total)
     $paymentLinkUrl = null;
+    /*
     try {
         require_once __DIR__ . '/../../models/PaymentLink.php';
         require_once __DIR__ . '/../../services/EmailService.php';
@@ -214,6 +218,7 @@ try {
         // On logge l'erreur mais on ne bloque pas la réponse (la commande est créée)
         error_log("Erreur lors de la génération du lien de paiement: " . $paymentError->getMessage());
     }
+    */
 
     // Retourner la commande créée
     http_response_code(201);
@@ -227,7 +232,7 @@ try {
             'customer_name' => trim($config['first_name'] . ' ' . $config['last_name']),
             'payment_link' => $paymentLinkUrl
         ],
-        'message' => 'Commande créée avec succès et lien de paiement envoyé'
+        'message' => 'Commande créée avec succès. Vous pouvez maintenant générer le lien de paiement.'
     ]);
 
 } catch (Exception $e) {

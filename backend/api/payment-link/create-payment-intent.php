@@ -88,7 +88,10 @@ try {
     }
 
     $order = $orderData['order'];
-    $totalAmount = floatval($order['total_amount']);
+    $paymentLinkAmount = floatval($order['amount']);
+    $paymentType = $order['payment_type'] ?? 'full';
+
+    error_log("CREATE-PI: Token {$token}, Order ID {$order['order_id']}, Type: {$paymentType}, Amount: {$paymentLinkAmount}");
 
     // Charger la librairie Stripe
     require_once __DIR__ . '/../../../vendor/stripe/init.php';
@@ -103,7 +106,7 @@ try {
     \Stripe\Stripe::setApiKey($stripeSecretKey);
 
     // Convertir le montant en centimes
-    $amountInCents = (int)($totalAmount * 100);
+    $amountInCents = (int)($paymentLinkAmount * 100);
 
     // Créer ou récupérer le customer Stripe
     require_once __DIR__ . '/../../core/Database.php';
@@ -159,6 +162,7 @@ try {
             'customer_id' => $customer['customer_id'],
             'payment_link_token' => $token,
             'installments' => $installments,
+            'payment_type' => $paymentType,
             'source' => 'payment_link'
         ]
     ];
@@ -169,9 +173,9 @@ try {
         $paymentIntentParams['amount'] = $firstPaymentAmount;
         $paymentIntentParams['metadata']['installment_number'] = 1;
         $paymentIntentParams['metadata']['total_amount'] = $amountInCents;
-        $paymentIntentParams['description'] = 'ArchiMeuble - Commande ' . $order['order_number'] . ' - Paiement 1/3';
+        $paymentIntentParams['description'] = 'ArchiMeuble - Commande ' . $order['order_number'] . ' - Paiement 1/3 (' . $paymentType . ')';
     } else {
-        $paymentIntentParams['description'] = 'ArchiMeuble - Commande ' . $order['order_number'] . ' - Paiement intégral';
+        $paymentIntentParams['description'] = 'ArchiMeuble - Commande ' . $order['order_number'] . ' - Paiement ' . $paymentType;
     }
 
     // Créer le PaymentIntent
@@ -191,6 +195,15 @@ try {
         $paymentIntent->status,
         json_encode($paymentIntent->metadata->toArray())
     ]);
+
+    // Mettre à jour l'ID d'intention dans la commande pour faciliter le suivi par le webhook
+    if ($paymentType === 'deposit') {
+        $db->execute("UPDATE orders SET deposit_stripe_intent_id = ? WHERE id = ?", [$paymentIntent->id, $order['order_id']]);
+    } elseif ($paymentType === 'balance') {
+        $db->execute("UPDATE orders SET balance_stripe_intent_id = ? WHERE id = ?", [$paymentIntent->id, $order['order_id']]);
+    } else {
+        $db->execute("UPDATE orders SET stripe_payment_intent_id = ? WHERE id = ?", [$paymentIntent->id, $order['order_id']]);
+    }
 
     // Retourner la réponse
     http_response_code(200);

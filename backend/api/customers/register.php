@@ -18,7 +18,7 @@ try {
     $data = json_decode(file_get_contents('php://input'), true);
     
     // Validation
-    $required = ['email', 'password', 'first_name', 'last_name'];
+    $required = ['email', 'password', 'first_name', 'last_name', 'phone', 'address', 'city', 'postal_code', 'country'];
     foreach ($required as $field) {
         if (empty($data[$field])) {
             http_response_code(400);
@@ -38,6 +38,21 @@ try {
     if (strlen($data['password']) < 8) {
         http_response_code(400);
         echo json_encode(['error' => 'Le mot de passe doit contenir au moins 8 caractères']);
+        exit;
+    }
+    
+    // Valider le format du téléphone (France ou international basique)
+    // Format attendu: +33612345678 ou 0612345678
+    if (!preg_match('/^(\+33|0)[1-9](\d{2}){4}$/', str_replace(' ', '', $data['phone']))) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Format de téléphone invalide (ex: 0612345678 ou +33612345678)']);
+        exit;
+    }
+    
+    // Valider le code postal (5 chiffres pour la France)
+    if ($data['country'] === 'France' && !preg_match('/^\d{5}$/', $data['postal_code'])) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Le code postal doit contenir exactement 5 chiffres']);
         exit;
     }
     

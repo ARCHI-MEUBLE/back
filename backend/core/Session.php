@@ -24,7 +24,7 @@ class Session {
 
             // Configurer les paramètres de cookie
             session_set_cookie_params([
-                'lifetime' => 86400 * 7, // 7 jours
+                'lifetime' => 0, // Session se termine à la fermeture du navigateur (plus sécurisé pour admin)
                 'path' => '/',
                 'domain' => '', // Pas de domaine spécifique
                 'secure' => !$isLocal, // HTTPS uniquement en production

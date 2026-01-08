@@ -21,8 +21,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// L'authentification est gérée par Next.js API route
-// Pas besoin de vérifier $_SESSION ici
+// Vérifier l'authentification admin
+$session = Session::getInstance();
+if (!$session->has('admin_email') || $session->get('is_admin') !== true) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Non authentifié']);
+    exit;
+}
 
 require_once __DIR__ . '/../../models/Sample.php';
 

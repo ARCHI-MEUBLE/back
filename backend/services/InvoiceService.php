@@ -22,7 +22,11 @@ class InvoiceService {
         $invoiceDate = date('d/m/Y', strtotime($order['created_at']));
 
         // Nom du fichier PDF
-        $filename = "facture_{$invoiceNumber}.pdf";
+        $suffix = '';
+        if (($order['payment_strategy'] ?? '') === 'deposit') {
+            $suffix = ($order['balance_payment_status'] ?? '') === 'paid' ? '_solde' : '_acompte';
+        }
+        $filename = "facture_{$invoiceNumber}{$suffix}.pdf";
 
         // Utiliser /data/invoices pour Railway (volume persistant)
         $invoicesDir = file_exists('/data') ? '/data/invoices' : __DIR__ . '/../../invoices';
@@ -68,7 +72,15 @@ class InvoiceService {
         
         // Titre Facture
         $pdf->SetFont('Arial', 'B', 32);
-        $pdf->Cell(90, 15, 'FACTURE', 0, 1, 'R');
+        $title = 'FACTURE';
+        if (($order['payment_strategy'] ?? '') === 'deposit') {
+            if (($order['balance_payment_status'] ?? '') === 'paid') {
+                $title = 'FACTURE SOLDE';
+            } else {
+                $title = 'FACTURE ACOMPTE';
+            }
+        }
+        $pdf->Cell(90, 15, $title, 0, 1, 'R');
         
         // Infos Entreprise (Gauche)
         $pdf->SetFont('Arial', '', 10);
@@ -91,6 +103,20 @@ class InvoiceService {
         $pdf->SetX($startX);
         $pdf->SetY($startY + 10);
         $pdf->Cell(190, 5, utf8_decode('Commande: ' . $order['order_number']), 0, 1, 'R');
+
+        // Type de paiement
+        $pdf->SetX($startX);
+        $pdf->SetY($startY + 15);
+        $paymentTypeLabel = 'Paiement Integral';
+        if (($order['payment_strategy'] ?? '') === 'deposit') {
+            if (($order['balance_payment_status'] ?? '') === 'paid') {
+                $paymentTypeLabel = 'Solde de commande';
+            } else {
+                $paymentTypeLabel = 'Acompte de commande (' . ($order['deposit_percentage'] ?? 0) . '%)';
+            }
+        }
+        $pdf->SetFont('Arial', 'B', 10);
+        $pdf->Cell(190, 5, utf8_decode($paymentTypeLabel), 0, 1, 'R');
         
         $pdf->Ln(10);
         $pdf->SetDrawColor(217, 119, 6);
@@ -198,6 +224,28 @@ class InvoiceService {
         $pdf->SetFont('Arial', 'B', 12);
         $pdf->Cell(35, 10, utf8_decode('Total TTC:'), 0, 0, 'R', true);
         $pdf->Cell(25, 10, number_format($order['total_amount'], 2, ',', ' ') . ' ' . chr(128), 0, 1, 'R', true);
+
+        // Détail Acompte / Solde si applicable
+        if (($order['payment_strategy'] ?? '') === 'deposit') {
+            $currentPaidLabel = (($order['balance_payment_status'] ?? '') === 'paid') ? 'Solde payé :' : 'Acompte payé :';
+            $currentPaidAmount = (($order['balance_payment_status'] ?? '') === 'paid') ? $order['remaining_amount'] : $order['deposit_amount'];
+
+            $pdf->SetX(110);
+            $pdf->SetFont('Arial', 'B', 11);
+            $pdf->SetFillColor(217, 249, 225); // Vert clair
+            $pdf->Cell(55, 10, utf8_decode($currentPaidLabel), 0, 0, 'R', true);
+            $pdf->Cell(25, 10, number_format($currentPaidAmount, 2, ',', ' ') . ' ' . chr(128), 0, 1, 'R', true);
+
+            if (($order['balance_payment_status'] ?? '') !== 'paid') {
+                $pdf->SetX(130);
+                $pdf->SetFont('Arial', 'B', 10);
+                $pdf->SetTextColor(217, 30, 30); // Rouge pour le solde dû
+                $pdf->Cell(35, 8, utf8_decode('Reste à percevoir:'), 0, 0, 'R');
+                $pdf->SetFont('Arial', '', 10);
+                $pdf->Cell(25, 8, number_format($order['remaining_amount'], 2, ',', ' ') . ' ' . chr(128), 0, 1, 'R');
+                $pdf->SetTextColor(51, 51, 51); // Reset couleur
+            }
+        }
         
         // Infos Paiement
         $pdf->Ln(10);
@@ -231,6 +279,25 @@ class InvoiceService {
     private function generateInvoiceHTML($order, $customer, $items, $samples, $invoiceNumber, $invoiceDate) {
         $totalHT = $order['total_amount'] / 1.20; // Montant HT (TVA 20%)
         $tva = $order['total_amount'] - $totalHT;
+
+        $title = 'FACTURE';
+        $paymentDetailHTML = '';
+        if (($order['payment_strategy'] ?? '') === 'deposit') {
+            if (($order['balance_payment_status'] ?? '') === 'paid') {
+                $title = 'FACTURE SOLDE';
+                $paymentDetailHTML = "
+                    <div style='text-align: right; margin-top: 10px; padding: 10px; background-color: #f0fdf4; border-radius: 4px;'>
+                        <strong>Solde payé : " . number_format($order['remaining_amount'], 2, ',', ' ') . " €</strong>
+                    </div>";
+            } else {
+                $title = 'FACTURE ACOMPTE';
+                $paymentDetailHTML = "
+                    <div style='text-align: right; margin-top: 10px; padding: 10px; background-color: #f0fdf4; border-radius: 4px;'>
+                        <strong>Acompte payé (" . ($order['deposit_percentage'] ?? 0) . "%) : " . number_format($order['deposit_amount'], 2, ',', ' ') . " €</strong><br>
+                        <span style='color: #ef4444;'>Reste à percevoir : " . number_format($order['remaining_amount'], 2, ',', ' ') . " €</span>
+                    </div>";
+            }
+        }
 
         $itemsHTML = '';
 
@@ -357,7 +424,7 @@ class InvoiceService {
                     <p style='margin: 5px 0;'>N° TVA: {$this->companyTVA}</p>
                 </div>
                 <div class='invoice-info'>
-                    <div class='invoice-title'>FACTURE</div>
+                    <div class='invoice-title'>{$title}</div>
                     <p style='margin: 5px 0;'><strong>N°:</strong> {$invoiceNumber}</p>
                     <p style='margin: 5px 0;'><strong>Date:</strong> {$invoiceDate}</p>
                     <p style='margin: 5px 0;'><strong>Commande:</strong> {$order['order_number']}</p>
@@ -406,6 +473,22 @@ class InvoiceService {
                     <td style='padding: 12px; text-align: right; font-size: 18px;'><strong>Total TTC:</strong></td>
                     <td style='padding: 12px; text-align: right; font-size: 18px;'><strong>" . number_format($order['total_amount'], 2, ',', ' ') . " €</strong></td>
                 </tr>
+                " . (($order['payment_strategy'] ?? '') === 'deposit' ? "
+                <tr>
+                    <td style='padding: 8px; text-align: right;'><strong>Acompte payé:</strong></td>
+                    <td style='padding: 8px; text-align: right;'>" . number_format($order['deposit_amount'], 2, ',', ' ') . " €</td>
+                </tr>
+                " . (($order['balance_payment_status'] ?? '') !== 'paid' ? "
+                <tr>
+                    <td style='padding: 8px; text-align: right; color: #ef4444;'><strong>Reste à payer:</strong></td>
+                    <td style='padding: 8px; text-align: right; color: #ef4444;'><strong>" . number_format($order['remaining_amount'], 2, ',', ' ') . " €</strong></td>
+                </tr>
+                " : "
+                <tr>
+                    <td style='padding: 8px; text-align: right;'><strong>Solde payé:</strong></td>
+                    <td style='padding: 8px; text-align: right;'>" . number_format($order['remaining_amount'], 2, ',', ' ') . " €</td>
+                </tr>
+                ") : "") . "
             </table>
 
             <div style='margin-top: 20px; padding: 12px; background-color: #fef3c7; border-radius: 8px;'>

@@ -18,7 +18,8 @@ require_once __DIR__ . '/../../models/Order.php';
 
 try {
     // Vérifier l'authentification admin
-    if (!isset($_SESSION['admin_email'])) {
+    $session = Session::getInstance();
+    if (!$session->has('admin_email') || $session->get('is_admin') !== true) {
         http_response_code(401);
         echo json_encode([
             'success' => false,
@@ -51,11 +52,13 @@ try {
 
     $orderId = intval($data['order_id']);
     $expiryDays = isset($data['expiry_days']) ? intval($data['expiry_days']) : 30;
+    $paymentType = $data['payment_type'] ?? 'full';
+    $amount = isset($data['amount']) ? floatval($data['amount']) : null;
     $adminEmail = $_SESSION['admin_email'];
 
     // Générer le lien de paiement
     $paymentLink = new PaymentLink();
-    $link = $paymentLink->generateLink($orderId, $adminEmail, $expiryDays);
+    $link = $paymentLink->generateLink($orderId, $adminEmail, $expiryDays, $paymentType, $amount);
 
     if (!$link) {
         http_response_code(500);
@@ -116,7 +119,7 @@ try {
             $orderDetails['order_number'],
             $fullUrl,
             $link['expires_at'],
-            $orderDetails['total_amount']
+            $link['amount'] ?? $orderDetails['total_amount']
         );
     }
 
