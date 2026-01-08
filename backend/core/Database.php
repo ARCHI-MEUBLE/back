@@ -57,9 +57,43 @@ class Database {
 
             // Forcer l'encodage UTF-8 pour SQLite
             $this->pdo->exec("PRAGMA encoding = 'UTF-8'");
+
+            // Vérifier et créer la table password_resets si elle n'existe pas
+            $this->ensureTablesExist();
         } catch (PDOException $e) {
             error_log("Erreur de connexion PDO : " . $e->getMessage());
             throw new Exception("Erreur de connexion à la base de données");
+        }
+    }
+
+    /**
+     * S'assure que les tables essentielles existent
+     */
+    private function ensureTablesExist() {
+        try {
+            $this->pdo->exec("
+                CREATE TABLE IF NOT EXISTS password_resets (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    email TEXT NOT NULL,
+                    token TEXT NOT NULL,
+                    expires_at DATETIME NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE TABLE IF NOT EXISTS realisations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    titre TEXT NOT NULL,
+                    description TEXT,
+                    image_url TEXT,
+                    date_projet TEXT,
+                    categorie TEXT,
+                    lieu TEXT,
+                    dimensions TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+            ");
+            // error_log("Database: ensureTablesExist check passed.");
+        } catch (PDOException $e) {
+            error_log("Erreur lors de la création des tables : " . $e->getMessage());
         }
     }
 
