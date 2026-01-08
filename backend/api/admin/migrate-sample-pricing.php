@@ -29,71 +29,87 @@ try {
     }
 
     $db = Database::getInstance();
+    $pdo = $db->getPDO(); // Utiliser PDO directement pour ALTER TABLE
     $results = [];
 
-    // 1. Vérifier si les colonnes existent déjà dans sample_types
-    try {
-        $testQuery = "SELECT price_per_m2, unit_price FROM sample_types LIMIT 1";
-        $db->query($testQuery, []);
-        $results[] = "✅ Les colonnes existent déjà dans sample_types";
-        $sampleTypesNeedMigration = false;
-    } catch (Exception $e) {
-        $results[] = "ℹ️ Les colonnes n'existent pas encore dans sample_types";
-        $sampleTypesNeedMigration = true;
-    }
-
-    // 2. Vérifier si les colonnes existent déjà dans sample_colors
-    try {
-        $testQuery = "SELECT price_per_m2, unit_price FROM sample_colors LIMIT 1";
-        $db->query($testQuery, []);
-        $results[] = "✅ Les colonnes existent déjà dans sample_colors";
-        $sampleColorsNeedMigration = false;
-    } catch (Exception $e) {
-        $results[] = "ℹ️ Les colonnes n'existent pas encore dans sample_colors";
-        $sampleColorsNeedMigration = true;
-    }
-
-    // 3. Ajouter les colonnes à sample_types si nécessaire
-    if ($sampleTypesNeedMigration) {
+    // Helper pour vérifier si une colonne existe
+    function columnExists($pdo, $table, $column) {
         try {
-            $db->execute("ALTER TABLE sample_types ADD COLUMN price_per_m2 REAL DEFAULT 0.0", []);
+            $stmt = $pdo->query("PRAGMA table_info($table)");
+            $columns = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($columns as $col) {
+                if ($col['name'] === $column) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    // 1. Vérifier et ajouter price_per_m2 à sample_types
+    if (!columnExists($pdo, 'sample_types', 'price_per_m2')) {
+        try {
+            $pdo->exec("ALTER TABLE sample_types ADD COLUMN price_per_m2 REAL DEFAULT 0.0");
             $results[] = "✅ Colonne price_per_m2 ajoutée à sample_types";
         } catch (Exception $e) {
-            $results[] = "⚠️ Erreur price_per_m2 sur sample_types: " . $e->getMessage();
+            $results[] = "❌ Erreur price_per_m2 sur sample_types: " . $e->getMessage();
         }
-
-        try {
-            $db->execute("ALTER TABLE sample_types ADD COLUMN unit_price REAL DEFAULT 0.0", []);
-            $results[] = "✅ Colonne unit_price ajoutée à sample_types";
-        } catch (Exception $e) {
-            $results[] = "⚠️ Erreur unit_price sur sample_types: " . $e->getMessage();
-        }
+    } else {
+        $results[] = "ℹ️ Colonne price_per_m2 existe déjà dans sample_types";
     }
 
-    // 4. Ajouter les colonnes à sample_colors si nécessaire
-    if ($sampleColorsNeedMigration) {
+    // 2. Vérifier et ajouter unit_price à sample_types
+    if (!columnExists($pdo, 'sample_types', 'unit_price')) {
         try {
-            $db->execute("ALTER TABLE sample_colors ADD COLUMN price_per_m2 REAL DEFAULT 0.0", []);
+            $pdo->exec("ALTER TABLE sample_types ADD COLUMN unit_price REAL DEFAULT 0.0");
+            $results[] = "✅ Colonne unit_price ajoutée à sample_types";
+        } catch (Exception $e) {
+            $results[] = "❌ Erreur unit_price sur sample_types: " . $e->getMessage();
+        }
+    } else {
+        $results[] = "ℹ️ Colonne unit_price existe déjà dans sample_types";
+    }
+
+    // 3. Vérifier et ajouter price_per_m2 à sample_colors
+    if (!columnExists($pdo, 'sample_colors', 'price_per_m2')) {
+        try {
+            $pdo->exec("ALTER TABLE sample_colors ADD COLUMN price_per_m2 REAL DEFAULT 0.0");
             $results[] = "✅ Colonne price_per_m2 ajoutée à sample_colors";
         } catch (Exception $e) {
-            $results[] = "⚠️ Erreur price_per_m2 sur sample_colors: " . $e->getMessage();
+            $results[] = "❌ Erreur price_per_m2 sur sample_colors: " . $e->getMessage();
         }
+    } else {
+        $results[] = "ℹ️ Colonne price_per_m2 existe déjà dans sample_colors";
+    }
 
+    // 4. Vérifier et ajouter unit_price à sample_colors
+    if (!columnExists($pdo, 'sample_colors', 'unit_price')) {
         try {
-            $db->execute("ALTER TABLE sample_colors ADD COLUMN unit_price REAL DEFAULT 0.0", []);
+            $pdo->exec("ALTER TABLE sample_colors ADD COLUMN unit_price REAL DEFAULT 0.0");
             $results[] = "✅ Colonne unit_price ajoutée à sample_colors";
         } catch (Exception $e) {
-            $results[] = "⚠️ Erreur unit_price sur sample_colors: " . $e->getMessage();
+            $results[] = "❌ Erreur unit_price sur sample_colors: " . $e->getMessage();
         }
+    } else {
+        $results[] = "ℹ️ Colonne unit_price existe déjà dans sample_colors";
     }
 
     // 5. Vérification finale
-    try {
-        $testTypes = $db->query("SELECT id, name, price_per_m2, unit_price FROM sample_types LIMIT 1", []);
-        $testColors = $db->query("SELECT id, name, price_per_m2, unit_price FROM sample_colors LIMIT 1", []);
-        $results[] = "✅ Vérification finale réussie : les colonnes sont accessibles";
-    } catch (Exception $e) {
-        $results[] = "❌ Vérification finale échouée : " . $e->getMessage();
+    $finalCheck = [
+        'sample_types_price_per_m2' => columnExists($pdo, 'sample_types', 'price_per_m2'),
+        'sample_types_unit_price' => columnExists($pdo, 'sample_types', 'unit_price'),
+        'sample_colors_price_per_m2' => columnExists($pdo, 'sample_colors', 'price_per_m2'),
+        'sample_colors_unit_price' => columnExists($pdo, 'sample_colors', 'unit_price')
+    ];
+
+    $allColumnsExist = !in_array(false, $finalCheck, true);
+
+    if ($allColumnsExist) {
+        $results[] = "✅ Vérification finale réussie : toutes les colonnes sont présentes";
+    } else {
+        $results[] = "❌ Vérification finale : certaines colonnes manquent encore";
     }
 
     http_response_code(200);
