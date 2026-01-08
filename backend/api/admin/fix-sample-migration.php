@@ -36,6 +36,38 @@ try {
         'sample_colors' => ['price_per_m2', 'unit_price']
     ];
 
+    // --- NOUVELLE SECTION : TABLES MANQUANTES ---
+    
+    // 1. Table calendly_appointments
+    $pdo->exec("CREATE TABLE IF NOT EXISTS calendly_appointments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_uri TEXT UNIQUE,
+        invitee_uri TEXT,
+        event_type_uri TEXT,
+        start_time DATETIME,
+        end_time DATETIME,
+        invitee_name TEXT,
+        invitee_email TEXT,
+        status TEXT DEFAULT 'active',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+    $messages[] = "✅ Table 'calendly_appointments' vérifiée/créée";
+
+    // 2. Table categories
+    $pdo->exec("CREATE TABLE IF NOT EXISTS categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        slug TEXT UNIQUE,
+        description TEXT,
+        image_url TEXT,
+        is_active INTEGER DEFAULT 1,
+        display_order INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+    $messages[] = "✅ Table 'categories' vérifiée/créée";
+
+    // --------------------------------------------
+
     foreach ($migrations as $table => $columns) {
         // Récupérer les colonnes existantes
         $stmt = $pdo->query("PRAGMA table_info($table)");
