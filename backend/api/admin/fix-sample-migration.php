@@ -11,11 +11,18 @@ require_once __DIR__ . '/../../core/Session.php';
 header('Content-Type: application/json; charset=utf-8');
 
 try {
-    // 1. Vérification session Admin
+    // 1. Vérification session Admin OU Token de secours
     $session = Session::getInstance();
-    if (!$session->has('admin_email')) {
+    $token = $_GET['token'] ?? '';
+    $isValidToken = ($token === 'archimeuble_fix_2025');
+
+    if (!$session->has('admin_email') && !$isValidToken) {
         http_response_code(401);
-        echo json_encode(['success' => false, 'error' => 'Authentification admin requise']);
+        echo json_encode([
+            'success' => false, 
+            'error' => 'Authentification admin requise',
+            'tip' => 'Utilisez le lien avec le token de secours si vous êtes bloqué.'
+        ]);
         exit;
     }
 
