@@ -123,6 +123,25 @@ class Database {
                 UNIQUE(catalogue_item_id, color_name)
             )");
 
+            $this->pdo->exec("CREATE TABLE IF NOT EXISTS calendly_appointments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                calendly_event_id TEXT UNIQUE NOT NULL,
+                client_name TEXT NOT NULL,
+                client_email TEXT NOT NULL,
+                event_type TEXT,
+                start_time DATETIME NOT NULL,
+                end_time DATETIME NOT NULL,
+                timezone TEXT DEFAULT 'Europe/Paris',
+                config_url TEXT,
+                additional_notes TEXT,
+                meeting_url TEXT,
+                phone_number TEXT,
+                status TEXT DEFAULT 'scheduled',
+                confirmation_sent INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )");
+
             // Vérifier et ajouter la colonne variation_label si elle manque (migration auto)
             try {
                 $check = $this->pdo->query("PRAGMA table_info(catalogue_items)");
