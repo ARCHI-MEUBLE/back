@@ -394,6 +394,18 @@ try:
     else:
         print("✓ Colonne stripe_customer_id existe déjà")
 
+    # Vérifier et ajouter la colonne name à order_catalogue_items
+    print("\nVérification de la colonne name dans order_catalogue_items...")
+    cursor.execute("PRAGMA table_info(order_catalogue_items)")
+    order_catalogue_columns = [col[1] for col in cursor.fetchall()]
+
+    if 'name' not in order_catalogue_columns:
+        print("Ajout de la colonne name à order_catalogue_items...")
+        cursor.execute("ALTER TABLE order_catalogue_items ADD COLUMN name TEXT")
+        print("✓ Colonne name ajoutée avec succès!")
+    else:
+        print("✓ Colonne name existe déjà")
+
     conn.commit()
     print("\n✓ Tables créées avec succès!")
 
