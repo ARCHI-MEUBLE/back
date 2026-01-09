@@ -43,11 +43,15 @@ try {
             http_response_code(405);
             echo json_encode(['success' => false, 'error' => 'Méthode non autorisée']);
     }
-} catch (Exception $e) {
-    error_log('Erreur API catalogue admin: ' . $e->getMessage());
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Erreur interne du serveur']);
-}
+} catch (PDOException $e) {
+        error_log('PDO Error API catalogue admin: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Database Error: ' . $e->getMessage()]);
+    } catch (Exception $e) {
+        error_log('Erreur API catalogue admin: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Internal Server Error: ' . $e->getMessage()]);
+    }
 
 function handleGet($action, $pdo) {
     switch ($action) {

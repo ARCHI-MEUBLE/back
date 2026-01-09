@@ -90,6 +90,35 @@ class Database {
                     dimensions TEXT,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 );
+                CREATE TABLE IF NOT EXISTS catalogue_items (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name VARCHAR(255) NOT NULL,
+                    category VARCHAR(100) NOT NULL,
+                    description TEXT,
+                    material VARCHAR(100),
+                    dimensions VARCHAR(100),
+                    unit_price DECIMAL(10,2) NOT NULL,
+                    unit VARCHAR(50) DEFAULT 'pièce',
+                    stock_quantity INTEGER DEFAULT 0,
+                    min_order_quantity INTEGER DEFAULT 1,
+                    is_available BOOLEAN DEFAULT 1,
+                    image_url VARCHAR(500),
+                    weight DECIMAL(8,2),
+                    tags TEXT,
+                    variation_label VARCHAR(100) DEFAULT 'Couleur / Finition',
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE TABLE IF NOT EXISTS catalogue_item_variations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    catalogue_item_id INTEGER NOT NULL,
+                    color_name VARCHAR(100) NOT NULL,
+                    image_url VARCHAR(500) NOT NULL,
+                    is_default BOOLEAN DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (catalogue_item_id) REFERENCES catalogue_items(id) ON DELETE CASCADE,
+                    UNIQUE(catalogue_item_id, color_name)
+                );
             ");
             // error_log("Database: ensureTablesExist check passed.");
         } catch (PDOException $e) {
