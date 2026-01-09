@@ -175,8 +175,12 @@ try {
             http_response_code(400);
             echo json_encode(['success' => false, 'error' => 'Action non supportée']);
     }
+} catch (PDOException $e) {
+    error_log('PDO Error API catalogue public: ' . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Database Error: ' . $e->getMessage()]);
 } catch (Exception $e) {
     error_log('Erreur API catalogue public: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Erreur interne du serveur']);
+    echo json_encode(['success' => false, 'error' => 'Internal Server Error: ' . $e->getMessage()]);
 }
