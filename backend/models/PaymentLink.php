@@ -113,7 +113,7 @@ class PaymentLink {
                          c.email, c.first_name, c.last_name, c.phone
                   FROM payment_links pl
                   JOIN orders o ON pl.order_id = o.id
-                  JOIN customers c ON o.customer_id = c.id
+                  LEFT JOIN customers c ON o.customer_id = c.id
                   WHERE pl.token = ?";
 
         $result = $this->db->query($query, [$token]);

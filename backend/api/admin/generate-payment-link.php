@@ -61,26 +61,10 @@ try {
 
     // Générer le lien de paiement
     $paymentLink = new PaymentLink();
-    try {
-        $link = $paymentLink->generateLink($orderId, $adminEmail, $expiryDays, $paymentType, $amount);
-    } catch (Exception $e) {
-        error_log("GENERATE LINK - Model Exception: " . $e->getMessage());
-        http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'error' => $e->getMessage()
-        ]);
-        exit;
-    }
+    $link = $paymentLink->generateLink($orderId, $adminEmail, $expiryDays, $paymentType, $amount);
 
     if (!$link) {
-        error_log("GENERATE LINK - Failed to generate link (returned false)");
-        http_response_code(500);
-        echo json_encode([
-            'success' => false,
-            'error' => 'Erreur lors de la génération du lien'
-        ]);
-        exit;
+        throw new Exception('Erreur lors de la génération du lien');
     }
 
     error_log("GENERATE LINK - Link generated successfully: ID=" . $link['id']);

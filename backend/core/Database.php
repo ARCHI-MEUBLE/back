@@ -142,6 +142,48 @@ class Database {
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )");
 
+            $this->pdo->exec("CREATE TABLE IF NOT EXISTS payment_links (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                order_id INTEGER NOT NULL,
+                token TEXT NOT NULL UNIQUE,
+                status TEXT DEFAULT 'active',
+                expires_at DATETIME NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                accessed_at DATETIME,
+                paid_at DATETIME,
+                created_by_admin TEXT,
+                payment_type TEXT DEFAULT 'full',
+                amount REAL,
+                FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+            )");
+
+            $this->pdo->exec("CREATE TABLE IF NOT EXISTS cart_catalogue_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                customer_id INTEGER NOT NULL,
+                catalogue_item_id INTEGER NOT NULL,
+                variation_id INTEGER,
+                quantity INTEGER DEFAULT 1,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+                FOREIGN KEY (catalogue_item_id) REFERENCES catalogue_items(id) ON DELETE CASCADE
+            )");
+
+            $this->pdo->exec("CREATE TABLE IF NOT EXISTS order_catalogue_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                order_id INTEGER NOT NULL,
+                catalogue_item_id INTEGER,
+                variation_id INTEGER,
+                product_name TEXT NOT NULL,
+                variation_name TEXT,
+                quantity INTEGER DEFAULT 1,
+                unit_price REAL NOT NULL,
+                total_price REAL NOT NULL,
+                image_url TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+            )");
+
             // Vérifier et ajouter la colonne variation_label si elle manque (migration auto)
             try {
                 $check = $this->pdo->query("PRAGMA table_info(catalogue_items)");
@@ -208,7 +250,7 @@ class Database {
             error_log("Message: " . $e->getMessage());
             error_log("Query: " . $query);
             error_log("Params: " . print_r($params, true));
-            return [];
+            throw $e; // Throw exception instead of returning empty array
         }
     }
 
@@ -235,7 +277,7 @@ class Database {
             return $stmt->execute($params);
         } catch (PDOException $e) {
             error_log("Erreur d'exécution : " . $e->getMessage());
-            return false;
+            throw $e; // Throw exception instead of returning false
         }
     }
 
