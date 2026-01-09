@@ -251,6 +251,20 @@ try:
             print("✓ Colonne payment_type ajoutée avec succès!")
         else:
             print("✓ Colonne payment_type existe déjà")
+
+        if 'accessed_at' not in payment_columns:
+            print("Ajout de la colonne accessed_at à payment_links...")
+            cursor.execute("ALTER TABLE payment_links ADD COLUMN accessed_at DATETIME")
+            print("✓ Colonne accessed_at ajoutée avec succès!")
+        else:
+            print("✓ Colonne accessed_at existe déjà")
+
+        if 'paid_at' not in payment_columns:
+            print("Ajout de la colonne paid_at à payment_links...")
+            cursor.execute("ALTER TABLE payment_links ADD COLUMN paid_at DATETIME")
+            print("✓ Colonne paid_at ajoutée avec succès!")
+        else:
+            print("✓ Colonne paid_at existe déjà")
     else:
         print("Création de la table payment_links...")
         cursor.execute("""
