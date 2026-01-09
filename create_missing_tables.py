@@ -288,6 +288,67 @@ try:
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_payment_links_expires ON payment_links(expires_at)")
         print("✓ Table payment_links créée avec succès!")
 
+    # Créer la table stripe_payment_intents
+    print("\nCréation de la table stripe_payment_intents...")
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS stripe_payment_intents (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        payment_intent_id TEXT NOT NULL UNIQUE,
+        order_id INTEGER NOT NULL,
+        customer_id INTEGER NOT NULL,
+        amount INTEGER NOT NULL,
+        currency TEXT DEFAULT 'eur',
+        status TEXT NOT NULL,
+        metadata TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+        FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+    )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_stripe_pi_payment_intent ON stripe_payment_intents(payment_intent_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_stripe_pi_order ON stripe_payment_intents(order_id)")
+    print("✓ Table stripe_payment_intents créée avec succès!")
+
+    # Ajouter les colonnes Stripe manquantes à la table orders
+    print("\nVérification des colonnes Stripe dans orders...")
+    cursor.execute("PRAGMA table_info(orders)")
+    orders_columns = [col[1] for col in cursor.fetchall()]
+
+    if 'stripe_payment_intent_id' not in orders_columns:
+        print("Ajout de la colonne stripe_payment_intent_id à orders...")
+        cursor.execute("ALTER TABLE orders ADD COLUMN stripe_payment_intent_id TEXT")
+        print("✓ Colonne stripe_payment_intent_id ajoutée avec succès!")
+    else:
+        print("✓ Colonne stripe_payment_intent_id existe déjà")
+
+    if 'deposit_stripe_intent_id' not in orders_columns:
+        print("Ajout de la colonne deposit_stripe_intent_id à orders...")
+        cursor.execute("ALTER TABLE orders ADD COLUMN deposit_stripe_intent_id TEXT")
+        print("✓ Colonne deposit_stripe_intent_id ajoutée avec succès!")
+    else:
+        print("✓ Colonne deposit_stripe_intent_id existe déjà")
+
+    if 'balance_stripe_intent_id' not in orders_columns:
+        print("Ajout de la colonne balance_stripe_intent_id à orders...")
+        cursor.execute("ALTER TABLE orders ADD COLUMN balance_stripe_intent_id TEXT")
+        print("✓ Colonne balance_stripe_intent_id ajoutée avec succès!")
+    else:
+        print("✓ Colonne balance_stripe_intent_id existe déjà")
+
+    # Ajouter la colonne stripe_customer_id à customers
+    print("\nVérification de la colonne stripe_customer_id dans customers...")
+    cursor.execute("PRAGMA table_info(customers)")
+    customers_columns = [col[1] for col in cursor.fetchall()]
+
+    if 'stripe_customer_id' not in customers_columns:
+        print("Ajout de la colonne stripe_customer_id à customers...")
+        cursor.execute("ALTER TABLE customers ADD COLUMN stripe_customer_id TEXT")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_customers_stripe ON customers(stripe_customer_id)")
+        print("✓ Colonne stripe_customer_id ajoutée avec succès!")
+    else:
+        print("✓ Colonne stripe_customer_id existe déjà")
+
     conn.commit()
     print("\n✓ Tables créées avec succès!")
 
