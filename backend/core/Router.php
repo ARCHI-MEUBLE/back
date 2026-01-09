@@ -224,6 +224,26 @@ class Router {
             $filePath = $this->baseDir . '/' . $path;
         }
 
+        error_log("STATIC FILE: Requested path: $path");
+        error_log("STATIC FILE: Resolved to: $filePath");
+        error_log("STATIC FILE: File exists: " . (file_exists($filePath) ? 'YES' : 'NO'));
+
+        if (file_exists($filePath)) {
+            error_log("STATIC FILE: Is file: " . (is_file($filePath) ? 'YES' : 'NO'));
+            if (is_file($filePath)) {
+                error_log("STATIC FILE: File size: " . filesize($filePath) . " bytes");
+            }
+        } else {
+            // Si le fichier n'existe pas, lister le contenu du dossier parent pour debug
+            $parentDir = dirname($filePath);
+            if (is_dir($parentDir)) {
+                $files = scandir($parentDir);
+                error_log("STATIC FILE: Parent dir contents: " . implode(", ", $files));
+            } else {
+                error_log("STATIC FILE: Parent dir does not exist: $parentDir");
+            }
+        }
+
         if (file_exists($filePath) && is_file($filePath)) {
             $contentType = $this->getContentType($path);
 

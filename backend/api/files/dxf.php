@@ -52,11 +52,12 @@ try {
         
         // Try multiple possible paths
         $possiblePaths = [
+            '/data' . $cleanPath, // Railway volume persistant (prioritaire)
             __DIR__ . '/../../../../front/public' . $cleanPath,
             __DIR__ . '/../../../' . $cleanPath,
             __DIR__ . '/../../../../public' . $cleanPath,
             __DIR__ . '/../../' . $cleanPath,
-            '/app' . $cleanPath // Docker production
+            '/app' . $cleanPath // Docker production (non persistant)
         ];
         
         foreach ($possiblePaths as $path) {
