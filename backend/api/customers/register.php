@@ -81,10 +81,9 @@ try {
     // Récupérer les infos du client créé
     $customerData = $customer->getById($customerId);
     
-    // Démarrer une session (si pas déjà démarrée)
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
+    // Démarrer une session via le singleton
+    require_once __DIR__ . '/../../core/Session.php';
+    $session = Session::getInstance();
     $_SESSION['customer_id'] = $customerId;
     $_SESSION['customer_email'] = $customerData['email'];
     $_SESSION['customer_name'] = $customerData['first_name'] . ' ' . $customerData['last_name'];

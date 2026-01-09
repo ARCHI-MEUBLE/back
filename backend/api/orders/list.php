@@ -49,6 +49,10 @@ try {
         $samples = $order->getOrderSamples($_GET['id']);
         $orderData['samples'] = $samples;
 
+        // Récupérer les articles du catalogue
+        $catalogueItems = $order->getOrderCatalogueItems($_GET['id']);
+        $orderData['catalogue_items'] = $catalogueItems;
+
         // Formater pour le frontend
         $orderData = $order->formatForFrontend($orderData);
 

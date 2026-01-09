@@ -34,8 +34,21 @@ class Order {
         ";
         $sampleItems = $this->db->query($samplesQuery, [$customerId]);
 
-        // Vérifier qu'il y a au moins des configs OU des échantillons
-        if (empty($cartItems) && empty($sampleItems)) {
+        // Récupérer les articles du catalogue du panier
+        $catalogueQuery = "
+            SELECT cci.id, cci.catalogue_item_id, cci.variation_id, cci.quantity,
+                   ci.name, ci.unit_price,
+                   civ.color_name as variation_name,
+                   COALESCE(civ.image_url, ci.image_url) as image_url
+            FROM cart_catalogue_items cci
+            JOIN catalogue_items ci ON cci.catalogue_item_id = ci.id
+            LEFT JOIN catalogue_item_variations civ ON cci.variation_id = civ.id
+            WHERE cci.customer_id = ?
+        ";
+        $catalogueItems = $this->db->query($catalogueQuery, [$customerId]);
+
+        // Vérifier qu'il y a au moins des configs OU des échantillons OU du catalogue
+        if (empty($cartItems) && empty($sampleItems) && empty($catalogueItems)) {
             throw new Exception('Panier vide');
         }
 
@@ -46,6 +59,9 @@ class Order {
         }
         foreach ($sampleItems as $sample) {
             $total += ($sample['unit_price'] ?? 0) * $sample['quantity'];
+        }
+        foreach ($catalogueItems as $catItem) {
+            $total += $catItem['unit_price'] * $catItem['quantity'];
         }
 
         // Générer un numéro de commande unique
@@ -111,9 +127,29 @@ class Order {
             ]);
         }
 
-        // Vider le panier (configurations ET échantillons)
+        // Insérer les articles du catalogue de commande
+        foreach ($catalogueItems as $catItem) {
+            $insertCatQuery = "INSERT INTO order_catalogue_items
+                (order_id, catalogue_item_id, variation_id, name, variation_name, image_url, quantity, unit_price, total_price)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            
+            $this->db->execute($insertCatQuery, [
+                $orderId,
+                $catItem['catalogue_item_id'],
+                $catItem['variation_id'],
+                $catItem['name'],
+                $catItem['variation_name'],
+                $catItem['image_url'],
+                $catItem['quantity'],
+                $catItem['unit_price'],
+                $catItem['unit_price'] * $catItem['quantity']
+            ]);
+        }
+
+        // Vider le panier (configurations ET échantillons ET catalogue)
         $cart->clear($customerId);
         $this->db->execute("DELETE FROM cart_sample_items WHERE customer_id = ?", [$customerId]);
+        $this->db->execute("DELETE FROM cart_catalogue_items WHERE customer_id = ?", [$customerId]);
 
         // Récupérer les infos du client
         require_once __DIR__ . '/Customer.php';
@@ -158,6 +194,14 @@ class Order {
      */
     public function getOrderSamples($orderId) {
         $query = "SELECT * FROM order_sample_items WHERE order_id = ? ORDER BY id";
+        return $this->db->query($query, [$orderId]);
+    }
+
+    /**
+     * Récupérer les articles du catalogue d'une commande
+     */
+    public function getOrderCatalogueItems($orderId) {
+        $query = "SELECT * FROM order_catalogue_items WHERE order_id = ? ORDER BY id";
         return $this->db->query($query, [$orderId]);
     }
 
@@ -362,11 +406,15 @@ class Order {
             $deleteSamplesQuery = "DELETE FROM order_sample_items WHERE order_id = ?";
             $this->db->execute($deleteSamplesQuery, [$orderId]);
 
-            // 4. Révoquer tous les liens de paiement actifs pour cette commande
+            // 4. Supprimer les items de catalogue
+            $deleteCatalogueQuery = "DELETE FROM order_catalogue_items WHERE order_id = ?";
+            $this->db->execute($deleteCatalogueQuery, [$orderId]);
+
+            // 5. Révoquer tous les liens de paiement actifs pour cette commande
             $revokeLinksQuery = "UPDATE payment_links SET status = 'revoked' WHERE order_id = ? AND status = 'active'";
             $this->db->execute($revokeLinksQuery, [$orderId]);
 
-            // 5. Supprimer la commande elle-même
+            // 6. Supprimer la commande elle-même
             $deleteOrderQuery = "DELETE FROM orders WHERE id = ?";
             return $this->db->execute($deleteOrderQuery, [$orderId]);
         } catch (Exception $e) {
@@ -428,6 +476,11 @@ class Order {
                 }
             }
             $formatted['items'] = $orderData['items'];
+        }
+
+        // Ajouter les articles du catalogue si présents
+        if (isset($orderData['catalogue_items'])) {
+            $formatted['catalogue_items'] = $orderData['catalogue_items'];
         }
 
         return $formatted;
