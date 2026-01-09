@@ -265,6 +265,30 @@ try:
             print("✓ Colonne paid_at ajoutée avec succès!")
         else:
             print("✓ Colonne paid_at existe déjà")
+
+        if 'amount' not in payment_columns:
+            print("Ajout de la colonne amount à payment_links...")
+            cursor.execute("ALTER TABLE payment_links ADD COLUMN amount DECIMAL(10,2)")
+            print("✓ Colonne amount ajoutée avec succès!")
+
+            # Mettre à jour les liens existants avec les bons montants
+            print("Migration des montants existants...")
+            cursor.execute("""
+            UPDATE payment_links
+            SET amount = (
+                SELECT CASE
+                    WHEN payment_links.payment_type = 'deposit' THEN o.deposit_amount
+                    WHEN payment_links.payment_type = 'balance' THEN o.remaining_amount
+                    ELSE o.total_amount
+                END
+                FROM orders o
+                WHERE o.id = payment_links.order_id
+            )
+            WHERE amount IS NULL
+            """)
+            print("✓ Montants migrés avec succès!")
+        else:
+            print("✓ Colonne amount existe déjà")
     else:
         print("Création de la table payment_links...")
         cursor.execute("""
