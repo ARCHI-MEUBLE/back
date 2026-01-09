@@ -94,19 +94,24 @@ try {
     error_log("CREATE-PI: Token {$token}, Order ID {$order['order_id']}, Type: {$paymentType}, Amount: {$paymentLinkAmount}");
 
     // Charger la librairie Stripe
+    error_log("CREATE-PI: Loading Stripe library...");
     require_once __DIR__ . '/../../../vendor/stripe/init.php';
+    error_log("CREATE-PI: Stripe library loaded");
 
     // Récupérer la clé secrète Stripe depuis .env
     $stripeSecretKey = getenv('STRIPE_SECRET_KEY');
+    error_log("CREATE-PI: Stripe key loaded: " . (empty($stripeSecretKey) ? 'NO' : 'YES'));
 
     if (!$stripeSecretKey || $stripeSecretKey === 'sk_test_YOUR_SECRET_KEY_HERE') {
         throw new Exception('Clé Stripe non configurée');
     }
 
     \Stripe\Stripe::setApiKey($stripeSecretKey);
+    error_log("CREATE-PI: Stripe API key set");
 
     // Convertir le montant en centimes
     $amountInCents = (int)($paymentLinkAmount * 100);
+    error_log("CREATE-PI: Amount in cents: {$amountInCents}");
 
     // Créer ou récupérer le customer Stripe
     require_once __DIR__ . '/../../core/Database.php';
@@ -118,18 +123,22 @@ try {
                       JOIN customers c ON o.customer_id = c.id
                       WHERE o.id = ?";
     $customerResult = $db->query($customerQuery, [$order['order_id']]);
+    error_log("CREATE-PI: Customer query executed, found: " . count($customerResult) . " results");
 
     if (empty($customerResult)) {
         throw new Exception('Client introuvable');
     }
 
     $customer = $customerResult[0];
+    error_log("CREATE-PI: Customer loaded: ID={$customer['customer_id']}, Email={$customer['email']}");
 
     // Créer ou récupérer le customer Stripe
     $stripeCustomerId = null;
     if (isset($customer['stripe_customer_id']) && $customer['stripe_customer_id']) {
         $stripeCustomerId = $customer['stripe_customer_id'];
+        error_log("CREATE-PI: Using existing Stripe customer: {$stripeCustomerId}");
     } else {
+        error_log("CREATE-PI: Creating new Stripe customer...");
         // Créer un nouveau customer Stripe
         $stripeCustomer = \Stripe\Customer::create([
             'email' => $customer['email'],
@@ -142,10 +151,12 @@ try {
             ]
         ]);
         $stripeCustomerId = $stripeCustomer->id;
+        error_log("CREATE-PI: Stripe customer created: {$stripeCustomerId}");
 
         // Sauvegarder le Stripe customer ID
         $updateQuery = "UPDATE customers SET stripe_customer_id = ? WHERE id = ?";
         $db->execute($updateQuery, [$stripeCustomerId, $customer['customer_id']]);
+        error_log("CREATE-PI: Stripe customer ID saved to database");
     }
 
     // Préparer les paramètres du PaymentIntent
@@ -179,9 +190,12 @@ try {
     }
 
     // Créer le PaymentIntent
+    error_log("CREATE-PI: Creating Stripe PaymentIntent with amount {$amountInCents}...");
     $paymentIntent = \Stripe\PaymentIntent::create($paymentIntentParams);
+    error_log("CREATE-PI: PaymentIntent created: {$paymentIntent->id}, Status: {$paymentIntent->status}");
 
     // Enregistrer le PaymentIntent dans la base de données
+    error_log("CREATE-PI: Saving PaymentIntent to database...");
     $insertQuery = "INSERT INTO stripe_payment_intents
                     (payment_intent_id, order_id, customer_id, amount, currency, status, metadata, created_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
@@ -195,8 +209,10 @@ try {
         $paymentIntent->status,
         json_encode($paymentIntent->metadata->toArray())
     ]);
+    error_log("CREATE-PI: PaymentIntent saved to database");
 
     // Mettre à jour l'ID d'intention dans la commande pour faciliter le suivi par le webhook
+    error_log("CREATE-PI: Updating order with PaymentIntent ID (type: {$paymentType})...");
     if ($paymentType === 'deposit') {
         $db->execute("UPDATE orders SET deposit_stripe_intent_id = ? WHERE id = ?", [$paymentIntent->id, $order['order_id']]);
     } elseif ($paymentType === 'balance') {
@@ -204,8 +220,10 @@ try {
     } else {
         $db->execute("UPDATE orders SET stripe_payment_intent_id = ? WHERE id = ?", [$paymentIntent->id, $order['order_id']]);
     }
+    error_log("CREATE-PI: Order updated successfully");
 
     // Retourner la réponse
+    error_log("CREATE-PI: Sending success response");
     http_response_code(200);
     echo json_encode([
         'success' => true,
@@ -217,6 +235,7 @@ try {
             'order_number' => $order['order_number']
         ]
     ]);
+    error_log("CREATE-PI: Success response sent");
 
 } catch (\Stripe\Exception\ApiErrorException $e) {
     http_response_code(400);
