@@ -212,6 +212,49 @@ try:
     else:
         print("✓ Colonne config_data existe déjà")
 
+    # Vérifier et corriger la table payment_links
+    print("\nVérification de la table payment_links...")
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='payment_links'")
+    if cursor.fetchone():
+        cursor.execute("PRAGMA table_info(payment_links)")
+        payment_columns = [col[1] for col in cursor.fetchall()]
+
+        if 'expires_at' not in payment_columns:
+            print("Ajout de la colonne expires_at à payment_links...")
+            cursor.execute("ALTER TABLE payment_links ADD COLUMN expires_at DATETIME")
+            print("✓ Colonne expires_at ajoutée avec succès!")
+        else:
+            print("✓ Colonne expires_at existe déjà")
+
+        if 'payment_type' not in payment_columns:
+            print("Ajout de la colonne payment_type à payment_links...")
+            cursor.execute("ALTER TABLE payment_links ADD COLUMN payment_type TEXT DEFAULT 'full'")
+            print("✓ Colonne payment_type ajoutée avec succès!")
+        else:
+            print("✓ Colonne payment_type existe déjà")
+    else:
+        print("Création de la table payment_links...")
+        cursor.execute("""
+        CREATE TABLE payment_links (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id INTEGER NOT NULL,
+            token TEXT NOT NULL UNIQUE,
+            status TEXT DEFAULT 'active',
+            expires_at DATETIME NOT NULL,
+            payment_type TEXT DEFAULT 'full',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            accessed_at DATETIME,
+            paid_at DATETIME,
+            created_by_admin TEXT,
+            FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+        )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_payment_links_token ON payment_links(token)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_payment_links_order ON payment_links(order_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_payment_links_status ON payment_links(status)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_payment_links_expires ON payment_links(expires_at)")
+        print("✓ Table payment_links créée avec succès!")
+
     conn.commit()
     print("\n✓ Tables créées avec succès!")
 
