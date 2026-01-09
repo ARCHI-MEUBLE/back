@@ -54,7 +54,10 @@ try {
     $orderId = intval($data['order_id']);
     $expiryDays = isset($data['expiry_days']) ? intval($data['expiry_days']) : 30;
     $paymentType = $data['payment_type'] ?? 'full';
-    $amount = isset($data['amount']) ? floatval($data['amount']) : null;
+    
+    // On ne prend le montant que s'il est spécifié et > 0, sinon on laisse le backend le calculer
+    $amount = (isset($data['amount']) && floatval($data['amount']) > 0) ? floatval($data['amount']) : null;
+    
     $adminEmail = $session->get('admin_email');
 
     error_log("GENERATE LINK - Params: Order=$orderId, Type=$paymentType, Amount=$amount, Admin=$adminEmail");

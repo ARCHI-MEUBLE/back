@@ -247,13 +247,17 @@ class Order {
             $samples = $this->getOrderSamples($orderId);
             $samplesTotal = 0;
             foreach ($samples as $sample) {
-                $samplesTotal += ($sample['price'] * $sample['quantity']);
+                $samplesTotal += (($sample['price'] ?? 0) * $sample['quantity']);
             }
 
-            $depositAmount = ($furnitureTotal * ($depositPercentage / 100)) + $samplesTotal; // Les échantillons sont payés direct ? Ou pas du tout ? 
-            // "non pour les échantillons" peut vouloir dire qu'on ne fait pas d'acompte sur eux, 
-            // donc on les fait payer 100% dès le premier paiement.
-            
+            // Récupérer le total des articles du catalogue (payés à 100% dans l'acompte)
+            $catalogueItems = $this->getOrderCatalogueItems($orderId);
+            $catalogueTotal = 0;
+            foreach ($catalogueItems as $catItem) {
+                $catalogueTotal += (($catItem['total_price'] ?? ($catItem['unit_price'] * $catItem['quantity'])) ?? 0);
+            }
+
+            $depositAmount = ($furnitureTotal * ($depositPercentage / 100)) + $samplesTotal + $catalogueTotal;
             $remainingAmount = ($order['total_amount'] ?? $order['total'] ?? 0) - $depositAmount;
         }
 
