@@ -148,6 +148,25 @@ try:
     )
     """)
 
+    # Vérifier et ajouter les colonnes manquantes à notifications
+    print("\nVérification des colonnes dans notifications...")
+    cursor.execute("PRAGMA table_info(notifications)")
+    notif_columns = [col[1] for col in cursor.fetchall()]
+
+    if 'related_id' not in notif_columns:
+        print("Ajout de la colonne related_id à notifications...")
+        cursor.execute("ALTER TABLE notifications ADD COLUMN related_id INTEGER")
+        print("✓ Colonne related_id ajoutée avec succès!")
+    else:
+        print("✓ Colonne related_id existe déjà")
+
+    if 'category' not in notif_columns:
+        print("Ajout de la colonne category à notifications...")
+        cursor.execute("ALTER TABLE notifications ADD COLUMN category TEXT")
+        print("✓ Colonne category ajoutée avec succès!")
+    else:
+        print("✓ Colonne category existe déjà")
+
     print("Création de la table pricing...")
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS pricing (
