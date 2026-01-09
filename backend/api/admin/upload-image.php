@@ -11,22 +11,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
+// Log de debug
+error_log("UPLOAD: Content-Type: " . ($_SERVER['CONTENT_TYPE'] ?? 'none'));
+error_log("UPLOAD: Files array: " . print_r($_FILES, true));
+error_log("UPLOAD: POST array: " . print_r($_POST, true));
+
 // Vérifier l'authentification admin
 if (!isset($_SESSION['admin_email'])) {
     http_response_code(401);
-    echo json_encode(['error' => 'Non authentifié']);
+    echo json_encode(['success' => false, 'error' => 'Non authentifié']);
     exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed']);
+    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
     exit;
 }
 
 if (!isset($_FILES['image'])) {
     http_response_code(400);
-    echo json_encode(['error' => 'Aucune image envoyée']);
+    echo json_encode(['success' => false, 'error' => 'Aucune image envoyée', 'debug' => [
+        'files' => $_FILES,
+        'content_type' => $_SERVER['CONTENT_TYPE'] ?? 'none'
+    ]]);
     exit;
 }
 
@@ -64,29 +72,40 @@ if ($fileSize > 20 * 1024 * 1024) {
     exit;
 }
 
-// Déterminer le dossier d'upload (utiliser le volume partagé /app/models)
-$isDocker = file_exists('/app');
-$uploadDir = $isDocker ? '/app/models/photos/' : __DIR__ . '/../../../../front/public/models/photos/';
+// Déterminer le dossier d'upload sur le volume persistant Railway
+$uploadDir = '/data/uploads/catalogue/';
 
 if (!file_exists($uploadDir)) {
     mkdir($uploadDir, 0777, true);
+    error_log("UPLOAD: Created directory: $uploadDir");
 }
 
 // Générer un nom unique
-$newFileName = uniqid('model_', true) . '.' . $fileExt;
+$newFileName = uniqid('catalogue_', true) . '.' . $fileExt;
 $destPath = $uploadDir . $newFileName;
+
+error_log("UPLOAD: Attempting to save to: $destPath");
 
 // Utiliser copy + unlink pour être plus robuste dans Docker avec les volumes
 if (copy($fileTmpName, $destPath)) {
     unlink($fileTmpName);
-    error_log("Upload success via copy: $destPath");
+    error_log("UPLOAD: Success! File saved to: $destPath");
+
+    // Retourner l'URL relative au backend
+    $fileUrl = '/uploads/catalogue/' . $newFileName;
+
     echo json_encode([
         'success' => true,
-        'url' => '/models/photos/' . $newFileName
+        'url' => $fileUrl,
+        'filename' => $newFileName
     ]);
 } else {
     $error = error_get_last();
-    error_log("Upload failed (copy): " . ($error['message'] ?? 'Unknown error') . " Dest: $destPath");
+    error_log("UPLOAD: Failed to copy file. Error: " . ($error['message'] ?? 'Unknown error'));
     http_response_code(500);
-    echo json_encode(['error' => 'Impossible de sauvegarder le fichier sur le serveur. Problème de permissions ou de stockage.']);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Impossible de sauvegarder le fichier sur le serveur. Problème de permissions ou de stockage.',
+        'details' => $error['message'] ?? 'Unknown error'
+    ]);
 }
