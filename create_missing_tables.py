@@ -167,6 +167,13 @@ try:
     else:
         print("✓ Colonne category existe déjà")
 
+    if 'related_type' not in notif_columns:
+        print("Ajout de la colonne related_type à notifications...")
+        cursor.execute("ALTER TABLE notifications ADD COLUMN related_type TEXT")
+        print("✓ Colonne related_type ajoutée avec succès!")
+    else:
+        print("✓ Colonne related_type existe déjà")
+
     print("Création de la table pricing...")
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS pricing (
