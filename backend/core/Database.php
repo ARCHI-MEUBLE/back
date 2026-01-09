@@ -196,6 +196,50 @@ class Database {
                 // Ignorer si la table n'existe pas encore
             }
 
+            // Migration auto pour payment_links
+            try {
+                $check = $this->pdo->query("PRAGMA table_info(payment_links)");
+                $columns = $check->fetchAll(PDO::FETCH_COLUMN, 1);
+                
+                if (!empty($columns)) {
+                    if (!in_array('token', $columns)) {
+                        $this->pdo->exec("ALTER TABLE payment_links ADD COLUMN token TEXT");
+                        error_log("Database: Added missing column token to payment_links");
+                    }
+                    if (!in_array('payment_type', $columns)) {
+                        $this->pdo->exec("ALTER TABLE payment_links ADD COLUMN payment_type TEXT DEFAULT 'full'");
+                        error_log("Database: Added missing column payment_type to payment_links");
+                    }
+                    if (!in_array('amount', $columns)) {
+                        $this->pdo->exec("ALTER TABLE payment_links ADD COLUMN amount REAL");
+                        error_log("Database: Added missing column amount to payment_links");
+                    }
+                    if (!in_array('created_by_admin', $columns)) {
+                        $this->pdo->exec("ALTER TABLE payment_links ADD COLUMN created_by_admin TEXT");
+                        error_log("Database: Added missing column created_by_admin to payment_links");
+                    }
+                }
+            } catch (Exception $e) {
+                error_log("Database Migration Error (payment_links): " . $e->getMessage());
+            }
+
+            // Migration auto pour calendly_appointments
+            try {
+                $check = $this->pdo->query("PRAGMA table_info(calendly_appointments)");
+                $columns = $check->fetchAll(PDO::FETCH_COLUMN, 1);
+                
+                if (!empty($columns)) {
+                    if (!in_array('meeting_url', $columns)) {
+                        $this->pdo->exec("ALTER TABLE calendly_appointments ADD COLUMN meeting_url TEXT");
+                    }
+                    if (!in_array('phone_number', $columns)) {
+                        $this->pdo->exec("ALTER TABLE calendly_appointments ADD COLUMN phone_number TEXT");
+                    }
+                }
+            } catch (Exception $e) {
+                error_log("Database Migration Error (calendly_appointments): " . $e->getMessage());
+            }
+
         } catch (PDOException $e) {
             error_log("Erreur lors de la création des tables : " . $e->getMessage());
         }
