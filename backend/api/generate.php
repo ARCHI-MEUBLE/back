@@ -102,13 +102,13 @@ try {
     // Générer un nom de fichier unique
     $filename = 'meuble_' . uniqid() . '.glb';
 
-    // Utiliser OUTPUT_DIR si défini, sinon fallback sur /app/models (Docker) ou chemin local
+    // Utiliser OUTPUT_DIR si défini, sinon fallback sur /data/models (Docker) ou chemin local
     $outputDir = getenv('OUTPUT_DIR');
 
     if (!$outputDir || empty($outputDir)) {
-        // En production (Docker/Railway), utiliser /app/models
-        if (file_exists('/app')) {
-            $outputDir = '/app/models';
+        // En production (Docker/Railway), utiliser /data/models (volume persistant)
+        if (file_exists('/data')) {
+            $outputDir = '/data/models';
         } else {
             // En local, utiliser le chemin relatif vers front
             $outputDir = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'front' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'models';

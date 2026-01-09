@@ -215,8 +215,10 @@ class Router {
      * @param string $path
      */
     private function serveStaticFile($path) {
-        // Les fichiers uploads sont dans le volume persistant /data
+        // Les fichiers uploads et models sont dans le volume persistant /data
         if (strpos($path, 'uploads/') === 0) {
+            $filePath = '/data/' . $path;
+        } elseif (strpos($path, 'models/') === 0) {
             $filePath = '/data/' . $path;
         } else {
             $filePath = $this->baseDir . '/' . $path;

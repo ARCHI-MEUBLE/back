@@ -16,9 +16,11 @@ echo ""
 # Créer le répertoire /data si nécessaire
 mkdir -p /data
 mkdir -p /data/uploads/models
+mkdir -p /data/models
 chmod -R 777 /data
 
 echo "✓ /data directory created and writable"
+echo "✓ /data/models directory created and writable"
 
 # Initialiser la base de données SEULEMENT si elle n'existe pas
 if [ ! -f "$DB_PATH" ]; then
