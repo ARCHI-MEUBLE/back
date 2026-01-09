@@ -360,6 +360,20 @@ try:
     else:
         print("✓ Colonne balance_stripe_intent_id existe déjà")
 
+    if 'deposit_payment_status' not in orders_columns:
+        print("Ajout de la colonne deposit_payment_status à orders...")
+        cursor.execute("ALTER TABLE orders ADD COLUMN deposit_payment_status TEXT DEFAULT 'pending'")
+        print("✓ Colonne deposit_payment_status ajoutée avec succès!")
+    else:
+        print("✓ Colonne deposit_payment_status existe déjà")
+
+    if 'balance_payment_status' not in orders_columns:
+        print("Ajout de la colonne balance_payment_status à orders...")
+        cursor.execute("ALTER TABLE orders ADD COLUMN balance_payment_status TEXT DEFAULT 'pending'")
+        print("✓ Colonne balance_payment_status ajoutée avec succès!")
+    else:
+        print("✓ Colonne balance_payment_status existe déjà")
+
     # Ajouter la colonne stripe_customer_id à customers
     print("\nVérification de la colonne stripe_customer_id dans customers...")
     cursor.execute("PRAGMA table_info(customers)")
