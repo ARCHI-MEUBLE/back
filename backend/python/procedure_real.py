@@ -2325,13 +2325,6 @@ for planches_index, planches in enumerate(groupes):
     planches_normales = [p for p in planches if getattr(p, 'bloc', None) not in facades_types]
     planches_facades = [p for p in planches if getattr(p, 'bloc', None) in facades_types]
 
-    # DEBUG: Afficher le nombre de planches dans chaque catégorie
-    print(f"[DXF DEBUG Groupe {planches_index+1}] Total planches: {len(planches)}")
-    print(f"[DXF DEBUG Groupe {planches_index+1}] Planches normales: {len(planches_normales)}")
-    print(f"[DXF DEBUG Groupe {planches_index+1}] Façades: {len(planches_facades)}")
-    if planches_facades:
-        print(f"[DXF DEBUG Groupe {planches_index+1}] Types de façades: {[p.bloc for p in planches_facades]}")
-
     # Collecter les façades pour les placer ensemble plus tard
     for facade in planches_facades:
         toutes_facades.append((planches_index, facade))
@@ -2453,8 +2446,7 @@ for planches_index, planches in enumerate(groupes):
     X = 0 # Réinitialiser X pour le nouveau groupe
 
 # Placer toutes les façades ensemble en haut à droite
-print(f"[DXF DEBUG] Placement de {len(toutes_facades)} façades en haut à droite")
-Y_facades = 0  # En haut du DXF
+Y_facades = 2500  # Très haut dans le DXF (grande valeur positive pour monter)
 X_facades = X_max_global + 500  # À droite des planches normales, avec marge de 500mm
 
 for planches_index, planche in toutes_facades:
