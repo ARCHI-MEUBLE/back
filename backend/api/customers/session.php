@@ -6,13 +6,24 @@
  */
 
 require_once __DIR__ . '/../../config/cors.php';
+require_once __DIR__ . '/../../core/Session.php';
+
+$session = Session::getInstance();
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    // Vérifier la session
-    if (isset($_SESSION['customer_id'])) {
+    // SÉCURITÉ: Vérifier qu'il n'y a pas de session admin active
+    if ($session->has('is_admin') && $session->get('is_admin') === true) {
+        // Session admin détectée, pas de session customer
+        http_response_code(200);
+        echo json_encode(['authenticated' => false]);
+        exit;
+    }
+
+    // Vérifier la session customer
+    if ($session->has('customer_id')) {
         require_once __DIR__ . '/../../models/Customer.php';
         $customer = new Customer();
-        $customerData = $customer->getById($_SESSION['customer_id']);
+        $customerData = $customer->getById($session->get('customer_id'));
 
         if ($customerData) {
             http_response_code(200);
@@ -22,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             ]);
         } else {
             // Session invalide
-            session_destroy();
+            $session->destroy();
             http_response_code(200);
             echo json_encode(['authenticated' => false]);
         }
@@ -31,10 +42,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         http_response_code(200);
         echo json_encode(['authenticated' => false]);
     }
-    
+
 } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     // Déconnexion
-    session_destroy();
+    $session->destroy();
     http_response_code(200);
     echo json_encode([
         'success' => true,

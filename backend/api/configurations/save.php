@@ -6,6 +6,7 @@
 
 require_once __DIR__ . '/../../config/cors.php';
 require_once __DIR__ . '/../../config/env.php';
+require_once __DIR__ . '/../../core/Session.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -18,18 +19,25 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+$session = Session::getInstance();
+
 // Vérifier l'authentification (Client OU Admin)
-error_log("SAVE.PHP - Session data: " . print_r($_SESSION, true));
-if (!isset($_SESSION['customer_id']) && !isset($_SESSION['admin_email'])) {
-    error_log("SAVE.PHP - Unauthorized access attempt");
+error_log("SAVE.PHP - Session data: " . print_r($session->all(), true));
+
+// SÉCURITÉ: Un utilisateur doit TOUJOURS être connecté en tant que customer pour sauvegarder une configuration
+// Un admin peut être connecté en plus (pour validation), mais il FAUT un customer_id
+if (!$session->has('customer_id')) {
+    error_log("SAVE.PHP - Unauthorized: No customer_id in session");
     http_response_code(401);
-    echo json_encode(['error' => 'Non authentifié']);
+    echo json_encode([
+        'error' => 'Vous devez être connecté en tant que client pour sauvegarder une configuration'
+    ]);
     exit;
 }
 
-$isAdmin = isset($_SESSION['admin_email']);
-$userId = $_SESSION['customer_id'] ?? null;
-error_log("SAVE.PHP - Authenticated: isAdmin=" . ($isAdmin ? 'YES' : 'NO') . ", userId=" . ($userId ?: 'NULL'));
+$isAdmin = $session->has('admin_email');
+$userId = $session->get('customer_id');
+error_log("SAVE.PHP - Authenticated: isAdmin=" . ($isAdmin ? 'YES' : 'NO') . ", userId=" . $userId);
 
 require_once __DIR__ . '/../../models/Configuration.php';
 
@@ -136,8 +144,8 @@ try {
             if (!$customer) {
                 $customer = [
                     'first_name' => $isAdmin ? 'Admin' : 'Visiteur',
-                    'last_name' => $_SESSION['admin_email'] ?? 'Système',
-                    'email' => $_SESSION['admin_email'] ?? 'noreply@archimeuble.com',
+                    'last_name' => $session->get('admin_email') ?? 'Système',
+                    'email' => $session->get('admin_email') ?? 'noreply@archimeuble.com',
                     'phone' => ''
                 ];
             }
@@ -223,8 +231,8 @@ try {
         if (!$customer) {
             $customer = [
                 'first_name' => $isAdmin ? 'Admin' : 'Visiteur',
-                'last_name' => $_SESSION['admin_email'] ?? 'Système',
-                'email' => $_SESSION['admin_email'] ?? 'noreply@archimeuble.com',
+                'last_name' => $session->get('admin_email') ?? 'Système',
+                'email' => $session->get('admin_email') ?? 'noreply@archimeuble.com',
                 'phone' => ''
             ];
         }

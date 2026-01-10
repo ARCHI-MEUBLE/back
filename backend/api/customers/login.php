@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../../config/cors.php';
+require_once __DIR__ . '/../../core/Session.php';
 
 header('Content-Type: application/json');
 
@@ -33,11 +34,22 @@ try {
         echo json_encode(['error' => 'Email ou mot de passe incorrect']);
         exit;
     }
-    
-    // La session est déjà démarrée par cors.php
-    $_SESSION['customer_id'] = $customerData['id'];
-    $_SESSION['customer_email'] = $customerData['email'];
-    $_SESSION['customer_name'] = $customerData['first_name'] . ' ' . $customerData['last_name'];
+
+    // Utiliser la classe Session (sécurisée)
+    $session = Session::getInstance();
+
+    // Régénérer l'ID de session pour prévenir la fixation de session
+    $session->regenerate();
+
+    // SÉCURITÉ: Effacer toutes les données admin si présentes
+    $session->remove('admin_id');
+    $session->remove('admin_email');
+    $session->remove('is_admin');
+
+    // Créer la session customer
+    $session->set('customer_id', $customerData['id']);
+    $session->set('customer_email', $customerData['email']);
+    $session->set('customer_name', $customerData['first_name'] . ' ' . $customerData['last_name']);
     
     http_response_code(200);
     echo json_encode([

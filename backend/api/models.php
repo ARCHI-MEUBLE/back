@@ -26,6 +26,10 @@ $method = $_SERVER['REQUEST_METHOD'];
  * Vérifie si l'utilisateur est admin
  */
 function isAdmin() {
+    if (session_status() === PHP_SESSION_NONE) {
+        require_once __DIR__ . '/../core/Session.php';
+        Session::getInstance();
+    }
     // Utiliser $_SESSION natif comme dans les autres endpoints admin
     $isAdmin = isset($_SESSION['admin_email']) && !empty($_SESSION['admin_email']);
 
@@ -260,26 +264,40 @@ if ($method === 'PUT') {
         }
     }
 
+    // Gérer spécifiquement config_data qui peut être un objet
+    if (isset($input['config_data']) && !is_string($input['config_data'])) {
+        $updateData['config_data'] = json_encode($input['config_data']);
+    }
+
     if (empty($updateData)) {
         http_response_code(400);
         echo json_encode(['error' => 'Aucune donnée à mettre à jour']);
         exit;
     }
 
-    if ($model->update($id, $updateData)) {
-        $updatedModel = $model->getById($id);
-        // Convertir le chemin de l'image en URL complète
-        if (isset($updatedModel['image_url'])) {
-            $updatedModel['image_url'] = convertImagePath($updatedModel['image_url']);
+    try {
+        if ($model->update($id, $updateData)) {
+            $updatedModel = $model->getById($id);
+            // Convertir le chemin de l'image en URL complète
+            if (isset($updatedModel['image_url'])) {
+                $updatedModel['image_url'] = convertImagePath($updatedModel['image_url']);
+            }
+            http_response_code(200);
+            echo json_encode([
+                'success' => true,
+                'model' => $updatedModel
+            ]);
+        } else {
+            http_response_code(500);
+            echo json_encode(['error' => 'Erreur lors de la mise à jour du modèle']);
         }
-        http_response_code(200);
-        echo json_encode([
-            'success' => true,
-            'model' => $updatedModel
-        ]);
-    } else {
+    } catch (Exception $e) {
         http_response_code(500);
-        echo json_encode(['error' => 'Erreur lors de la mise à jour du modèle']);
+        echo json_encode([
+            'error' => 'Exception lors de la mise à jour du modèle',
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
     }
     exit;
 }
