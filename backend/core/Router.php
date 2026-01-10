@@ -250,7 +250,7 @@ class Router {
             // Headers CORS dynamiques pour tous les fichiers statiques
             $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
             $allowedOrigins = [
-                'http://localhost:3000',
+                'http://127.0.0.1:3000',
                 'http://localhost:3001',
                 'http://127.0.0.1:3000',
                 'http://127.0.0.1:3001',
@@ -340,7 +340,7 @@ class Router {
         // Gérer CORS correctement avec credentials
         $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
         $allowedOrigins = [
-            'http://localhost:3000',
+            'http://127.0.0.1:3000',
             'http://localhost:3001',
             'http://127.0.0.1:3000',
             'http://127.0.0.1:3001',
@@ -359,7 +359,7 @@ class Router {
         if ($isAllowed) {
             header('Access-Control-Allow-Origin: ' . $origin);
         } else {
-            header('Access-Control-Allow-Origin: http://localhost:3000');
+            header('Access-Control-Allow-Origin: http://127.0.0.1:3000');
         }
 
         header('Access-Control-Allow-Credentials: true');

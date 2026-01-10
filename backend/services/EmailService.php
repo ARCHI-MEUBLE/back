@@ -50,8 +50,8 @@ class EmailService {
     private function getAdminConfigurationNotificationTemplate($config, $customer) {
         $price = $config['price'] ?? 0;
         $priceFormatted = number_format($price, 2, ',', ' ') . ' €';
-        $frontendUrl = getenv('FRONTEND_URL') ?: 'http://localhost:3000';
-        $backendUrl = getenv('BACKEND_URL') ?: 'http://localhost:8000';
+        $frontendUrl = getenv('FRONTEND_URL') ?: 'http://127.0.0.1:3000';
+        $backendUrl = getenv('BACKEND_URL') ?: 'http://127.0.0.1:8000';
 
         // Déterminer le type de meuble (M1-M5)
         $type = $config['template_id'] ?? null;
@@ -781,7 +781,7 @@ class EmailService {
                                     </p>
 
                                     <div style='text-align: center;'>
-                                        <a href='http://localhost:3000/orders' style='display: inline-block; background-color: #d97706; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold;'>
+                                        <a href='http://127.0.0.1:3000/orders' style='display: inline-block; background-color: #d97706; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold;'>
                                             Voir ma commande
                                         </a>
                                     </div>

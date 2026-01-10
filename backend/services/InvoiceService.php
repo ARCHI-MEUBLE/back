@@ -557,6 +557,6 @@ class InvoiceService {
      * Retourne le chemin public vers une facture
      */
     public function getInvoiceUrl($filename) {
-        return "http://localhost:8000/backend/invoices/{$filename}";
+        return "http://127.0.0.1:8000/backend/invoices/{$filename}";
     }
 }

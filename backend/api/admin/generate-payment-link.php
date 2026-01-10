@@ -73,7 +73,7 @@ try {
     error_log("GENERATE LINK - Link generated successfully: ID=" . $link['id']);
 
     // Construire l'URL complète du lien
-    $frontendUrl = getenv('FRONTEND_URL') ?: 'http://localhost:3000';
+    $frontendUrl = getenv('FRONTEND_URL') ?: 'http://127.0.0.1:3000';
     $fullUrl = rtrim($frontendUrl, '/') . '/paiement/' . $link['token'];
 
     error_log("GENERATE LINK - URL built: " . $fullUrl);

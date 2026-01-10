@@ -53,20 +53,12 @@ function convertImagePath($imagePath) {
         $imagePath = '/' . $imagePath;
     }
 
-    $host = $_SERVER['HTTP_HOST'];
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
     $isLocal = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
 
     if ($isLocal) {
-        $frontendUrl = getenv('FRONTEND_URL');
-        if (!$frontendUrl) {
-            $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-            if ($origin && (strpos($origin, 'localhost') !== false || strpos($origin, '127.0.0.1') !== false)) {
-                $frontendUrl = $origin;
-            } else {
-                $frontendUrl = 'http://localhost:3000';
-            }
-        }
-        return $frontendUrl . $imagePath;
+        // En local, on retourne un chemin relatif pour que Next.js le gère via son proxy
+        return $imagePath;
     }
 
     $protocol = 'https';

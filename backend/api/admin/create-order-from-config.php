@@ -200,7 +200,7 @@ try {
         
         if ($paymentLink) {
             // Construire l'URL du lien
-            $baseUrl = getenv('FRONTEND_URL') ?: 'http://localhost:3000';
+            $baseUrl = getenv('FRONTEND_URL') ?: 'http://127.0.0.1:3000';
             $paymentLinkUrl = $baseUrl . '/paiement/' . $paymentLink['token'];
             
             // Envoyer l'email au client

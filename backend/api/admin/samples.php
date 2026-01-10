@@ -31,11 +31,57 @@ if (!$session->has('admin_email') || $session->get('is_admin') !== true) {
 
 require_once __DIR__ . '/../../models/Sample.php';
 
+/**
+ * Convertit un chemin relatif d'image en URL complète
+ */
+function convertImagePath($imagePath) {
+    if (!$imagePath) {
+        return null;
+    }
+
+    // Si c'est déjà une URL complète, la retourner telle quelle
+    if (strpos($imagePath, 'http://') === 0 || strpos($imagePath, 'https://') === 0) {
+        return $imagePath;
+    }
+
+    // S'assurer que le chemin commence par /
+    if (strpos($imagePath, '/') !== 0) {
+        $imagePath = '/' . $imagePath;
+    }
+
+    // Détecter l'environnement
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $isLocal = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
+
+    if ($isLocal) {
+        // En local, on retourne un chemin relatif pour que Next.js le gère via son proxy
+        return $imagePath;
+    }
+
+    // EN PRODUCTION: Les images sont sur Railway backend
+    $protocol = 'https';
+    $baseUrl = $protocol . '://' . $host;
+
+    return $baseUrl . $imagePath;
+}
+
 try {
     $sample = new Sample();
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $all = $sample->getAllGroupedForAdmin();
+
+        // Convertir les chemins d'images en URLs complètes
+        foreach ($all as &$type) {
+            if (isset($type['colors']) && is_array($type['colors'])) {
+                foreach ($type['colors'] as &$color) {
+                    if (isset($color['image_url'])) {
+                        $color['image_url'] = convertImagePath($color['image_url']);
+                    }
+                }
+            }
+        }
+
         http_response_code(200);
         echo json_encode(['success' => true, 'data' => $all], JSON_UNESCAPED_UNICODE);
         exit;

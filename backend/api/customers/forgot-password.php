@@ -49,7 +49,7 @@ try {
 
         // Envoyer l'email
         $emailService = new EmailService();
-        $frontendUrl = getenv('FRONTEND_URL') ?: 'http://localhost:3000';
+        $frontendUrl = getenv('FRONTEND_URL') ?: 'http://127.0.0.1:3000';
         $resetUrl = "{$frontendUrl}/auth/reset-password?token={$token}";
         $name = $customer['first_name'] ?: 'Client';
 

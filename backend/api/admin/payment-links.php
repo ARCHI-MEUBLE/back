@@ -39,7 +39,7 @@ try {
 
         // Ajouter l'URL complète pour chaque lien
         foreach ($links as &$link) {
-            $frontendUrl = getenv('FRONTEND_URL') ?: 'http://localhost:3000';
+            $frontendUrl = getenv('FRONTEND_URL') ?: 'http://127.0.0.1:3000';
             $link['url'] = rtrim($frontendUrl, '/') . '/paiement/' . $link['token'];
         }
 

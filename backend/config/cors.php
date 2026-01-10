@@ -8,7 +8,7 @@ require_once __DIR__ . '/env.php';
 
 // Autoriser les requêtes depuis le frontend Next.js
 $allowedOrigins = [
-    'http://localhost:3000',
+    'http://127.0.0.1:3000',
     'http://localhost:3001',
     'http://127.0.0.1:3000',
     'http://127.0.0.1:3001',
@@ -35,7 +35,7 @@ if (!$isAllowed && preg_match('/^https:\/\/.*\.vercel\.app$/', $origin)) {
 if ($isAllowed) {
     header("Access-Control-Allow-Origin: $origin");
 } else {
-    header('Access-Control-Allow-Origin: http://localhost:3000');
+    header('Access-Control-Allow-Origin: http://127.0.0.1:3000');
 }
 
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');

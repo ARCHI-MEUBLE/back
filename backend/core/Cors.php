@@ -8,7 +8,7 @@
 class Cors {
     /**
      * Configure les headers CORS automatiquement
-     * Utilise FRONTEND_URL depuis .env.local ou autorise localhost:3000/3001 par défaut
+     * Utilise FRONTEND_URL depuis .env.local ou autorise 127.0.0.1:3000/3001 par défaut
      */
     public static function enable() {
         // Récupérer l'origine de la requête
@@ -16,7 +16,7 @@ class Cors {
 
         // Liste des origines autorisées
         $allowedOrigins = [
-            'http://localhost:3000',
+            'http://127.0.0.1:3000',
             'http://localhost:3001',
             'http://127.0.0.1:3000',
             'http://127.0.0.1:3001',
@@ -45,7 +45,7 @@ class Cors {
             header('Access-Control-Allow-Origin: ' . $origin);
         } else {
             // En développement, autoriser localhost par défaut
-            header('Access-Control-Allow-Origin: http://localhost:3000');
+            header('Access-Control-Allow-Origin: http://127.0.0.1:3000');
         }
 
         // Autres headers CORS

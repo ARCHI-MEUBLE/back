@@ -59,42 +59,18 @@ function convertImagePath($imagePath) {
     }
 
     // Détecter l'environnement
-    $host = $_SERVER['HTTP_HOST'];
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
     $isLocal = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
 
     if ($isLocal) {
-        // EN LOCAL: Les images sont dans le frontend Next.js
-        // Détecter le port du frontend depuis Origin ou Referer
-        $frontendUrl = getenv('FRONTEND_URL');
-        if (!$frontendUrl) {
-            // Essayer de détecter depuis les headers
-            $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-            $referer = $_SERVER['HTTP_REFERER'] ?? '';
-
-            if ($origin && (strpos($origin, 'localhost') !== false || strpos($origin, '127.0.0.1') !== false)) {
-                $frontendUrl = $origin;
-            } elseif ($referer && (strpos($referer, 'localhost') !== false || strpos($referer, '127.0.0.1') !== false)) {
-                // Extraire l'URL de base du referer
-                $parsed = parse_url($referer);
-                $frontendUrl = $parsed['scheme'] . '://' . $parsed['host'];
-                if (isset($parsed['port'])) {
-                    $frontendUrl .= ':' . $parsed['port'];
-                }
-            } else {
-                // Fallback
-                $frontendUrl = 'http://localhost:3000';
-            }
-        }
-        error_log("Converting image path (LOCAL): $imagePath -> $frontendUrl$imagePath");
-        return $frontendUrl . $imagePath;
+        // En local, on retourne un chemin relatif pour que Next.js le gère via son proxy
+        // Cela évite les problèmes de CORS et facilite le chargement par Three.js
+        return $imagePath;
     }
 
     // EN PRODUCTION: Les images sont sur Railway backend
-    // car le frontend proxie l'upload vers le backend
     $protocol = 'https';
     $baseUrl = $protocol . '://' . $host;
-    error_log("Converting image path (PRODUCTION): $imagePath -> $baseUrl$imagePath");
-
     return $baseUrl . $imagePath;
 }
 
