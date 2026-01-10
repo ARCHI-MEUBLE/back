@@ -2311,15 +2311,39 @@ X = 0
 Y = 0
 
 diameter_layers = {}  # Dictionnaire pour stocker les layers créés
+toutes_facades = []  # Collecter toutes les façades pour les placer ensemble en haut à droite
+X_max_global = 0  # Suivre le X maximum de toutes les planches normales
 
 for planches_index, planches in enumerate(groupes):
 
-    for i, planche in enumerate(planches):
-  
+    # Séparer les façades (portes, tiroirs, miroirs) des autres planches
+    facades_types = [
+        "porteg", "ported", "portec", "porte_coulissante", "porteg_push",  # Portes
+        "tiroir", "tiroir_push",  # Tiroirs (normaux et push-to-open)
+        "miroir", "verre"  # Miroirs et vitres
+    ]
+    planches_normales = [p for p in planches if getattr(p, 'bloc', None) not in facades_types]
+    planches_facades = [p for p in planches if getattr(p, 'bloc', None) in facades_types]
+
+    # DEBUG: Afficher le nombre de planches dans chaque catégorie
+    print(f"[DXF DEBUG Groupe {planches_index+1}] Total planches: {len(planches)}")
+    print(f"[DXF DEBUG Groupe {planches_index+1}] Planches normales: {len(planches_normales)}")
+    print(f"[DXF DEBUG Groupe {planches_index+1}] Façades: {len(planches_facades)}")
+    if planches_facades:
+        print(f"[DXF DEBUG Groupe {planches_index+1}] Types de façades: {[p.bloc for p in planches_facades]}")
+
+    # Collecter les façades pour les placer ensemble plus tard
+    for facade in planches_facades:
+        toutes_facades.append((planches_index, facade))
+
+    # Traiter d'abord les planches normales (à gauche)
+    X_max_normales = 0
+    for i, planche in enumerate(planches_normales):
+
         # Projeter les points et rester en mm
         projection = project_points_on_plane(planche.points,
                                             planche.points[planche.face_usine.contour[0]],
-                                            np.cross(planche.sens_fibres,planche.face_usine.equation[:3]), 
+                                            np.cross(planche.sens_fibres,planche.face_usine.equation[:3]),
                                             planche.sens_fibres)
         # projection = projection / 1000  # Suppression de la conversion en m
 
@@ -2414,14 +2438,128 @@ for planches_index, planches in enumerate(groupes):
                 # Ajouter le cercle au bon layer
                 msp.add_circle(
                     center=(projectioncentre[0, 0], projectioncentre[0, 1]),
-                    radius=radius_mm, 
+                    radius=radius_mm,
                     dxfattribs={"layer": layer_name},
                 )
 
         X = X + marge + xmax - xmin
-    
+        X_max_normales = max(X_max_normales, X)
+
+    # Mettre à jour le X maximum global
+    X_max_global = max(X_max_global, X_max_normales)
+
+    # Les façades seront placées après la boucle principale
     Y = Y + 1000  # Décalage de 1000 mm (1m) pour le groupe suivant
     X = 0 # Réinitialiser X pour le nouveau groupe
+
+# Placer toutes les façades ensemble en haut à droite
+print(f"[DXF DEBUG] Placement de {len(toutes_facades)} façades en haut à droite")
+Y_facades = 0  # En haut du DXF
+X_facades = X_max_global + 500  # À droite des planches normales, avec marge de 500mm
+
+for planches_index, planche in toutes_facades:
+
+    # Projeter les points et rester en mm
+    projection = project_points_on_plane(planche.points,
+                                        planche.points[planche.face_usine.contour[0]],
+                                        np.cross(planche.sens_fibres,planche.face_usine.equation[:3]),
+                                        planche.sens_fibres)
+
+    xmax = np.max(projection[:, 0])
+    xmin = np.min(projection[:, 0])
+
+    ymax = np.max(projection[:, 1])
+    ymin = np.min(projection[:, 1])
+
+    projection[:, 0] = projection[:, 0] - xmin + X_facades
+    projection[:, 1] = projection[:, 1] - ymin + Y_facades
+
+    for face in planche.listface:
+        if planche.biseau:
+            print(planche.biseau)
+            if not face.chant:
+                if face == planche.face_usine:
+                    contour_2d = projection[face.contour]
+                    msp.add_lwpolyline(
+                        points=contour_2d,
+                        close=True,
+                        dxfattribs={"layer": "contour_haut"},
+                    )
+
+                    # Ajout de texte pour ce contour
+                    texte = planche.nom+f"G{planches_index+1}"+"\n biseau"+str(np.round(planche.biseau))
+                    # Calculer le centre du contour pour placer le texte
+                    x_center = np.min(contour_2d[:, 0])
+                    y_center = (np.max(contour_2d[:, 1]) + np.min(contour_2d[:, 1])) / 2
+                    msp.add_text(
+                        texte,
+                        dxfattribs={
+                            "layer": "texte",
+                            "height": 15,  # hauteur du texte en mm
+                            "style": "Standard",
+                            "insert": (x_center, y_center)
+                        }
+                    )
+                else :
+                    contour_2d = projection[face.contour]
+                    msp.add_lwpolyline(
+                        points=contour_2d,
+                        close=True,
+                        dxfattribs={"layer": "contour_bas"},
+                    )
+
+
+        else:
+            if face == planche.face_usine: # ajouter les deux face non chant en cas de coupe biaise
+                contour_2d = projection[face.contour]
+                msp.add_lwpolyline(
+                    points=contour_2d,
+                    close=True,
+                    dxfattribs={"layer": "contour_haut"},
+                )
+
+                # Ajout de texte pour ce contour
+                texte = planche.nom+f"G{planches_index+1}"
+                # Calculer le centre du contour pour placer le texte
+                x_center = np.min(contour_2d[:, 0])
+                y_center = (np.max(contour_2d[:, 1]) + np.min(contour_2d[:, 1])) / 2
+                msp.add_text(
+                    texte,
+                    dxfattribs={
+                        "layer": "texte",
+                        "height": 15,  # hauteur du texte en mm
+                        "style": "Standard",
+                        "insert": (x_center, y_center)
+                    }
+                )
+
+        for alesage in face.alesages:
+            # Projeter le centre de l'alésage
+            projectioncentre = project_points_on_plane(alesage.positionxyz,
+                                                      planche.points[planche.face_usine.contour[0]],
+                                                      np.cross(planche.sens_fibres,planche.face_usine.equation[:3]),
+                                                      planche.sens_fibres)
+            projectioncentre[:, 0] = projectioncentre[:, 0] - xmin + X_facades
+            projectioncentre[:, 1] = projectioncentre[:, 1] - ymin + Y_facades
+
+            # Définir le nom de couche avec unité mm
+            radius_mm = alesage.rayon
+            diameter_mm = round(2 * radius_mm, 1)
+            layer_name = f"diam_{diameter_mm}mm"
+
+            # Ajouter le layer si ce diamètre n'a pas encore de couche
+            if layer_name not in diameter_layers:
+                doc.layers.add(layer_name, color=len(diameter_layers) + 2)
+                diameter_layers[layer_name] = True
+
+            # Ajouter le cercle au bon layer
+            msp.add_circle(
+                center=(projectioncentre[0, 0], projectioncentre[0, 1]),
+                radius=radius_mm,
+                dxfattribs={"layer": layer_name},
+            )
+
+    X_facades = X_facades + marge + xmax - xmin
 
 # Ajouter des métadonnées pour clarifier les unités
 doc.header['$MENU'] = "Toutes les unités sont en millimètres"
