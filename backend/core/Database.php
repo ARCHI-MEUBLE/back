@@ -421,8 +421,8 @@ class Database {
                         ('doors', 'push', 'hinge_count', 2, 'units', 'Nb charnières porte push'),
                         ('columns', 'standard', 'price_per_m2', 120, 'eur_m2', 'Prix au m² d''une colonne'),
                         ('casing', 'full', 'coefficient', 1.2, 'coefficient', 'Coefficient caisson complet'),
-                        ('display', 'price', 'display_mode', 0, 'units', 'Mode d\'affichage (0: DIRECT, 1: INTERVALLE)'),
-                        ('display', 'price', 'deviation_range', 100, 'eur', 'Écart type pour l\'intervalle')
+                        ('display', 'price', 'display_mode', 0, 'units', 'Mode d''affichage (0: DIRECT, 1: INTERVALLE)'),
+                        ('display', 'price', 'deviation_range', 100, 'eur', 'Écart type pour l''intervalle')
                     ");
                 }
             } catch (Exception $e) {
