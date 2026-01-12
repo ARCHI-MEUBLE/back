@@ -493,7 +493,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461053.0161111113
+2461053.0884722224
   9
 $TDUCREATE
  40
@@ -501,7 +501,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461053.0161111113
+2461053.0884722224
   9
 $TDUUPDATE
  40
@@ -553,7 +553,7 @@ $SPLINESEGS
   9
 $HANDSEED
   5
-94
+16E
   9
 $SURFTAB1
  70
@@ -933,11 +933,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{35A86D3B-DAFB-4EF9-B065-478E701D4C67}
+{53140518-A358-48E2-A185-A3D28003659E}
   9
 $VERSIONGUID
   2
-{4A4B82B9-BEFB-4808-88B4-CE667BC50C19}
+{6A96DD3A-4F57-49B0-B748-99FC2457A524}
   9
 $EXTNAMES
 290
@@ -1727,7 +1727,7 @@ Continuous
   0
 LAYER
   5
-3C
+6A
 330
 1
 100
@@ -1849,7 +1849,7 @@ ACAD
   0
 APPID
   5
-91
+16B
 330
 3
 100
@@ -1863,7 +1863,7 @@ HATCHBACKGROUNDCOLOR
   0
 APPID
   5
-92
+16C
 330
 3
 100
@@ -2191,17 +2191,17 @@ AcDbPolyline
  20
 0.0
  10
-0.0
- 20
-1000.0
- 10
-400.0
- 20
-1000.0
- 10
-400.0
+350.0
  20
 0.0
+ 10
+350.0
+ 20
+1250.0
+ 10
+0.0
+ 20
+1250.0
   0
 TEXT
   5
@@ -2217,7 +2217,7 @@ AcDbText
  10
 0.0
  20
-500.0
+625.0
  30
 0.0
  40
@@ -2239,9 +2239,9 @@ diam_5.0mm
 100
 AcDbCircle
  10
-9.5
+60.0
  20
-940.0
+1240.5
  30
 0.0
  40
@@ -2250,6 +2250,106 @@ AcDbCircle
 CIRCLE
   5
 36
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+290.0
+ 20
+1240.5
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+38
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+28.0
+ 20
+1240.5
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+39
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+258.0
+ 20
+1240.5
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+3A
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+92.0
+ 20
+1240.5
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+3B
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+322.0
+ 20
+1240.5
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+3C
 330
 17
 100
@@ -2269,27 +2369,27 @@ AcDbCircle
   0
 CIRCLE
   5
-38
+3D
 330
 17
 100
 AcDbEntity
   8
-diam_8mm
+diam_5.0mm
 100
 AcDbCircle
  10
 9.5
  20
-908.0
+1171.0
  30
 0.0
  40
-4.0
+2.5
   0
 CIRCLE
   5
-39
+3E
 330
 17
 100
@@ -2309,7 +2409,7 @@ AcDbCircle
   0
 CIRCLE
   5
-3A
+3F
 330
 17
 100
@@ -2321,7 +2421,7 @@ AcDbCircle
  10
 9.5
  20
-972.0
+1139.0
  30
 0.0
  40
@@ -2329,7 +2429,7 @@ AcDbCircle
   0
 CIRCLE
   5
-3B
+40
 330
 17
 100
@@ -2349,119 +2449,23 @@ AcDbCircle
   0
 CIRCLE
   5
-3D
-330
-17
-100
-AcDbEntity
-  8
-diam_15.0mm
-100
-AcDbCircle
- 10
-1390.0
- 20
-34.0
- 30
-0.0
- 40
-7.5
-  0
-CIRCLE
-  5
-3E
-330
-17
-100
-AcDbEntity
-  8
-diam_15.0mm
-100
-AcDbCircle
- 10
-510.0
- 20
-34.0
- 30
-0.0
- 40
-7.5
-  0
-LWPOLYLINE
-  5
-3F
-330
-17
-100
-AcDbEntity
-  8
-contour_haut
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-1450.0
- 20
-1981.0
- 10
-450.0
- 20
-1981.0
- 10
-450.0
- 20
-0.0
- 10
-1450.0
- 20
-0.0
-  0
-TEXT
-  5
-40
-330
-17
-100
-AcDbEntity
-  8
-texte
-100
-AcDbText
- 10
-450.0
- 20
-990.5
- 30
-0.0
- 40
-15.0
-  1
-2G1
-100
-AcDbText
-  0
-CIRCLE
-  5
 41
 330
 17
 100
 AcDbEntity
   8
-diam_5.0mm
+diam_8mm
 100
 AcDbCircle
  10
-510.0
+9.5
  20
-1921.979555779909
+1203.0
  30
 0.0
  40
-2.5
+4.0
   0
 CIRCLE
   5
@@ -2475,9 +2479,9 @@ diam_5.0mm
 100
 AcDbCircle
  10
-1390.0
+290.0
  20
-1921.979555779909
+9.5
  30
 0.0
  40
@@ -2491,17 +2495,17 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_8mm
+diam_5.0mm
 100
 AcDbCircle
  10
-478.0
+79.0
  20
-1921.979555779909
+9.5
  30
 0.0
  40
-4.0
+2.5
   0
 CIRCLE
   5
@@ -2515,9 +2519,9 @@ diam_8mm
 100
 AcDbCircle
  10
-1358.0
+322.0
  20
-1921.979555779909
+9.5
  30
 0.0
  40
@@ -2535,9 +2539,9 @@ diam_8mm
 100
 AcDbCircle
  10
-542.0
+111.0
  20
-1921.979555779909
+9.5
  30
 0.0
  40
@@ -2555,9 +2559,9 @@ diam_8mm
 100
 AcDbCircle
  10
-1422.0
+258.0
  20
-1921.979555779909
+9.5
  30
 0.0
  40
@@ -2571,17 +2575,17 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_5.0mm
+diam_8mm
 100
 AcDbCircle
  10
-500.0
+47.0
  20
-1582.5662964832577
+9.5
  30
 0.0
  40
-2.5
+4.0
   0
 CIRCLE
   5
@@ -2595,9 +2599,9 @@ diam_5.0mm
 100
 AcDbCircle
  10
-1400.0
+290.0
  20
-1582.5662964832577
+1172.2838283828382
  30
 0.0
  40
@@ -2615,9 +2619,9 @@ diam_5.0mm
 100
 AcDbCircle
  10
-500.0
+79.0
  20
-1260.653037186606
+1172.2838283828382
  30
 0.0
  40
@@ -2631,17 +2635,17 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_5.0mm
+diam_8mm
 100
 AcDbCircle
  10
-1400.0
+258.0
  20
-1260.653037186606
+1172.2838283828382
  30
 0.0
  40
-2.5
+4.0
   0
 CIRCLE
   5
@@ -2651,17 +2655,17 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_5.0mm
+diam_8mm
 100
 AcDbCircle
  10
-500.0
+47.0
  20
-938.7397778899547
+1172.2838283828382
  30
 0.0
  40
-2.5
+4.0
   0
 CIRCLE
   5
@@ -2671,17 +2675,17 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_5.0mm
+diam_8mm
 100
 AcDbCircle
  10
-1400.0
+322.0
  20
-938.7397778899547
+1172.2838283828382
  30
 0.0
  40
-2.5
+4.0
   0
 CIRCLE
   5
@@ -2691,19 +2695,19 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_5.0mm
+diam_8mm
 100
 AcDbCircle
  10
-500.0
+111.0
  20
-616.826518593303
+1172.2838283828382
  30
 0.0
  40
-2.5
+4.0
   0
-CIRCLE
+LWPOLYLINE
   5
 4E
 330
@@ -2711,19 +2715,31 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_5.0mm
+contour_haut
 100
-AcDbCircle
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
-1400.0
+400.0
  20
-616.826518593303
- 30
+1250.0
+ 10
+750.0
+ 20
+1250.0
+ 10
+750.0
+ 20
 0.0
- 40
-2.5
+ 10
+400.0
+ 20
+0.0
   0
-CIRCLE
+TEXT
   5
 4F
 330
@@ -2731,17 +2747,21 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_5.0mm
+texte
 100
-AcDbCircle
+AcDbText
  10
-500.0
+400.0
  20
-294.9132592966514
+625.0
  30
 0.0
  40
-2.5
+15.0
+  1
+2G1
+100
+AcDbText
   0
 CIRCLE
   5
@@ -2755,9 +2775,9 @@ diam_5.0mm
 100
 AcDbCircle
  10
-1400.0
+460.0
  20
-294.9132592966514
+9.5
  30
 0.0
  40
@@ -2775,9 +2795,9 @@ diam_5.0mm
 100
 AcDbCircle
  10
-950.0
+690.0
  20
-886.7397778899544
+9.5
  30
 0.0
  40
@@ -2791,17 +2811,17 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_5.0mm
+diam_8mm
 100
 AcDbCircle
  10
-950.0
+492.0
  20
-703.826518593303
+9.5
  30
 0.0
  40
-2.5
+4.0
   0
 CIRCLE
   5
@@ -2815,9 +2835,9 @@ diam_8mm
 100
 AcDbCircle
  10
-950.0
+722.0
  20
-918.7397778899544
+9.5
  30
 0.0
  40
@@ -2835,9 +2855,9 @@ diam_8mm
 100
 AcDbCircle
  10
-950.0
+428.0
  20
-735.826518593303
+9.5
  30
 0.0
  40
@@ -2855,9 +2875,9 @@ diam_8mm
 100
 AcDbCircle
  10
-950.0
+658.0
  20
-854.7397778899544
+9.5
  30
 0.0
  40
@@ -2871,17 +2891,17 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_8mm
+diam_5.0mm
 100
 AcDbCircle
  10
-950.0
+409.5
  20
-671.826518593303
+1190.0
  30
 0.0
  40
-4.0
+2.5
   0
 CIRCLE
   5
@@ -2891,17 +2911,17 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_15.0mm
+diam_5.0mm
 100
 AcDbCircle
  10
-1847.0
+409.5
  20
-60.0
+79.0
  30
 0.0
  40
-7.5
+2.5
   0
 CIRCLE
   5
@@ -2911,19 +2931,19 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_15.0mm
+diam_8mm
 100
 AcDbCircle
  10
-1847.0
+409.5
  20
-940.0
+1158.0
  30
 0.0
  40
-7.5
+4.0
   0
-LWPOLYLINE
+CIRCLE
   5
 59
 330
@@ -2931,31 +2951,19 @@ LWPOLYLINE
 100
 AcDbEntity
   8
-contour_haut
+diam_8mm
 100
-AcDbPolyline
- 90
-4
- 70
-1
+AcDbCircle
  10
-1500.0
+409.5
  20
-1000.0
- 10
-1500.0
- 20
+47.0
+ 30
 0.0
- 10
-1881.0
- 20
-0.0
- 10
-1881.0
- 20
-1000.0
+ 40
+4.0
   0
-TEXT
+CIRCLE
   5
 5A
 330
@@ -2963,23 +2971,19 @@ TEXT
 100
 AcDbEntity
   8
-texte
+diam_8mm
 100
-AcDbText
+AcDbCircle
  10
-1500.0
+409.5
  20
-500.0
+1222.0
  30
 0.0
  40
-15.0
-  1
-3G1
-100
-AcDbText
+4.0
   0
-LWPOLYLINE
+CIRCLE
   5
 5B
 330
@@ -2987,31 +2991,19 @@ LWPOLYLINE
 100
 AcDbEntity
   8
-contour_haut
+diam_8mm
 100
-AcDbPolyline
- 90
-4
- 70
-1
+AcDbCircle
  10
-2931.0
+409.5
  20
+111.0
+ 30
 0.0
- 10
-1931.0
- 20
-0.0
- 10
-1931.0
- 20
-49.520444220090894
- 10
-2931.0
- 20
-49.520444220090894
+ 40
+4.0
   0
-TEXT
+CIRCLE
   5
 5C
 330
@@ -3019,23 +3011,19 @@ TEXT
 100
 AcDbEntity
   8
-texte
+diam_5.0mm
 100
-AcDbText
+AcDbCircle
  10
-1931.0
+690.0
  20
-24.760222110045447
+1240.5
  30
 0.0
  40
-15.0
-  1
-4G1
-100
-AcDbText
+2.5
   0
-LWPOLYLINE
+CIRCLE
   5
 5D
 330
@@ -3043,31 +3031,19 @@ LWPOLYLINE
 100
 AcDbEntity
   8
-contour_haut
+diam_5.0mm
 100
-AcDbPolyline
- 90
-4
- 70
-1
+AcDbCircle
  10
-3981.0
+479.0
  20
-49.520444220090894
- 10
-2981.0
- 20
-49.520444220090894
- 10
-2981.0
- 20
+1240.5
+ 30
 0.0
- 10
-3981.0
- 20
-0.0
+ 40
+2.5
   0
-TEXT
+CIRCLE
   5
 5E
 330
@@ -3075,21 +3051,17 @@ TEXT
 100
 AcDbEntity
   8
-texte
+diam_8mm
 100
-AcDbText
+AcDbCircle
  10
-2981.0
+658.0
  20
-24.760222110045447
+1240.5
  30
 0.0
  40
-15.0
-  1
-5G1
-100
-AcDbText
+4.0
   0
 CIRCLE
   5
@@ -3099,17 +3071,17 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_5.0mm
+diam_8mm
 100
 AcDbCircle
  10
-4402.0
+447.0
  20
-50.0
+1240.5
  30
 0.0
  40
-2.5
+4.0
   0
 CIRCLE
   5
@@ -3119,19 +3091,19 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_5.0mm
+diam_8mm
 100
 AcDbCircle
  10
-4402.0
+722.0
  20
-950.0
+1240.5
  30
 0.0
  40
-2.5
+4.0
   0
-LWPOLYLINE
+CIRCLE
   5
 61
 330
@@ -3139,31 +3111,19 @@ LWPOLYLINE
 100
 AcDbEntity
   8
-contour_haut
+diam_8mm
 100
-AcDbPolyline
- 90
-4
- 70
-1
+AcDbCircle
  10
-4031.0
+511.0
  20
-1000.0
- 10
-4031.0
- 20
+1240.5
+ 30
 0.0
- 10
-4412.0
- 20
-0.0
- 10
-4412.0
- 20
-1000.0
+ 40
+4.0
   0
-TEXT
+CIRCLE
   5
 62
 330
@@ -3171,21 +3131,17 @@ TEXT
 100
 AcDbEntity
   8
-texte
+diam_5.0mm
 100
-AcDbText
+AcDbCircle
  10
-4031.0
+690.0
  20
-500.0
+77.71617161716176
  30
 0.0
  40
-15.0
-  1
-6G1
-100
-AcDbText
+2.5
   0
 CIRCLE
   5
@@ -3199,9 +3155,9 @@ diam_5.0mm
 100
 AcDbCircle
  10
-4833.0
+479.0
  20
-50.0
+77.71617161716176
  30
 0.0
  40
@@ -3215,19 +3171,19 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_5.0mm
+diam_8mm
 100
 AcDbCircle
  10
-4833.0
+722.0
  20
-950.0
+77.71617161716176
  30
 0.0
  40
-2.5
+4.0
   0
-LWPOLYLINE
+CIRCLE
   5
 65
 330
@@ -3235,31 +3191,19 @@ LWPOLYLINE
 100
 AcDbEntity
   8
-contour_haut
+diam_8mm
 100
-AcDbPolyline
- 90
-4
- 70
-1
+AcDbCircle
  10
-4462.0
+511.0
  20
-1000.0
- 10
-4462.0
- 20
+77.71617161716176
+ 30
 0.0
- 10
-4843.0
- 20
-0.0
- 10
-4843.0
- 20
-1000.0
+ 40
+4.0
   0
-TEXT
+CIRCLE
   5
 66
 330
@@ -3267,21 +3211,17 @@ TEXT
 100
 AcDbEntity
   8
-texte
+diam_8mm
 100
-AcDbText
+AcDbCircle
  10
-4462.0
+658.0
  20
-500.0
+77.71617161716176
  30
 0.0
  40
-15.0
-  1
-7G1
-100
-AcDbText
+4.0
   0
 CIRCLE
   5
@@ -3291,17 +3231,17 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_5.0mm
+diam_8mm
 100
 AcDbCircle
  10
-5264.0
+447.0
  20
-50.0
+77.71617161716176
  30
 0.0
  40
-2.5
+4.0
   0
 CIRCLE
   5
@@ -3315,17 +3255,117 @@ diam_5.0mm
 100
 AcDbCircle
  10
-5264.0
+700.0
  20
-950.0
+676.6080858085809
  30
 0.0
  40
 2.5
   0
-LWPOLYLINE
+CIRCLE
   5
 69
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+469.0
+ 20
+676.6080858085809
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+6B
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+860.0
+ 20
+34.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+6C
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+1090.0
+ 20
+34.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+6D
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+860.0
+ 20
+1128.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+6E
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+1090.0
+ 20
+1128.0
+ 30
+0.0
+ 40
+7.5
+  0
+LWPOLYLINE
+  5
+6F
 330
 17
 100
@@ -3339,25 +3379,25 @@ AcDbPolyline
  70
 1
  10
-4893.0
- 20
-1000.0
- 10
-4893.0
+800.0
  20
 0.0
  10
-5274.0
+1150.0
  20
 0.0
  10
-5274.0
+1150.0
  20
-1000.0
+1162.0
+ 10
+800.0
+ 20
+1162.0
   0
 TEXT
   5
-6A
+70
 330
 17
 100
@@ -3367,137 +3407,17 @@ texte
 100
 AcDbText
  10
-4893.0
+800.0
  20
-500.0
+581.0
  30
 0.0
  40
 15.0
   1
-8G1
+3G1
 100
 AcDbText
-  0
-CIRCLE
-  5
-6B
-330
-17
-100
-AcDbEntity
-  8
-diam_5.0mm
-100
-AcDbCircle
- 10
-4953.0
- 20
-500.0
- 30
-0.0
- 40
-2.5
-  0
-CIRCLE
-  5
-6C
-330
-17
-100
-AcDbEntity
-  8
-diam_5.0mm
-100
-AcDbCircle
- 10
-5214.0
- 20
-500.0
- 30
-0.0
- 40
-2.5
-  0
-CIRCLE
-  5
-6D
-330
-17
-100
-AcDbEntity
-  8
-diam_8mm
-100
-AcDbCircle
- 10
-4921.0
- 20
-500.0
- 30
-0.0
- 40
-4.0
-  0
-CIRCLE
-  5
-6E
-330
-17
-100
-AcDbEntity
-  8
-diam_8mm
-100
-AcDbCircle
- 10
-5182.0
- 20
-500.0
- 30
-0.0
- 40
-4.0
-  0
-CIRCLE
-  5
-6F
-330
-17
-100
-AcDbEntity
-  8
-diam_8mm
-100
-AcDbCircle
- 10
-4985.0
- 20
-500.0
- 30
-0.0
- 40
-4.0
-  0
-CIRCLE
-  5
-70
-330
-17
-100
-AcDbEntity
-  8
-diam_8mm
-100
-AcDbCircle
- 10
-5246.0
- 20
-500.0
- 30
-0.0
- 40
-4.0
   0
 CIRCLE
   5
@@ -3511,9 +3431,9 @@ diam_5.0mm
 100
 AcDbCircle
  10
-5695.0
+809.5
  20
-50.0
+60.0
  30
 0.0
  40
@@ -3531,9 +3451,9 @@ diam_5.0mm
 100
 AcDbCircle
  10
-5695.0
+809.5
  20
-950.0
+1102.0
  30
 0.0
  40
@@ -3547,17 +3467,17 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_5.0mm
+diam_8mm
 100
 AcDbCircle
  10
-5384.0
+809.5
  20
-500.0
+28.0
  30
 0.0
  40
-2.5
+4.0
   0
 CIRCLE
   5
@@ -3567,17 +3487,17 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_5.0mm
+diam_8mm
 100
 AcDbCircle
  10
-5645.0
+809.5
  20
-500.0
+1070.0
  30
 0.0
  40
-2.5
+4.0
   0
 CIRCLE
   5
@@ -3591,9 +3511,9 @@ diam_8mm
 100
 AcDbCircle
  10
-5416.0
+809.5
  20
-500.0
+92.0
  30
 0.0
  40
@@ -3611,9 +3531,9 @@ diam_8mm
 100
 AcDbCircle
  10
-5677.0
+809.5
  20
-500.0
+1134.0
  30
 0.0
  40
@@ -3627,17 +3547,17 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_8mm
+diam_15.0mm
 100
 AcDbCircle
  10
-5352.0
+2328.0
  20
-500.0
+60.0
  30
 0.0
  40
-4.0
+7.5
   0
 CIRCLE
   5
@@ -3647,19 +3567,19 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_8mm
+diam_15.0mm
 100
 AcDbCircle
  10
-5613.0
+2328.0
  20
-500.0
+1171.0
  30
 0.0
  40
-4.0
+7.5
   0
-LWPOLYLINE
+CIRCLE
   5
 79
 330
@@ -3667,31 +3587,19 @@ LWPOLYLINE
 100
 AcDbEntity
   8
-contour_haut
+diam_15.0mm
 100
-AcDbPolyline
- 90
-4
- 70
-1
+AcDbCircle
  10
-5324.0
+1234.0
  20
-1000.0
- 10
-5324.0
- 20
+60.0
+ 30
 0.0
- 10
-5705.0
- 20
-0.0
- 10
-5705.0
- 20
-1000.0
+ 40
+7.5
   0
-TEXT
+CIRCLE
   5
 7A
 330
@@ -3699,21 +3607,17 @@ TEXT
 100
 AcDbEntity
   8
-texte
+diam_15.0mm
 100
-AcDbText
+AcDbCircle
  10
-5324.0
+1234.0
  20
-500.0
+1171.0
  30
 0.0
  40
-15.0
-  1
-9G1
-100
-AcDbText
+7.5
   0
 CIRCLE
   5
@@ -3723,17 +3627,17 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_5.0mm
+diam_15.0mm
 100
 AcDbCircle
  10
-6126.0
+2302.0
  20
-50.0
+1197.0
  30
 0.0
  40
-2.5
+7.5
   0
 CIRCLE
   5
@@ -3743,17 +3647,17 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_5.0mm
+diam_15.0mm
 100
 AcDbCircle
  10
-6126.0
+1260.0
  20
-950.0
+1197.0
  30
 0.0
  40
-2.5
+7.5
   0
 LWPOLYLINE
   5
@@ -3771,21 +3675,21 @@ AcDbPolyline
  70
 1
  10
-5755.0
- 20
-1000.0
- 10
-5755.0
+2362.0
  20
 0.0
  10
-6136.0
+1200.0
  20
 0.0
  10
-6136.0
+1200.0
  20
-1000.0
+1231.0
+ 10
+2362.0
+ 20
+1231.0
   0
 TEXT
   5
@@ -3799,15 +3703,15 @@ texte
 100
 AcDbText
  10
-5755.0
+1200.0
  20
-500.0
+615.5
  30
 0.0
  40
 15.0
   1
-10G1
+4G1
 100
 AcDbText
   0
@@ -3819,17 +3723,17 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_15.0mm
+diam_5.0mm
 100
 AcDbCircle
  10
-6533.0
+1260.0
  20
-60.0
+9.5
  30
 0.0
  40
-7.5
+2.5
   0
 CIRCLE
   5
@@ -3839,17 +3743,17 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_15.0mm
+diam_5.0mm
 100
 AcDbCircle
  10
-6533.0
+2302.0
  20
-242.91325929665152
+9.5
  30
 0.0
  40
-7.5
+2.5
   0
 CIRCLE
   5
@@ -3859,17 +3763,17 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_15.0mm
+diam_8mm
 100
 AcDbCircle
  10
-6246.0
+1292.0
  20
-34.0
+9.5
  30
 0.0
  40
-7.5
+4.0
   0
 CIRCLE
   5
@@ -3879,17 +3783,17 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_15.0mm
+diam_8mm
 100
 AcDbCircle
  10
-6507.0
+2334.0
  20
-34.0
+9.5
  30
 0.0
  40
-7.5
+4.0
   0
 CIRCLE
   5
@@ -3899,17 +3803,17 @@ CIRCLE
 100
 AcDbEntity
   8
-diam_15.0mm
+diam_8mm
 100
 AcDbCircle
  10
-6246.0
+1228.0
  20
-268.9132592966515
+9.5
  30
 0.0
  40
-7.5
+4.0
   0
 CIRCLE
   5
@@ -3919,13 +3823,653 @@ CIRCLE
 100
 AcDbEntity
   8
+diam_8mm
+100
+AcDbCircle
+ 10
+2270.0
+ 20
+9.5
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+85
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+2302.0
+ 20
+1172.2838283828382
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+86
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+1260.0
+ 20
+1172.2838283828382
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+87
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+2270.0
+ 20
+1172.2838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+88
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+1228.0
+ 20
+1172.2838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+89
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+2334.0
+ 20
+1172.2838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+8A
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+1292.0
+ 20
+1172.2838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+8B
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+2076.25
+ 20
+79.0
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+8C
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+2076.25
+ 20
+1102.7838283828382
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+8D
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+2076.25
+ 20
+111.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+8E
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+2076.25
+ 20
+1134.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+8F
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+2076.25
+ 20
+47.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+90
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+2076.25
+ 20
+1070.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+91
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+1781.0
+ 20
+79.0
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+92
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+1781.0
+ 20
+1102.7838283828382
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+93
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+1781.0
+ 20
+111.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+94
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+1781.0
+ 20
+1134.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+95
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+1781.0
+ 20
+47.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+96
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+1781.0
+ 20
+1070.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+97
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+1485.75
+ 20
+79.0
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+98
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+1485.75
+ 20
+1102.7838283828382
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+99
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+1485.75
+ 20
+111.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+9A
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+1485.75
+ 20
+1134.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+9B
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+1485.75
+ 20
+47.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+9C
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+1485.75
+ 20
+1070.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+9D
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+1250.0
+ 20
+573.3919141914191
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+9E
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+1426.25
+ 20
+573.3919141914191
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+9F
+330
+17
+100
+AcDbEntity
+  8
 diam_15.0mm
 100
 AcDbCircle
  10
-6507.0
+2683.0
  20
-268.9132592966515
+1128.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+A0
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+2472.0
+ 20
+1128.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+A1
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+2683.0
+ 20
+34.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+A2
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+2472.0
+ 20
+34.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+A3
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+2446.0
+ 20
+60.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+A4
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+2446.0
+ 20
+1102.0
  30
 0.0
  40
@@ -3933,7 +4477,7 @@ AcDbCircle
   0
 LWPOLYLINE
   5
-85
+A5
 330
 17
 100
@@ -3947,25 +4491,25 @@ AcDbPolyline
  70
 1
  10
-6186.0
+2743.0
+ 20
+1162.0
+ 10
+2743.0
  20
 0.0
  10
-6567.0
+2412.0
  20
 0.0
  10
-6567.0
+2412.0
  20
-302.9132592966515
- 10
-6186.0
- 20
-302.9132592966515
+1162.0
   0
 TEXT
   5
-86
+A6
 330
 17
 100
@@ -3975,9 +4519,1161 @@ texte
 100
 AcDbText
  10
-6186.0
+2412.0
  20
-151.45662964832576
+581.0
+ 30
+0.0
+ 40
+15.0
+  1
+5G1
+100
+AcDbText
+  0
+CIRCLE
+  5
+A7
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+2683.0
+ 20
+876.25
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+A8
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+2472.0
+ 20
+876.25
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+A9
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+2651.0
+ 20
+876.25
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+AA
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+2440.0
+ 20
+876.25
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+AB
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+2715.0
+ 20
+876.25
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+AC
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+2504.0
+ 20
+876.25
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+AD
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+2683.0
+ 20
+581.0
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+AE
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+2472.0
+ 20
+581.0
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+AF
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+2651.0
+ 20
+581.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+B0
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+2440.0
+ 20
+581.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+B1
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+2715.0
+ 20
+581.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+B2
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+2504.0
+ 20
+581.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+B3
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+2683.0
+ 20
+285.75
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+B4
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+2472.0
+ 20
+285.75
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+B5
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+2651.0
+ 20
+285.75
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+B6
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+2440.0
+ 20
+285.75
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+B7
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+2715.0
+ 20
+285.75
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+B8
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+2504.0
+ 20
+285.75
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+B9
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+2853.0
+ 20
+1128.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+BA
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+3064.0
+ 20
+1128.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+BB
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+2853.0
+ 20
+34.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+BC
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+3064.0
+ 20
+34.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+BD
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+3090.0
+ 20
+1102.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+BE
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+3090.0
+ 20
+60.0
+ 30
+0.0
+ 40
+7.5
+  0
+LWPOLYLINE
+  5
+BF
+330
+17
+100
+AcDbEntity
+  8
+contour_haut
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+2793.0
+ 20
+1162.0
+ 10
+2793.0
+ 20
+0.0
+ 10
+3124.0
+ 20
+0.0
+ 10
+3124.0
+ 20
+1162.0
+  0
+TEXT
+  5
+C0
+330
+17
+100
+AcDbEntity
+  8
+texte
+100
+AcDbText
+ 10
+2793.0
+ 20
+581.0
+ 30
+0.0
+ 40
+15.0
+  1
+6G1
+100
+AcDbText
+  0
+LWPOLYLINE
+  5
+C1
+330
+17
+100
+AcDbEntity
+  8
+contour_haut
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+4336.0
+ 20
+0.0
+ 10
+3174.0
+ 20
+0.0
+ 10
+3174.0
+ 20
+49.21617161716176
+ 10
+4336.0
+ 20
+49.21617161716176
+  0
+TEXT
+  5
+C2
+330
+17
+100
+AcDbEntity
+  8
+texte
+100
+AcDbText
+ 10
+3174.0
+ 20
+24.60808580858088
+ 30
+0.0
+ 40
+15.0
+  1
+7G1
+100
+AcDbText
+  0
+LWPOLYLINE
+  5
+C3
+330
+17
+100
+AcDbEntity
+  8
+contour_haut
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+5548.0
+ 20
+49.21617161716176
+ 10
+4386.0
+ 20
+49.21617161716176
+ 10
+4386.0
+ 20
+0.0
+ 10
+5548.0
+ 20
+0.0
+  0
+TEXT
+  5
+C4
+330
+17
+100
+AcDbEntity
+  8
+texte
+100
+AcDbText
+ 10
+4386.0
+ 20
+24.60808580858088
+ 30
+0.0
+ 40
+15.0
+  1
+8G1
+100
+AcDbText
+  0
+CIRCLE
+  5
+C5
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+5895.0
+ 20
+1083.7838283828382
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+C6
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+5895.0
+ 20
+60.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+C7
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+5658.0
+ 20
+1109.7838283828382
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+C8
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+5869.0
+ 20
+1109.7838283828382
+ 30
+0.0
+ 40
+7.5
+  0
+LWPOLYLINE
+  5
+C9
+330
+17
+100
+AcDbEntity
+  8
+contour_haut
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+5598.0
+ 20
+1143.7838283828382
+ 10
+5929.0
+ 20
+1143.7838283828382
+ 10
+5929.0
+ 20
+0.0
+ 10
+5598.0
+ 20
+0.0
+  0
+TEXT
+  5
+CA
+330
+17
+100
+AcDbEntity
+  8
+texte
+100
+AcDbText
+ 10
+5598.0
+ 20
+571.8919141914191
+ 30
+0.0
+ 40
+15.0
+  1
+9G1
+100
+AcDbText
+  0
+CIRCLE
+  5
+CB
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+6276.0
+ 20
+1083.7838283828382
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+CC
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+6276.0
+ 20
+60.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+CD
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+6039.0
+ 20
+1109.7838283828382
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+CE
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+6250.0
+ 20
+1109.7838283828382
+ 30
+0.0
+ 40
+7.5
+  0
+LWPOLYLINE
+  5
+CF
+330
+17
+100
+AcDbEntity
+  8
+contour_haut
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+5979.0
+ 20
+1143.7838283828382
+ 10
+6310.0
+ 20
+1143.7838283828382
+ 10
+6310.0
+ 20
+0.0
+ 10
+5979.0
+ 20
+0.0
+  0
+TEXT
+  5
+D0
+330
+17
+100
+AcDbEntity
+  8
+texte
+100
+AcDbText
+ 10
+5979.0
+ 20
+571.8919141914191
+ 30
+0.0
+ 40
+15.0
+  1
+10G1
+100
+AcDbText
+  0
+CIRCLE
+  5
+D1
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+6657.0
+ 20
+1083.7838283828382
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+D2
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+6657.0
+ 20
+60.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+D3
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+6420.0
+ 20
+1109.7838283828382
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+D4
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+6631.0
+ 20
+1109.7838283828382
+ 30
+0.0
+ 40
+7.5
+  0
+LWPOLYLINE
+  5
+D5
+330
+17
+100
+AcDbEntity
+  8
+contour_haut
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+6360.0
+ 20
+1143.7838283828382
+ 10
+6691.0
+ 20
+1143.7838283828382
+ 10
+6691.0
+ 20
+0.0
+ 10
+6360.0
+ 20
+0.0
+  0
+TEXT
+  5
+D6
+330
+17
+100
+AcDbEntity
+  8
+texte
+100
+AcDbText
+ 10
+6360.0
+ 20
+571.8919141914191
+ 30
+0.0
+ 40
+15.0
+  1
+11G1
+100
+AcDbText
+  0
+CIRCLE
+  5
+D7
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+6410.0
+ 20
+589.3919141914191
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+D8
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+6641.0
+ 20
+589.3919141914191
+ 30
+0.0
+ 40
+2.5
+  0
+LWPOLYLINE
+  5
+D9
+330
+17
+100
+AcDbEntity
+  8
+contour_haut
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+6741.0
+ 20
+270.25
+ 10
+6741.0
+ 20
+0.0
+ 10
+7034.0
+ 20
+0.0
+ 10
+7034.0
+ 20
+270.25
+  0
+TEXT
+  5
+DA
+330
+17
+100
+AcDbEntity
+  8
+texte
+100
+AcDbText
+ 10
+6741.0
+ 20
+135.125
  30
 0.0
  40
@@ -3987,9 +5683,289 @@ AcDbText
 100
 AcDbText
   0
+CIRCLE
+  5
+DB
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+6801.0
+ 20
+263.75
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+DC
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+6974.0
+ 20
+263.75
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+DD
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+6769.0
+ 20
+263.75
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+DE
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+6942.0
+ 20
+263.75
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+DF
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+6833.0
+ 20
+263.75
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+E0
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+7006.0
+ 20
+263.75
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+E1
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+6974.0
+ 20
+6.5
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+E2
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+6801.0
+ 20
+6.5
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+E3
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+7006.0
+ 20
+6.5
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+E4
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+6833.0
+ 20
+6.5
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+E5
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+6942.0
+ 20
+6.5
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+E6
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+6769.0
+ 20
+6.5
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+E7
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+7343.0
+ 20
+210.25
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+E8
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+7343.0
+ 20
+60.0
+ 30
+0.0
+ 40
+7.5
+  0
 LWPOLYLINE
   5
-87
+E9
 330
 17
 100
@@ -4003,25 +5979,25 @@ AcDbPolyline
  70
 1
  10
-7117.0
+7084.0
  20
-2990.5
+0.0
  10
-7498.0
+7084.0
  20
-2990.5
+270.25
  10
-7498.0
+7377.0
  20
-2500.0
+270.25
  10
-7117.0
+7377.0
  20
-2500.0
+0.0
   0
 TEXT
   5
-88
+EA
 330
 17
 100
@@ -4031,9 +6007,9 @@ texte
 100
 AcDbText
  10
-7117.0
+7084.0
  20
-2745.25
+135.125
  30
 0.0
  40
@@ -4043,9 +6019,369 @@ AcDbText
 100
 AcDbText
   0
+CIRCLE
+  5
+EB
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+7144.0
+ 20
+6.5
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+EC
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+7317.0
+ 20
+6.5
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+ED
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+7176.0
+ 20
+6.5
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+EE
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+7349.0
+ 20
+6.5
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+EF
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+7112.0
+ 20
+6.5
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+F0
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+7285.0
+ 20
+6.5
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+F1
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+7317.0
+ 20
+263.75
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+F2
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+7144.0
+ 20
+263.75
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+F3
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+7285.0
+ 20
+263.75
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+F4
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+7112.0
+ 20
+263.75
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+F5
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+7349.0
+ 20
+263.75
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+F6
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+7176.0
+ 20
+263.75
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+F7
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+7686.0
+ 20
+60.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+F8
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+7686.0
+ 20
+1045.7838283828382
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+F9
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+7487.0
+ 20
+34.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+FA
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+7660.0
+ 20
+34.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+FB
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+7487.0
+ 20
+1071.7838283828382
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+FC
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+7660.0
+ 20
+1071.7838283828382
+ 30
+0.0
+ 40
+7.5
+  0
 LWPOLYLINE
   5
-89
+FD
 330
 17
 100
@@ -4059,25 +6395,25 @@ AcDbPolyline
  70
 1
  10
-7548.0
+7427.0
  20
-2500.0
+0.0
  10
-7548.0
+7720.0
  20
-2792.9132592966516
+0.0
  10
-8542.0
+7720.0
  20
-2792.9132592966516
+1105.7838283828382
  10
-8542.0
+7427.0
  20
-2500.0
+1105.7838283828382
   0
 TEXT
   5
-8A
+FE
 330
 17
 100
@@ -4087,21 +6423,141 @@ texte
 100
 AcDbText
  10
-7548.0
+7427.0
  20
-2646.456629648326
+552.8919141914191
  30
 0.0
  40
 15.0
   1
-11G2
+15G1
 100
 AcDbText
   0
+CIRCLE
+  5
+FF
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+8029.0
+ 20
+60.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+100
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+8029.0
+ 20
+1045.7838283828382
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+101
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+8003.0
+ 20
+1071.7838283828382
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+102
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+7830.0
+ 20
+1071.7838283828382
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+103
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+8003.0
+ 20
+34.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+104
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+7830.0
+ 20
+34.0
+ 30
+0.0
+ 40
+7.5
+  0
 LWPOLYLINE
   5
-8B
+105
 330
 17
 100
@@ -4115,25 +6571,25 @@ AcDbPolyline
  70
 1
  10
-8592.0
+7770.0
  20
-2500.0
+1105.7838283828382
  10
-8592.0
+8063.0
  20
-2792.9132592966516
+1105.7838283828382
  10
-9586.0
+8063.0
  20
-2792.9132592966516
+0.0
  10
-9586.0
+7770.0
  20
-2500.0
+0.0
   0
 TEXT
   5
-8C
+106
 330
 17
 100
@@ -4143,9 +6599,1385 @@ texte
 100
 AcDbText
  10
-8592.0
+7770.0
  20
-2646.456629648326
+552.8919141914191
+ 30
+0.0
+ 40
+15.0
+  1
+16G1
+100
+AcDbText
+  0
+CIRCLE
+  5
+107
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+8163.0
+ 20
+10.0
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+108
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+8394.0
+ 20
+10.0
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+109
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+8434.0
+ 20
+50.0
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+10A
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+8434.0
+ 20
+226.25
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+10B
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+8163.0
+ 20
+266.25
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+10C
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+8394.0
+ 20
+266.25
+ 30
+0.0
+ 40
+2.5
+  0
+LWPOLYLINE
+  5
+10D
+330
+17
+100
+AcDbEntity
+  8
+contour_haut
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+8113.0
+ 20
+0.0
+ 10
+8444.0
+ 20
+0.0
+ 10
+8444.0
+ 20
+276.25
+ 10
+8113.0
+ 20
+276.25
+  0
+TEXT
+  5
+10E
+330
+17
+100
+AcDbEntity
+  8
+texte
+100
+AcDbText
+ 10
+8113.0
+ 20
+138.125
+ 30
+0.0
+ 40
+15.0
+  1
+21G1
+100
+AcDbText
+  0
+CIRCLE
+  5
+10F
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+9253.0
+ 20
+3545.7838283828382
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+110
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+9253.0
+ 20
+2560.0
+ 30
+0.0
+ 40
+7.5
+  0
+LWPOLYLINE
+  5
+111
+330
+17
+100
+AcDbEntity
+  8
+contour_haut
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+8994.0
+ 20
+2500.0
+ 10
+9287.0
+ 20
+2500.0
+ 10
+9287.0
+ 20
+3605.7838283828382
+ 10
+8994.0
+ 20
+3605.7838283828382
+  0
+TEXT
+  5
+112
+330
+17
+100
+AcDbEntity
+  8
+texte
+100
+AcDbText
+ 10
+8994.0
+ 20
+3052.8919141914193
+ 30
+0.0
+ 40
+15.0
+  1
+17G1
+100
+AcDbText
+  0
+CIRCLE
+  5
+113
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+9003.5
+ 20
+2560.0
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+114
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+9003.5
+ 20
+3545.7838283828382
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+115
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+9003.5
+ 20
+2528.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+116
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+9003.5
+ 20
+3513.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+117
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+9003.5
+ 20
+2592.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+118
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+9003.5
+ 20
+3577.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+119
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+9227.0
+ 20
+3596.2838283828382
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+11A
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+9073.0
+ 20
+3596.2838283828382
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+11B
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+9195.0
+ 20
+3596.2838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+11C
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+9041.0
+ 20
+3596.2838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+11D
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+9259.0
+ 20
+3596.2838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+11E
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+9105.0
+ 20
+3596.2838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+11F
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+9596.0
+ 20
+2560.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+120
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+9596.0
+ 20
+3545.7838283828382
+ 30
+0.0
+ 40
+7.5
+  0
+LWPOLYLINE
+  5
+121
+330
+17
+100
+AcDbEntity
+  8
+contour_haut
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+9337.0
+ 20
+3605.7838283828382
+ 10
+9630.0
+ 20
+3605.7838283828382
+ 10
+9630.0
+ 20
+2500.0
+ 10
+9337.0
+ 20
+2500.0
+  0
+TEXT
+  5
+122
+330
+17
+100
+AcDbEntity
+  8
+texte
+100
+AcDbText
+ 10
+9337.0
+ 20
+3052.8919141914193
+ 30
+0.0
+ 40
+15.0
+  1
+18G1
+100
+AcDbText
+  0
+CIRCLE
+  5
+123
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+9346.5
+ 20
+3545.7838283828382
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+124
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+9346.5
+ 20
+2560.0
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+125
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+9346.5
+ 20
+3513.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+126
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+9346.5
+ 20
+2528.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+127
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+9346.5
+ 20
+3577.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+128
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+9346.5
+ 20
+2592.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+129
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+9570.0
+ 20
+2509.5
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+12A
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+9416.0
+ 20
+2509.5
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+12B
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+9602.0
+ 20
+2509.5
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+12C
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+9448.0
+ 20
+2509.5
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+12D
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+9538.0
+ 20
+2509.5
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+12E
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+9384.0
+ 20
+2509.5
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+12F
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+9714.0
+ 20
+3545.7838283828382
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+130
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+9714.0
+ 20
+2560.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+131
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+9852.25
+ 20
+3545.7838283828382
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+132
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+9852.25
+ 20
+2560.0
+ 30
+0.0
+ 40
+7.5
+  0
+LWPOLYLINE
+  5
+133
+330
+17
+100
+AcDbEntity
+  8
+contour_haut
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+9680.0
+ 20
+3605.7838283828382
+ 10
+9680.0
+ 20
+2500.0
+ 10
+9886.25
+ 20
+2500.0
+ 10
+9886.25
+ 20
+3605.7838283828382
+  0
+TEXT
+  5
+134
+330
+17
+100
+AcDbEntity
+  8
+texte
+100
+AcDbText
+ 10
+9680.0
+ 20
+3052.8919141914193
+ 30
+0.0
+ 40
+15.0
+  1
+19G1
+100
+AcDbText
+  0
+CIRCLE
+  5
+135
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+9740.0
+ 20
+2509.5
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+136
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+9826.25
+ 20
+2509.5
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+137
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+9772.0
+ 20
+2509.5
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+138
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+9858.25
+ 20
+2509.5
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+139
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+9708.0
+ 20
+2509.5
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+13A
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+9794.25
+ 20
+2509.5
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+13B
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+10176.25
+ 20
+2560.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+13C
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+10176.25
+ 20
+2646.25
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+13D
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+10150.25
+ 20
+2534.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+13E
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+9996.25
+ 20
+2534.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+13F
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+10150.25
+ 20
+2672.25
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+140
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+9996.25
+ 20
+2672.25
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+141
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+9970.25
+ 20
+2560.0
+ 30
+0.0
+ 40
+7.5
+  0
+CIRCLE
+  5
+142
+330
+17
+100
+AcDbEntity
+  8
+diam_15.0mm
+100
+AcDbCircle
+ 10
+9970.25
+ 20
+2646.25
+ 30
+0.0
+ 40
+7.5
+  0
+LWPOLYLINE
+  5
+143
+330
+17
+100
+AcDbEntity
+  8
+contour_haut
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+10210.25
+ 20
+2500.0
+ 10
+10210.25
+ 20
+2706.25
+ 10
+9936.25
+ 20
+2706.25
+ 10
+9936.25
+ 20
+2500.0
+  0
+TEXT
+  5
+144
+330
+17
+100
+AcDbEntity
+  8
+texte
+100
+AcDbText
+ 10
+9936.25
+ 20
+2603.125
+ 30
+0.0
+ 40
+15.0
+  1
+20G1
+100
+AcDbText
+  0
+LWPOLYLINE
+  5
+145
+330
+17
+100
+AcDbEntity
+  8
+contour_haut
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+10260.25
+ 20
+2500.0
+ 10
+10530.5
+ 20
+2500.0
+ 10
+10530.5
+ 20
+3637.7838283828382
+ 10
+10260.25
+ 20
+3637.7838283828382
+  0
+TEXT
+  5
+146
+330
+17
+100
+AcDbEntity
+  8
+texte
+100
+AcDbText
+ 10
+10260.25
+ 20
+3068.8919141914193
  30
 0.0
  40
@@ -4155,117 +7987,725 @@ AcDbText
 100
 AcDbText
   0
-LWPOLYLINE
+CIRCLE
   5
-8D
+147
 330
 17
 100
 AcDbEntity
   8
-contour_haut
+diam_5.0mm
 100
-AcDbPolyline
- 90
-4
- 70
-1
+AcDbCircle
  10
-10131.5
+10470.5
  20
-2500.0
- 10
-9636.0
- 20
-2500.0
- 10
-9636.0
- 20
-2792.9132592966516
- 10
-10131.5
- 20
-2792.9132592966516
-  0
-TEXT
-  5
-8E
-330
-17
-100
-AcDbEntity
-  8
-texte
-100
-AcDbText
- 10
-9636.0
- 20
-2646.456629648326
+3636.7838283828382
  30
 0.0
  40
-15.0
-  1
-15G2
-100
-AcDbText
+2.5
   0
-LWPOLYLINE
+CIRCLE
   5
-8F
+148
 330
 17
 100
 AcDbEntity
   8
-contour_haut
+diam_5.0mm
 100
-AcDbPolyline
- 90
-4
- 70
-1
+AcDbCircle
  10
-10181.5
+10320.25
  20
-2500.0
- 10
-10181.5
- 20
-2792.9132592966516
- 10
-10677.0
- 20
-2792.9132592966516
- 10
-10677.0
- 20
-2500.0
-  0
-TEXT
-  5
-90
-330
-17
-100
-AcDbEntity
-  8
-texte
-100
-AcDbText
- 10
-10181.5
- 20
-2646.456629648326
+3636.7838283828382
  30
 0.0
  40
-15.0
-  1
-16G2
+2.5
+  0
+CIRCLE
+  5
+149
+330
+17
 100
-AcDbText
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10438.5
+ 20
+3636.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+14A
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10288.25
+ 20
+3636.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+14B
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10502.5
+ 20
+3636.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+14C
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10352.25
+ 20
+3636.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+14D
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+10266.75
+ 20
+2590.0
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+14E
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+10266.75
+ 20
+3575.7838283828382
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+14F
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10266.75
+ 20
+2558.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+150
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10266.75
+ 20
+3543.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+151
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10266.75
+ 20
+2622.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+152
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10266.75
+ 20
+3607.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+153
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+10524.0
+ 20
+3575.7838283828382
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+154
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+10524.0
+ 20
+2590.0
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+155
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10524.0
+ 20
+3607.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+156
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10524.0
+ 20
+2622.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+157
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10524.0
+ 20
+3543.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+158
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10524.0
+ 20
+2558.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+159
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+10282.75
+ 20
+3575.7838283828382
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+15A
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+10282.75
+ 20
+2590.0
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+15B
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10282.75
+ 20
+3543.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+15C
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10282.75
+ 20
+2558.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+15D
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10282.75
+ 20
+3607.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+15E
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10282.75
+ 20
+2622.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+15F
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+10508.0
+ 20
+3575.7838283828382
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+160
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+10508.0
+ 20
+2590.0
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+161
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10508.0
+ 20
+3607.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+162
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10508.0
+ 20
+2622.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+163
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10508.0
+ 20
+3543.7838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+164
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10508.0
+ 20
+2558.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+165
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+10352.25
+ 20
+3626.2838283828382
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+166
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+10438.5
+ 20
+3626.2838283828382
+ 30
+0.0
+ 40
+2.5
+  0
+CIRCLE
+  5
+167
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10320.25
+ 20
+3626.2838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+168
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10406.5
+ 20
+3626.2838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+169
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10384.25
+ 20
+3626.2838283828382
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+16A
+330
+17
+100
+AcDbEntity
+  8
+diam_8mm
+100
+AcDbCircle
+ 10
+10470.5
+ 20
+3626.2838283828382
+ 30
+0.0
+ 40
+4.0
   0
 ENDSEC
   0
@@ -5257,7 +9697,7 @@ CREATED_BY_EZDXF
   3
 WRITTEN_BY_EZDXF
 350
-93
+16D
   0
 DICTIONARYVAR
   5
@@ -5269,11 +9709,11 @@ DictionaryVariables
 280
 0
   1
-1.4.3 @ 2026-01-11T23:23:12.052605+00:00
+1.4.3 @ 2026-01-12T01:07:24.769159+00:00
   0
 DICTIONARYVAR
   5
-93
+16D
 330
 2D
 100
@@ -5281,7 +9721,7 @@ DictionaryVariables
 280
 0
   1
-1.4.3 @ 2026-01-11T23:23:12.056571+00:00
+1.4.3 @ 2026-01-12T01:07:24.779877+00:00
   0
 ENDSEC
   0
