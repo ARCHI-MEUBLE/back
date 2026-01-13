@@ -184,11 +184,19 @@ class Router {
         // Extraire la première partie (ex: admin-auth, admin, customers)
         $parts = explode('/', $endpoint);
         $mainEndpoint = $parts[0];
+        
+        // Le reste du path devient PATH_INFO pour l'API
+        $pathInfo = '';
+        if (count($parts) > 1) {
+            $pathInfo = '/' . implode('/', array_slice($parts, 1));
+        }
 
         // Construire le chemin du fichier API principal
         $apiFile = $this->baseDir . '/backend/api/' . $mainEndpoint . '.php';
 
         if (file_exists($apiFile)) {
+            // Définir PATH_INFO pour que l'API puisse extraire l'ID
+            $_SERVER['PATH_INFO'] = $pathInfo;
             require $apiFile;
         } else {
             $this->sendJSON([
