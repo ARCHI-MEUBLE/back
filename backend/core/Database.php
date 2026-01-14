@@ -273,6 +273,221 @@ class Database {
                 error_log("Database Migration Error (calendly_appointments): " . $e->getMessage());
             }
 
+            // Migration auto pour categories
+            try {
+                $this->pdo->exec("CREATE TABLE IF NOT EXISTS categories (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL UNIQUE,
+                    slug TEXT NOT NULL UNIQUE,
+                    description TEXT,
+                    image_url TEXT,
+                    display_order INTEGER DEFAULT 0,
+                    is_active INTEGER DEFAULT 1,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )");
+
+                // Insertion des catégories par défaut si table vide
+                $count = $this->pdo->query("SELECT COUNT(*) FROM categories")->fetchColumn();
+                if ($count == 0) {
+                    $this->pdo->exec("INSERT INTO categories (name, slug, description, display_order, is_active) VALUES
+                        ('Dressing', 'dressing', 'Optimisez chaque centimètre', 1, 1),
+                        ('Bibliothèque', 'bibliotheque', 'Du sol au plafond', 2, 1),
+                        ('Buffet', 'buffet', 'Élégance fonctionnelle', 3, 1),
+                        ('Bureau', 'bureau', 'Votre espace de travail', 4, 1),
+                        ('Meuble TV', 'meuble-tv', 'Lignes épurées', 5, 1),
+                        ('Sous-escalier', 'sous-escalier', 'Chaque recoin optimisé', 6, 1),
+                        ('Tête de lit', 'tete-de-lit', 'Confort et style', 7, 1)
+                    ");
+                }
+            } catch (Exception $e) {
+                error_log("Database Migration Error (categories): " . $e->getMessage());
+            }
+
+            // Migration auto pour quote_requests
+            try {
+                $this->pdo->exec("CREATE TABLE IF NOT EXISTS quote_requests (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    first_name TEXT NOT NULL,
+                    last_name TEXT NOT NULL,
+                    email TEXT NOT NULL,
+                    phone TEXT NOT NULL,
+                    description TEXT,
+                    status TEXT NOT NULL DEFAULT 'pending',
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )");
+
+                $this->pdo->exec("CREATE TABLE IF NOT EXISTS quote_request_files (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    quote_request_id INTEGER NOT NULL,
+                    file_name TEXT NOT NULL,
+                    file_path TEXT NOT NULL,
+                    file_type TEXT NOT NULL,
+                    file_size INTEGER NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (quote_request_id) REFERENCES quote_requests(id) ON DELETE CASCADE
+                )");
+
+                $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_quote_requests_status ON quote_requests(status)");
+                $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_quote_requests_created ON quote_requests(created_at DESC)");
+            } catch (Exception $e) {
+                error_log("Database Migration Error (quote_requests): " . $e->getMessage());
+            }
+
+            // Migration auto pour sample orders
+            try {
+                $this->pdo->exec("CREATE TABLE IF NOT EXISTS cart_sample_items (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    customer_id INTEGER NOT NULL,
+                    sample_color_id INTEGER NOT NULL,
+                    quantity INTEGER NOT NULL DEFAULT 1,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+                    FOREIGN KEY (sample_color_id) REFERENCES sample_colors(id) ON DELETE CASCADE,
+                    UNIQUE(customer_id, sample_color_id)
+                )");
+
+                $this->pdo->exec("CREATE TABLE IF NOT EXISTS order_sample_items (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    order_id INTEGER NOT NULL,
+                    sample_color_id INTEGER NOT NULL,
+                    sample_name VARCHAR(255) NOT NULL,
+                    sample_type_name VARCHAR(255),
+                    material VARCHAR(255),
+                    image_url TEXT,
+                    hex VARCHAR(20),
+                    quantity INTEGER NOT NULL DEFAULT 1,
+                    price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+                    FOREIGN KEY (sample_color_id) REFERENCES sample_colors(id) ON DELETE SET NULL
+                )");
+
+                $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_cart_sample_items_customer ON cart_sample_items(customer_id)");
+                $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_cart_sample_items_color ON cart_sample_items(sample_color_id)");
+                $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_order_sample_items_order ON order_sample_items(order_id)");
+            } catch (Exception $e) {
+                error_log("Database Migration Error (sample_orders): " . $e->getMessage());
+            }
+
+            // Migration auto pour payment_installments
+            try {
+                $this->pdo->exec("CREATE TABLE IF NOT EXISTS payment_installments (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    order_id INTEGER NOT NULL,
+                    customer_id INTEGER NOT NULL,
+                    installment_number INTEGER NOT NULL,
+                    amount DECIMAL(10,2) NOT NULL,
+                    due_date DATE NOT NULL,
+                    status VARCHAR(20) DEFAULT 'pending',
+                    stripe_payment_intent_id TEXT,
+                    paid_at DATETIME,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (order_id) REFERENCES orders(id),
+                    FOREIGN KEY (customer_id) REFERENCES customers(id)
+                )");
+
+                $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_installments_order ON payment_installments(order_id)");
+                $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_installments_customer ON payment_installments(customer_id)");
+                $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_installments_due_date ON payment_installments(due_date)");
+                $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_installments_status ON payment_installments(status)");
+            } catch (Exception $e) {
+                error_log("Database Migration Error (payment_installments): " . $e->getMessage());
+            }
+
+            // Migration auto pour pricing_config
+            try {
+                $this->pdo->exec("CREATE TABLE IF NOT EXISTS pricing_config (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    category TEXT NOT NULL,
+                    item_type TEXT NOT NULL,
+                    param_name TEXT NOT NULL,
+                    param_value REAL NOT NULL,
+                    unit TEXT NOT NULL,
+                    description TEXT,
+                    is_active INTEGER NOT NULL DEFAULT 1,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(category, item_type, param_name)
+                )");
+
+                $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_pricing_config_category ON pricing_config(category)");
+                $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_pricing_config_active ON pricing_config(is_active)");
+                $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_pricing_config_lookup ON pricing_config(category, item_type, param_name)");
+                
+                // Vérifier si la table est vide pour insérer les données par défaut
+                $count = $this->pdo->query("SELECT COUNT(*) FROM pricing_config")->fetchColumn();
+                if ($count == 0) {
+                    error_log("Database: pricing_config table is empty, inserting default values...");
+                    $this->pdo->exec("
+                        INSERT INTO pricing_config (category, item_type, param_name, param_value, unit, description) VALUES
+                        -- Matériau de base (UN SEUL pour tous les meubles)
+                        ('materials', 'base', 'supplement', 0, 'eur', 'Supplément matériau (0 par défaut)'),
+                        ('materials', 'base', 'price_per_m2', 50, 'eur_m2', 'Prix du matériau de base au m²'),
+
+                        -- Tiroirs
+                        ('drawers', 'standard', 'base_price', 35, 'eur', 'Prix de base d''un tiroir standard'),
+                        ('drawers', 'standard', 'coefficient', 0.0001, 'coefficient', 'Coefficient (× largeur × profondeur en mm²)'),
+                        ('drawers', 'push', 'base_price', 45, 'eur', 'Prix de base d''un tiroir push'),
+                        ('drawers', 'push', 'coefficient', 0.0001, 'coefficient', 'Coefficient (× largeur × profondeur en mm²)'),
+
+                        -- Étagères
+                        ('shelves', 'glass', 'price_per_m2', 250, 'eur_m2', 'Prix du verre au m²'),
+                        ('shelves', 'standard', 'price_per_m2', 100, 'eur_m2', 'Prix au m² d''une étagère standard'),
+
+                        -- Éclairage LED
+                        ('lighting', 'led', 'price_per_linear_meter', 15, 'eur_linear_m', 'Prix de la LED par mètre linéaire'),
+
+                        -- Passe-câbles
+                        ('cables', 'pass_cable', 'fixed_price', 10, 'eur', 'Prix fixe pour un passe-câble'),
+
+                        -- Socles
+                        ('bases', 'none', 'fixed_price', 0, 'eur', 'Pas de socle'),
+                        ('bases', 'wood', 'price_per_m3', 800, 'eur_m3', 'Prix du bois massif par m³'),
+                        ('bases', 'wood', 'height', 80, 'mm', 'Hauteur FIXE du socle bois (même pour tous les meubles)'),
+                        ('bases', 'metal', 'price_per_foot', 20, 'eur', 'Prix d''un pied métallique'),
+                        ('bases', 'metal', 'foot_interval', 2000, 'mm', 'Intervalle entre pieds (2m)'),
+
+                        -- Charnières
+                        ('hinges', 'standard', 'price_per_unit', 5, 'eur', 'Prix d''une charnière standard'),
+
+                        -- Portes
+                        ('doors', 'simple', 'coefficient', 0.00004, 'coefficient', 'Coefficient porte simple'),
+                        ('doors', 'simple', 'hinge_count', 2, 'units', 'Nb charnières porte simple'),
+                        ('doors', 'double', 'coefficient', 0.00008, 'coefficient', 'Coefficient double porte'),
+                        ('doors', 'double', 'hinge_count', 4, 'units', 'Nb charnières double porte'),
+                        ('doors', 'glass', 'coefficient', 0.00009, 'coefficient', 'Coefficient porte vitrée'),
+                        ('doors', 'glass', 'hinge_count', 2, 'units', 'Nb charnières porte vitrée'),
+                        ('doors', 'push', 'coefficient', 0.00005, 'coefficient', 'Coefficient porte push'),
+                        ('doors', 'push', 'hinge_count', 2, 'units', 'Nb charnières porte push'),
+
+                        -- Colonnes
+                        ('columns', 'standard', 'price_per_m2', 120, 'eur_m2', 'Prix au m² d''une colonne'),
+
+                        -- Penderie
+                        ('wardrobe', 'rod', 'price_per_linear_meter', 20, 'eur_linear_m', 'Prix de la barre de penderie par mètre linéaire'),
+
+                        -- Poignées
+                        ('handles', 'horizontal_bar', 'price_per_unit', 15, 'eur', 'Prix d''une barre horizontale'),
+                        ('handles', 'vertical_bar', 'price_per_unit', 15, 'eur', 'Prix d''une barre verticale'),
+                        ('handles', 'knob', 'price_per_unit', 10, 'eur', 'Prix d''un bouton'),
+                        ('handles', 'recessed', 'price_per_unit', 12, 'eur', 'Prix d''une poignée encastrée'),
+
+                        -- Caisson
+                        ('casing', 'full', 'coefficient', 1.2, 'coefficient', 'Coefficient caisson complet'),
+
+                        -- Affichage des prix
+                        ('display', 'price', 'display_mode', 0, 'units', 'Mode d''affichage (0: DIRECT, 1: INTERVALLE)'),
+                        ('display', 'price', 'deviation_range', 100, 'eur', 'Écart type pour l''intervalle')
+                    ");
+                }
+            } catch (Exception $e) {
+                error_log("Database Migration Error (pricing_config): " . $e->getMessage());
+            }
+
         } catch (PDOException $e) {
             error_log("Erreur lors de la création des tables : " . $e->getMessage());
         }

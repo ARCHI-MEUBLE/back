@@ -394,8 +394,28 @@ try:
     else:
         print("✓ Colonne stripe_customer_id existe déjà")
 
-    # Vérifier et ajouter la colonne name à order_catalogue_items
-    print("\nVérification de la colonne name dans order_catalogue_items...")
+    # Créer la table order_catalogue_items si elle n'existe pas
+    print("\nVérification de la table order_catalogue_items...")
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS order_catalogue_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id INTEGER NOT NULL,
+            catalogue_item_id INTEGER,
+            variation_id INTEGER,
+            product_name TEXT NOT NULL,
+            variation_name TEXT,
+            quantity INTEGER DEFAULT 1,
+            unit_price REAL NOT NULL,
+            total_price REAL NOT NULL,
+            image_url TEXT,
+            name TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+        )
+    """)
+    print("✓ Table order_catalogue_items vérifiée/créée")
+
+    # Vérifier et ajouter la colonne name à order_catalogue_items (pour les anciennes bases)
     cursor.execute("PRAGMA table_info(order_catalogue_items)")
     order_catalogue_columns = [col[1] for col in cursor.fetchall()]
 
@@ -515,6 +535,48 @@ try:
                 VALUES (?, ?, ?, ?, ?)
             """, (name, color, texture, modifier, price_m2))
         print("✓ Matériaux par défaut façades ajoutés")
+
+    # Ajouter les paramètres de prix manquants (penderie, poignées, etc.)
+    print("\nVérification des paramètres de prix manquants...")
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='pricing_config'")
+    if cursor.fetchone():
+        # Liste des paramètres à ajouter
+        params_to_add = [
+            # PENDERIE
+            ('wardrobe', 'rod', 'price_per_linear_meter', 20, 'eur_linear_m', 'Prix de la barre de penderie par mètre linéaire'),
+
+            # POIGNÉES
+            ('handles', 'horizontal_bar', 'price_per_unit', 15, 'eur', "Prix d'une poignée barre horizontale"),
+            ('handles', 'vertical_bar', 'price_per_unit', 15, 'eur', "Prix d'une poignée barre verticale"),
+            ('handles', 'knob', 'price_per_unit', 10, 'eur', "Prix d'un bouton de porte"),
+            ('handles', 'recessed', 'price_per_unit', 20, 'eur', "Prix d'une poignée encastrée"),
+
+            # SOCLE BOIS - paramètres complémentaires
+            ('bases', 'wood', 'price_per_m3', 800, 'eur_m3', 'Prix du bois pour socle au m³'),
+            ('bases', 'wood', 'height', 80, 'mm', 'Hauteur fixe du socle bois'),
+            ('bases', 'metal', 'base_foot_count', 2, 'units', 'Nombre minimum de pieds (base)'),
+
+            # AFFICHAGE PRIX
+            ('display', 'price', 'display_mode', 0, 'units', "Mode d'affichage (0=Direct, 1=Intervalle)"),
+            ('display', 'price', 'deviation_range', 100, 'eur', "Écart pour l'affichage en intervalle"),
+        ]
+
+        for category, item_type, param_name, param_value, unit, description in params_to_add:
+            # Vérifier si le paramètre existe déjà
+            cursor.execute("""
+                SELECT id FROM pricing_config
+                WHERE category = ? AND item_type = ? AND param_name = ?
+            """, (category, item_type, param_name))
+
+            if cursor.fetchone() is None:
+                cursor.execute("""
+                    INSERT INTO pricing_config (category, item_type, param_name, param_value, unit, description, is_active)
+                    VALUES (?, ?, ?, ?, ?, ?, 1)
+                """, (category, item_type, param_name, param_value, unit, description))
+                print(f"  + Ajouté: {category}/{item_type}/{param_name}")
+        print("✓ Paramètres de prix vérifiés/ajoutés")
+    else:
+        print("⚠️  Table pricing_config n'existe pas encore")
 
     conn.commit()
     print("\n✓ Tables créées avec succès!")
