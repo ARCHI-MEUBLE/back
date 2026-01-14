@@ -137,13 +137,18 @@ try {
     
     // DELETE
     elseif ($method === 'DELETE') {
+        $id = null;
         if (preg_match('/^\/(\d+)$/', $path, $matches)) {
             $id = $matches[1];
-            
+        } elseif (isset($_GET['id'])) {
+            $id = $_GET['id'];
+        }
+
+        if ($id) {
             $stmt = $db->prepare('DELETE FROM facade_drilling_types WHERE id = :id');
             $stmt->bindValue(':id', $id, SQLITE3_INTEGER);
             $stmt->execute();
-            
+
             echo json_encode(['success' => true, 'message' => 'Type de perçage supprimé']);
         } else {
             http_response_code(400);
