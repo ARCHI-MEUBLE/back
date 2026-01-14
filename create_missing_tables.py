@@ -394,8 +394,28 @@ try:
     else:
         print("✓ Colonne stripe_customer_id existe déjà")
 
-    # Vérifier et ajouter la colonne name à order_catalogue_items
-    print("\nVérification de la colonne name dans order_catalogue_items...")
+    # Créer la table order_catalogue_items si elle n'existe pas
+    print("\nVérification de la table order_catalogue_items...")
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS order_catalogue_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id INTEGER NOT NULL,
+            catalogue_item_id INTEGER,
+            variation_id INTEGER,
+            product_name TEXT NOT NULL,
+            variation_name TEXT,
+            quantity INTEGER DEFAULT 1,
+            unit_price REAL NOT NULL,
+            total_price REAL NOT NULL,
+            image_url TEXT,
+            name TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+        )
+    """)
+    print("✓ Table order_catalogue_items vérifiée/créée")
+
+    # Vérifier et ajouter la colonne name à order_catalogue_items (pour les anciennes bases)
     cursor.execute("PRAGMA table_info(order_catalogue_items)")
     order_catalogue_columns = [col[1] for col in cursor.fetchall()]
 
