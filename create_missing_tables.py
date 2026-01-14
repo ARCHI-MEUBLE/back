@@ -406,6 +406,116 @@ try:
     else:
         print("✓ Colonne name existe déjà")
 
+    # Créer les tables pour les façades
+    print("\nCréation des tables pour les façades...")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS facades (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(255) NOT NULL,
+            description TEXT,
+            width DECIMAL(10, 2) NOT NULL,
+            height DECIMAL(10, 2) NOT NULL,
+            depth DECIMAL(10, 2) NOT NULL,
+            base_price DECIMAL(10, 2) NOT NULL DEFAULT 0,
+            is_active BOOLEAN DEFAULT 1,
+            image_url VARCHAR(500),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    print("✓ Table facades créée")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS facade_materials (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(255) NOT NULL,
+            color_hex VARCHAR(7) NOT NULL,
+            texture_url VARCHAR(500),
+            price_modifier DECIMAL(10, 2) DEFAULT 0,
+            price_per_m2 DECIMAL(10, 2) DEFAULT 150,
+            is_active BOOLEAN DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    print("✓ Table facade_materials créée")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS facade_drilling_types (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(255) NOT NULL,
+            description TEXT,
+            icon_svg TEXT,
+            price DECIMAL(10, 2) DEFAULT 0,
+            is_active BOOLEAN DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    print("✓ Table facade_drilling_types créée")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS facade_settings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            setting_key TEXT UNIQUE NOT NULL,
+            setting_value TEXT NOT NULL,
+            description TEXT,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    print("✓ Table facade_settings créée")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS saved_facades (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            customer_id INTEGER,
+            facade_id INTEGER,
+            configuration_data TEXT NOT NULL,
+            preview_image TEXT,
+            total_price DECIMAL(10, 2),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+            FOREIGN KEY (facade_id) REFERENCES facades(id) ON DELETE CASCADE
+        )
+    """)
+    print("✓ Table saved_facades créée")
+
+    # Ajouter les données par défaut pour facade_settings
+    default_facade_settings = [
+        ('max_width', '600', 'Largeur maximale en mm'),
+        ('max_height', '2300', 'Hauteur maximale en mm'),
+        ('fixed_depth', '19', 'Épaisseur fixe en mm'),
+        ('hinge_edge_margin', '20', 'Marge des charnières en mm'),
+        ('hinge_hole_diameter', '26', 'Diamètre des trous de charnières en mm'),
+        ('hinge_base_price', '34.20', 'Prix de base d\'une charnière'),
+        ('hinge_coefficient', '0.05', 'Coefficient multiplicateur par charnière'),
+        ('material_price_per_m2', '150', 'Prix du matériau au m²'),
+    ]
+
+    for key, value, desc in default_facade_settings:
+        cursor.execute("""
+            INSERT OR IGNORE INTO facade_settings (setting_key, setting_value, description)
+            VALUES (?, ?, ?)
+        """, (key, value, desc))
+    print("✓ Paramètres par défaut façades ajoutés")
+
+    # Ajouter des matériaux par défaut si la table est vide
+    cursor.execute("SELECT COUNT(*) FROM facade_materials")
+    if cursor.fetchone()[0] == 0:
+        default_materials = [
+            ('Chêne Naturel', '#D8C7A1', None, 0, 150),
+            ('Chêne Foncé', '#8B7355', None, 10, 160),
+            ('Blanc Mat', '#FFFFFF', None, -5, 145),
+            ('Noir Mat', '#1A1917', None, 5, 155),
+            ('Gris Anthracite', '#4A4A4A', None, 0, 150),
+        ]
+        for name, color, texture, modifier, price_m2 in default_materials:
+            cursor.execute("""
+                INSERT INTO facade_materials (name, color_hex, texture_url, price_modifier, price_per_m2)
+                VALUES (?, ?, ?, ?, ?)
+            """, (name, color, texture, modifier, price_m2))
+        print("✓ Matériaux par défaut façades ajoutés")
+
     conn.commit()
     print("\n✓ Tables créées avec succès!")
 
