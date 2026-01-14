@@ -115,6 +115,36 @@ INSERT INTO pricing_config (category, item_type, param_name, param_value, unit, 
 INSERT INTO pricing_config (category, item_type, param_name, param_value, unit, description) VALUES
 ('casing', 'full', 'coefficient', 1.2, 'coefficient', 'Coefficient pour le caisson complet (majoration complexité)');
 
+-- ----------------------------------------------------------------------------
+-- 12. PENDERIE - Prix au mètre linéaire
+-- ----------------------------------------------------------------------------
+INSERT INTO pricing_config (category, item_type, param_name, param_value, unit, description) VALUES
+('wardrobe', 'rod', 'price_per_linear_meter', 20, 'eur_linear_m', 'Prix de la barre de penderie par mètre linéaire');
+
+-- ----------------------------------------------------------------------------
+-- 13. POIGNÉES - Prix fixe par type
+-- ----------------------------------------------------------------------------
+INSERT INTO pricing_config (category, item_type, param_name, param_value, unit, description) VALUES
+('handles', 'horizontal_bar', 'price_per_unit', 15, 'eur', 'Prix d''une poignée barre horizontale'),
+('handles', 'vertical_bar', 'price_per_unit', 15, 'eur', 'Prix d''une poignée barre verticale'),
+('handles', 'knob', 'price_per_unit', 10, 'eur', 'Prix d''un bouton de porte'),
+('handles', 'recessed', 'price_per_unit', 20, 'eur', 'Prix d''une poignée encastrée');
+
+-- ----------------------------------------------------------------------------
+-- 14. SOCLE BOIS - Paramètres complémentaires
+-- ----------------------------------------------------------------------------
+INSERT INTO pricing_config (category, item_type, param_name, param_value, unit, description) VALUES
+('bases', 'wood', 'price_per_m3', 800, 'eur_m3', 'Prix du bois pour socle au m³'),
+('bases', 'wood', 'height', 80, 'mm', 'Hauteur fixe du socle bois'),
+('bases', 'metal', 'base_foot_count', 2, 'units', 'Nombre minimum de pieds (base)');
+
+-- ----------------------------------------------------------------------------
+-- 15. AFFICHAGE PRIX - Paramètres d'affichage
+-- ----------------------------------------------------------------------------
+INSERT INTO pricing_config (category, item_type, param_name, param_value, unit, description) VALUES
+('display', 'price', 'display_mode', 0, 'units', 'Mode d''affichage (0=Direct, 1=Intervalle)'),
+('display', 'price', 'deviation_range', 100, 'eur', 'Écart pour l''affichage en intervalle');
+
 -- ============================================================================
 -- Trigger pour mise à jour automatique de updated_at
 -- ============================================================================
