@@ -184,6 +184,39 @@ class Database {
                 FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
             )");
 
+            $this->pdo->exec("CREATE TABLE IF NOT EXISTS realisation_images (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                realisation_id INTEGER NOT NULL,
+                image_url TEXT NOT NULL,
+                ordre INTEGER DEFAULT 0,
+                legende TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (realisation_id) REFERENCES realisations(id) ON DELETE CASCADE
+            )");
+
+            $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_realisation_images_realisation_id ON realisation_images(realisation_id)");
+
+            $this->pdo->exec("CREATE TABLE IF NOT EXISTS facade_cart_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                customer_id INTEGER NOT NULL,
+                config_data TEXT NOT NULL,
+                quantity INTEGER DEFAULT 1,
+                unit_price REAL NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+            )");
+
+            $this->pdo->exec("CREATE TABLE IF NOT EXISTS order_facade_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                order_id INTEGER NOT NULL,
+                config_data TEXT NOT NULL,
+                quantity INTEGER DEFAULT 1,
+                unit_price REAL NOT NULL,
+                total_price REAL NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+            )");
+
             // Vérifier et ajouter la colonne variation_label si elle manque (migration auto)
             try {
                 $check = $this->pdo->query("PRAGMA table_info(catalogue_items)");

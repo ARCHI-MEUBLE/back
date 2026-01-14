@@ -47,8 +47,12 @@ class Order {
         ";
         $catalogueItems = $this->db->query($catalogueQuery, [$customerId]);
 
-        // Vérifier qu'il y a au moins des configs OU des échantillons OU du catalogue
-        if (empty($cartItems) && empty($sampleItems) && empty($catalogueItems)) {
+        // Récupérer les façades du panier
+        $facadeQuery = "SELECT * FROM facade_cart_items WHERE customer_id = ?";
+        $facadeItems = $this->db->query($facadeQuery, [$customerId]);
+
+        // Vérifier qu'il y a au moins des configs OU des échantillons OU du catalogue OU des façades
+        if (empty($cartItems) && empty($sampleItems) && empty($catalogueItems) && empty($facadeItems)) {
             throw new Exception('Panier vide');
         }
 
@@ -62,6 +66,9 @@ class Order {
         }
         foreach ($catalogueItems as $catItem) {
             $total += $catItem['unit_price'] * $catItem['quantity'];
+        }
+        foreach ($facadeItems as $facade) {
+            $total += $facade['unit_price'] * $facade['quantity'];
         }
 
         // Générer un numéro de commande unique
@@ -130,9 +137,9 @@ class Order {
         // Insérer les articles du catalogue de commande
         foreach ($catalogueItems as $catItem) {
             $insertCatQuery = "INSERT INTO order_catalogue_items
-                (order_id, catalogue_item_id, variation_id, name, variation_name, image_url, quantity, unit_price, total_price)
+                (order_id, catalogue_item_id, variation_id, product_name, variation_name, image_url, quantity, unit_price, total_price)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            
+
             $this->db->execute($insertCatQuery, [
                 $orderId,
                 $catItem['catalogue_item_id'],
@@ -146,10 +153,26 @@ class Order {
             ]);
         }
 
-        // Vider le panier (configurations ET échantillons ET catalogue)
+        // Insérer les façades de commande
+        foreach ($facadeItems as $facade) {
+            $insertFacadeQuery = "INSERT INTO order_facade_items
+                (order_id, config_data, quantity, unit_price, total_price)
+                VALUES (?, ?, ?, ?, ?)";
+
+            $this->db->execute($insertFacadeQuery, [
+                $orderId,
+                $facade['config_data'],
+                $facade['quantity'],
+                $facade['unit_price'],
+                $facade['unit_price'] * $facade['quantity']
+            ]);
+        }
+
+        // Vider le panier (configurations ET échantillons ET catalogue ET façades)
         $cart->clear($customerId);
         $this->db->execute("DELETE FROM cart_sample_items WHERE customer_id = ?", [$customerId]);
         $this->db->execute("DELETE FROM cart_catalogue_items WHERE customer_id = ?", [$customerId]);
+        $this->db->execute("DELETE FROM facade_cart_items WHERE customer_id = ?", [$customerId]);
 
         // Récupérer les infos du client
         require_once __DIR__ . '/Customer.php';
@@ -161,6 +184,7 @@ class Order {
             'order_number' => $orderNumber,
             'total' => $total,
             'samples_count' => count($sampleItems),
+            'facades_count' => count($facadeItems),
             'customer' => $customerData
         ];
     }
@@ -202,6 +226,14 @@ class Order {
      */
     public function getOrderCatalogueItems($orderId) {
         $query = "SELECT * FROM order_catalogue_items WHERE order_id = ? ORDER BY id";
+        return $this->db->query($query, [$orderId]);
+    }
+
+    /**
+     * Récupérer les façades d'une commande
+     */
+    public function getOrderFacadeItems($orderId) {
+        $query = "SELECT * FROM order_facade_items WHERE order_id = ? ORDER BY id";
         return $this->db->query($query, [$orderId]);
     }
 
@@ -257,7 +289,14 @@ class Order {
                 $catalogueTotal += (($catItem['total_price'] ?? ($catItem['unit_price'] * $catItem['quantity'])) ?? 0);
             }
 
-            $depositAmount = ($furnitureTotal * ($depositPercentage / 100)) + $samplesTotal + $catalogueTotal;
+            // Récupérer le total des façades (comme les meubles, acompte en %)
+            $facadeItems = $this->getOrderFacadeItems($orderId);
+            $facadeTotal = 0;
+            foreach ($facadeItems as $facade) {
+                $facadeTotal += (($facade['total_price'] ?? ($facade['unit_price'] * $facade['quantity'])) ?? 0);
+            }
+
+            $depositAmount = (($furnitureTotal + $facadeTotal) * ($depositPercentage / 100)) + $samplesTotal + $catalogueTotal;
             $remainingAmount = ($order['total_amount'] ?? $order['total'] ?? 0) - $depositAmount;
         }
 
@@ -413,6 +452,10 @@ class Order {
             // 4. Supprimer les items de catalogue
             $deleteCatalogueQuery = "DELETE FROM order_catalogue_items WHERE order_id = ?";
             $this->db->execute($deleteCatalogueQuery, [$orderId]);
+
+            // 4b. Supprimer les façades
+            $deleteFacadesQuery = "DELETE FROM order_facade_items WHERE order_id = ?";
+            $this->db->execute($deleteFacadesQuery, [$orderId]);
 
             // 5. Révoquer tous les liens de paiement actifs pour cette commande
             $revokeLinksQuery = "UPDATE payment_links SET status = 'revoked' WHERE order_id = ? AND status = 'active'";

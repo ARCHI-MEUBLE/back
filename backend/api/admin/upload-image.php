@@ -72,8 +72,14 @@ if ($fileSize > 20 * 1024 * 1024) {
     exit;
 }
 
-// Déterminer le dossier d'upload sur le volume persistant Railway
-$uploadDir = '/data/uploads/catalogue/';
+// Déterminer le dossier d'upload
+// En production Railway: /data/uploads/catalogue/
+// En local: backend/uploads/catalogue/
+if (file_exists('/data') && is_writable('/data')) {
+    $uploadDir = '/data/uploads/catalogue/';
+} else {
+    $uploadDir = __DIR__ . '/../../uploads/catalogue/';
+}
 
 if (!file_exists($uploadDir)) {
     mkdir($uploadDir, 0777, true);
@@ -91,8 +97,12 @@ if (copy($fileTmpName, $destPath)) {
     unlink($fileTmpName);
     error_log("UPLOAD: Success! File saved to: $destPath");
 
-    // Retourner l'URL relative au backend
-    $fileUrl = '/uploads/catalogue/' . $newFileName;
+    // Retourner l'URL relative - en local via /backend/uploads, en prod via /uploads
+    if (file_exists('/data') && is_writable('/data')) {
+        $fileUrl = '/uploads/catalogue/' . $newFileName;
+    } else {
+        $fileUrl = '/backend/uploads/catalogue/' . $newFileName;
+    }
 
     echo json_encode([
         'success' => true,
