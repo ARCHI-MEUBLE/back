@@ -223,11 +223,16 @@ class Router {
      * @param string $path
      */
     private function serveStaticFile($path) {
-        // Les fichiers uploads et models sont dans le volume persistant /data
-        if (strpos($path, 'uploads/') === 0) {
-            $filePath = '/data/' . $path;
+        // Gérer les uploads avec ou sans préfixe "backend/"
+        if (strpos($path, 'backend/uploads/') === 0) {
+            // Chemin: backend/uploads/... -> baseDir/backend/uploads/...
+            $filePath = $this->baseDir . '/' . $path;
+        } elseif (strpos($path, 'uploads/') === 0) {
+            // Chemin: uploads/... -> baseDir/backend/uploads/...
+            $filePath = $this->baseDir . '/backend/' . $path;
         } elseif (strpos($path, 'models/') === 0) {
-            $filePath = '/data/' . $path;
+            // Les modèles 3D
+            $filePath = $this->baseDir . '/' . $path;
         } else {
             $filePath = $this->baseDir . '/' . $path;
         }

@@ -21,8 +21,34 @@ $realisations = $stmt->fetchAll(PDO::FETCH_ASSOC);
 foreach ($realisations as &$realisation) {
     $stmt = $db->prepare('SELECT * FROM realisation_images WHERE realisation_id = ? ORDER BY ordre ASC');
     $stmt->execute([$realisation['id']]);
-    $realisation['images'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+    $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Si l'image principale existe dans realisations mais pas dans realisation_images,
+    // l'ajouter en premier dans le tableau
+    $mainImageUrl = $realisation['image_url'];
+    if (!empty($mainImageUrl)) {
+        $mainImageExists = false;
+        foreach ($images as $img) {
+            if ($img['image_url'] === $mainImageUrl) {
+                $mainImageExists = true;
+                break;
+            }
+        }
+
+        // Ajouter l'image principale en premier si elle n'est pas déjà dans la liste
+        if (!$mainImageExists) {
+            array_unshift($images, [
+                'id' => 0,
+                'realisation_id' => $realisation['id'],
+                'image_url' => $mainImageUrl,
+                'legende' => null,
+                'ordre' => -1
+            ]);
+        }
+    }
+
+    $realisation['images'] = $images;
+
     // Garder image_url pour compatibilité (première image)
     if (!empty($realisation['images'])) {
         $realisation['image_url'] = $realisation['images'][0]['image_url'];
