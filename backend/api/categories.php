@@ -198,78 +198,95 @@ if ($method === 'POST') {
  * PUT /api/categories - Modifier une catégorie (admin uniquement)
  */
 if ($method === 'PUT') {
-    if (!isAdmin()) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Accès non autorisé']);
-        exit;
-    }
-
-    $input = json_decode(file_get_contents('php://input'), true);
-
-    // Gérer le réordonnancement
-    if (isset($input['action']) && $input['action'] === 'reorder') {
-        if (!isset($input['categoryIds']) || !is_array($input['categoryIds'])) {
-            http_response_code(400);
-            echo json_encode(['error' => 'IDs des catégories requis pour le réordonnancement']);
+    try {
+        if (!isAdmin()) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Accès non autorisé']);
             exit;
         }
 
-        if ($category->reorder($input['categoryIds'])) {
+        $rawInput = file_get_contents('php://input');
+        error_log("PUT categories - Raw input: " . $rawInput);
+
+        $input = json_decode($rawInput, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            http_response_code(400);
+            echo json_encode(['error' => 'JSON invalide: ' . json_last_error_msg()]);
+            exit;
+        }
+
+        // Gérer le réordonnancement
+        if (isset($input['action']) && $input['action'] === 'reorder') {
+            if (!isset($input['categoryIds']) || !is_array($input['categoryIds'])) {
+                http_response_code(400);
+                echo json_encode(['error' => 'IDs des catégories requis pour le réordonnancement']);
+                exit;
+            }
+
+            if ($category->reorder($input['categoryIds'])) {
+                http_response_code(200);
+                echo json_encode(['success' => true]);
+            } else {
+                http_response_code(500);
+                echo json_encode(['error' => 'Erreur lors du réordonnancement des catégories']);
+            }
+            exit;
+        }
+
+        // Modification normale
+        if (!isset($input['id'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'ID de la catégorie requis', 'received' => $input]);
+            exit;
+        }
+
+        $updateData = [];
+        $allowedFields = ['name', 'slug', 'description', 'image_url', 'display_order', 'is_active'];
+
+        // Convertir camelCase en snake_case
+        if (isset($input['imageUrl'])) {
+            $input['image_url'] = $input['imageUrl'];
+        }
+        if (isset($input['displayOrder'])) {
+            $input['display_order'] = $input['displayOrder'];
+        }
+        if (isset($input['isActive'])) {
+            $input['is_active'] = $input['isActive'] ? 1 : 0;
+        }
+
+        foreach ($allowedFields as $field) {
+            if (isset($input[$field])) {
+                $updateData[$field] = $input[$field];
+            }
+        }
+
+        if (empty($updateData)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Aucune donnée à mettre à jour']);
+            exit;
+        }
+
+        error_log("PUT categories - Updating ID {$input['id']} with: " . json_encode($updateData));
+
+        if ($category->update($input['id'], $updateData)) {
+            $updatedCategory = $category->getById($input['id']);
+            if (isset($updatedCategory['image_url'])) {
+                $updatedCategory['image_url'] = convertImagePath($updatedCategory['image_url']);
+            }
             http_response_code(200);
-            echo json_encode(['success' => true]);
+            echo json_encode([
+                'success' => true,
+                'category' => $updatedCategory
+            ]);
         } else {
             http_response_code(500);
-            echo json_encode(['error' => 'Erreur lors du réordonnancement des catégories']);
+            echo json_encode(['error' => 'Erreur lors de la mise à jour de la catégorie']);
         }
-        exit;
-    }
-
-    // Modification normale
-    if (!isset($input['id'])) {
-        http_response_code(400);
-        echo json_encode(['error' => 'ID de la catégorie requis']);
-        exit;
-    }
-
-    $updateData = [];
-    $allowedFields = ['name', 'slug', 'description', 'image_url', 'display_order', 'is_active'];
-
-    // Convertir camelCase en snake_case
-    if (isset($input['imageUrl'])) {
-        $input['image_url'] = $input['imageUrl'];
-    }
-    if (isset($input['displayOrder'])) {
-        $input['display_order'] = $input['displayOrder'];
-    }
-    if (isset($input['isActive'])) {
-        $input['is_active'] = $input['isActive'] ? 1 : 0;
-    }
-
-    foreach ($allowedFields as $field) {
-        if (isset($input[$field])) {
-            $updateData[$field] = $input[$field];
-        }
-    }
-
-    if (empty($updateData)) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Aucune donnée à mettre à jour']);
-        exit;
-    }
-
-    if ($category->update($input['id'], $updateData)) {
-        $updatedCategory = $category->getById($input['id']);
-        if (isset($updatedCategory['image_url'])) {
-            $updatedCategory['image_url'] = convertImagePath($updatedCategory['image_url']);
-        }
-        http_response_code(200);
-        echo json_encode([
-            'success' => true,
-            'category' => $updatedCategory
-        ]);
-    } else {
+    } catch (Exception $e) {
+        error_log("PUT categories - Exception: " . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['error' => 'Erreur lors de la mise à jour de la catégorie']);
+        echo json_encode(['error' => 'Exception: ' . $e->getMessage()]);
     }
     exit;
 }
