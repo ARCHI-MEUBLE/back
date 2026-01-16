@@ -86,6 +86,9 @@ function convertModelImagePaths($models) {
         if (isset($model['image_url'])) {
             $model['image_url'] = convertImagePath($model['image_url']);
         }
+        if (isset($model['hover_image_url'])) {
+            $model['hover_image_url'] = convertImagePath($model['hover_image_url']);
+        }
     }
 
     return $models;
@@ -99,9 +102,12 @@ if ($method === 'GET') {
     if (isset($_GET['id'])) {
         $modelData = $model->getById($_GET['id']);
         if ($modelData) {
-            // Convertir le chemin de l'image en URL complète
+            // Convertir les chemins des images en URLs complètes
             if (isset($modelData['image_url'])) {
                 $modelData['image_url'] = convertImagePath($modelData['image_url']);
+            }
+            if (isset($modelData['hover_image_url'])) {
+                $modelData['hover_image_url'] = convertImagePath($modelData['hover_image_url']);
             }
             http_response_code(200);
             echo json_encode($modelData);
@@ -146,6 +152,7 @@ if ($method === 'POST') {
 
     // Support des deux formats : camelCase et snake_case
     $imageUrl = $input['imageUrl'] ?? $input['image_url'] ?? $input['imagePath'] ?? $input['image_path'] ?? null;
+    $hoverImageUrl = $input['hoverImageUrl'] ?? $input['hover_image_url'] ?? $input['hoverImagePath'] ?? $input['hover_image_path'] ?? null;
     $price = $input['price'] ?? $input['basePrice'] ?? $input['base_price'] ?? null;
 
     try {
@@ -156,14 +163,18 @@ if ($method === 'POST') {
             $price,
             $imageUrl,
             $input['category'] ?? null,
-            isset($input['config_data']) ? (is_string($input['config_data']) ? $input['config_data'] : json_encode($input['config_data'])) : null
+            isset($input['config_data']) ? (is_string($input['config_data']) ? $input['config_data'] : json_encode($input['config_data'])) : null,
+            $hoverImageUrl
         );
 
         if ($modelId) {
             $createdModel = $model->getById($modelId);
-            // Convertir le chemin de l'image en URL complète
+            // Convertir les chemins des images en URLs complètes
             if (isset($createdModel['image_url'])) {
                 $createdModel['image_url'] = convertImagePath($createdModel['image_url']);
+            }
+            if (isset($createdModel['hover_image_url'])) {
+                $createdModel['hover_image_url'] = convertImagePath($createdModel['hover_image_url']);
             }
             http_response_code(201);
             echo json_encode([
@@ -221,7 +232,7 @@ if ($method === 'PUT') {
     }
 
     $updateData = [];
-    $allowedFields = ['name', 'description', 'prompt', 'price', 'image_url', 'category', 'config_data'];
+    $allowedFields = ['name', 'description', 'prompt', 'price', 'image_url', 'category', 'config_data', 'hover_image_url'];
 
     // Convertir camelCase en snake_case si nécessaire
     if (isset($input['imageUrl'])) {
@@ -229,6 +240,12 @@ if ($method === 'PUT') {
     }
     if (isset($input['imagePath'])) {
         $input['image_url'] = $input['imagePath'];
+    }
+    if (isset($input['hoverImageUrl'])) {
+        $input['hover_image_url'] = $input['hoverImageUrl'];
+    }
+    if (isset($input['hoverImagePath'])) {
+        $input['hover_image_url'] = $input['hoverImagePath'];
     }
     if (isset($input['basePrice'])) {
         $input['price'] = $input['basePrice'];
@@ -254,9 +271,12 @@ if ($method === 'PUT') {
     try {
         if ($model->update($id, $updateData)) {
             $updatedModel = $model->getById($id);
-            // Convertir le chemin de l'image en URL complète
+            // Convertir les chemins des images en URLs complètes
             if (isset($updatedModel['image_url'])) {
                 $updatedModel['image_url'] = convertImagePath($updatedModel['image_url']);
+            }
+            if (isset($updatedModel['hover_image_url'])) {
+                $updatedModel['hover_image_url'] = convertImagePath($updatedModel['hover_image_url']);
             }
             http_response_code(200);
             echo json_encode([

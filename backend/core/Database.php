@@ -398,6 +398,19 @@ class Database {
                 error_log("Database Migration Error (payment_installments): " . $e->getMessage());
             }
 
+            // Migration auto pour models (hover_image_url)
+            try {
+                $check = $this->pdo->query("PRAGMA table_info(models)");
+                $columns = $check->fetchAll(PDO::FETCH_COLUMN, 1);
+
+                if (!empty($columns) && !in_array('hover_image_url', $columns)) {
+                    $this->pdo->exec("ALTER TABLE models ADD COLUMN hover_image_url TEXT");
+                    error_log("Database: Added missing column hover_image_url to models");
+                }
+            } catch (Exception $e) {
+                error_log("Database Migration Error (models hover_image_url): " . $e->getMessage());
+            }
+
             // Migration auto pour pricing_config
             try {
                 $this->pdo->exec("CREATE TABLE IF NOT EXISTS pricing_config (
