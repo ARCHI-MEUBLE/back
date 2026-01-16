@@ -119,9 +119,6 @@ class Category {
             return false;
         }
 
-        // Ajouter updated_at
-        $fields[] = "updated_at = CURRENT_TIMESTAMP";
-
         $query = "UPDATE categories SET " . implode(', ', $fields) . " WHERE id = :id";
         return $this->db->execute($query, $params);
     }
