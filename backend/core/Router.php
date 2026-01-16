@@ -223,18 +223,41 @@ class Router {
      * @param string $path
      */
     private function serveStaticFile($path) {
-        // Gérer les uploads avec ou sans préfixe "backend/"
+        // Normaliser le path (retirer le préfixe backend/ si présent)
+        $cleanPath = $path;
         if (strpos($path, 'backend/uploads/') === 0) {
-            // Chemin: backend/uploads/... -> baseDir/backend/uploads/...
-            $filePath = $this->baseDir . '/' . $path;
-        } elseif (strpos($path, 'uploads/') === 0) {
-            // Chemin: uploads/... -> baseDir/backend/uploads/...
-            $filePath = $this->baseDir . '/backend/' . $path;
-        } elseif (strpos($path, 'models/') === 0) {
-            // Les modèles 3D
-            $filePath = $this->baseDir . '/' . $path;
+            $cleanPath = substr($path, 8); // Retire "backend/"
+        }
+
+        // Chemins possibles à essayer (production puis local)
+        $possiblePaths = [];
+
+        if (strpos($cleanPath, 'uploads/') === 0) {
+            // Production: /data/uploads/...
+            $possiblePaths[] = '/data/' . $cleanPath;
+            // Local dev: baseDir/backend/uploads/...
+            $possiblePaths[] = $this->baseDir . '/backend/' . $cleanPath;
+        } elseif (strpos($cleanPath, 'models/') === 0) {
+            // Production: /data/models/...
+            $possiblePaths[] = '/data/' . $cleanPath;
+            // Local: baseDir/models/...
+            $possiblePaths[] = $this->baseDir . '/' . $cleanPath;
         } else {
-            $filePath = $this->baseDir . '/' . $path;
+            $possiblePaths[] = $this->baseDir . '/' . $path;
+        }
+
+        // Trouver le premier chemin qui existe
+        $filePath = null;
+        foreach ($possiblePaths as $tryPath) {
+            if (file_exists($tryPath) && is_file($tryPath)) {
+                $filePath = $tryPath;
+                break;
+            }
+        }
+
+        // Si aucun fichier trouvé, utiliser le premier chemin pour le message d'erreur
+        if ($filePath === null) {
+            $filePath = $possiblePaths[0];
         }
 
         error_log("STATIC FILE: Requested path: $path");
