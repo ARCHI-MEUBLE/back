@@ -62,10 +62,28 @@ try {
     elseif ($method === 'POST') {
         $input = json_decode(file_get_contents('php://input'), true);
         
-        if (!isset($input['name']) || !isset($input['color_hex'])) {
+        if (!isset($input['name'])) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'Données manquantes']);
+            echo json_encode(['success' => false, 'error' => 'Nom manquant']);
             exit;
+        }
+        
+        $colorHex = $input['color_hex'] ?? '';
+        $textureUrl = $input['texture_url'] ?? '';
+        
+        // Validation stricte: soit couleur SOIT texture, jamais les deux
+        if (!$colorHex && !$textureUrl) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Fournir une couleur (hex) OU une image de texture']);
+            exit;
+        }
+        
+        // Si texture fournie: ignorer la couleur (elle devient #FFFFFF par défaut)
+        // Si couleur fournie sans texture: vider la texture
+        if ($textureUrl) {
+            $colorHex = '#FFFFFF'; // Default white pour texture
+        } else {
+            $textureUrl = ''; // Vider la texture si couleur seule
         }
         
         $stmt = $db->prepare('
@@ -74,8 +92,8 @@ try {
         ');
         
         $stmt->bindValue(':name', $input['name'], SQLITE3_TEXT);
-        $stmt->bindValue(':color_hex', $input['color_hex'], SQLITE3_TEXT);
-        $stmt->bindValue(':texture_url', $input['texture_url'] ?? '', SQLITE3_TEXT);
+        $stmt->bindValue(':color_hex', $colorHex, SQLITE3_TEXT);
+        $stmt->bindValue(':texture_url', $textureUrl, SQLITE3_TEXT);
         $stmt->bindValue(':price_modifier', $input['price_modifier'] ?? 0, SQLITE3_FLOAT);
         $stmt->bindValue(':price_per_m2', $input['price_per_m2'] ?? 150, SQLITE3_FLOAT);
         $stmt->bindValue(':is_active', $input['is_active'] ?? 1, SQLITE3_INTEGER);
@@ -92,6 +110,24 @@ try {
             $id = $matches[1];
             $input = json_decode(file_get_contents('php://input'), true);
             
+            $colorHex = $input['color_hex'] ?? '';
+            $textureUrl = $input['texture_url'] ?? '';
+            
+            // Validation: soit couleur SOIT texture, pas les deux
+            if (!$colorHex && !$textureUrl) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Fournir une couleur (hex) OU une image de texture']);
+                exit;
+            }
+            
+            // Si texture fournie: ignorer la couleur (elle devient vide)
+            // Si couleur fournie sans texture: garder juste la couleur
+            if ($textureUrl) {
+                $colorHex = '#FFFFFF'; // Default white pour texture
+            } else {
+                $textureUrl = ''; // Vider la texture si couleur seule
+            }
+            
             $fields = [];
             $values = [];
             
@@ -99,14 +135,13 @@ try {
                 $fields[] = 'name = :name';
                 $values[':name'] = [$input['name'], SQLITE3_TEXT];
             }
-            if (isset($input['color_hex'])) {
-                $fields[] = 'color_hex = :color_hex';
-                $values[':color_hex'] = [$input['color_hex'], SQLITE3_TEXT];
-            }
-            if (isset($input['texture_url'])) {
-                $fields[] = 'texture_url = :texture_url';
-                $values[':texture_url'] = [$input['texture_url'], SQLITE3_TEXT];
-            }
+            
+            $fields[] = 'color_hex = :color_hex';
+            $values[':color_hex'] = [$colorHex, SQLITE3_TEXT];
+            
+            $fields[] = 'texture_url = :texture_url';
+            $values[':texture_url'] = [$textureUrl, SQLITE3_TEXT];
+            
             if (isset($input['price_modifier'])) {
                 $fields[] = 'price_modifier = :price_modifier';
                 $values[':price_modifier'] = [$input['price_modifier'], SQLITE3_FLOAT];
