@@ -5,6 +5,7 @@
  * POST /api/admin-auth/logout - Déconnexion admin
  * GET /api/admin-auth/session - Vérifier la session admin
  *
+ * SÉCURITÉ: Rate limiting activé pour protection brute force
  * Date : 2025-11-06
  */
 
@@ -17,10 +18,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once __DIR__ . '/../core/Database.php';
 require_once __DIR__ . '/../core/Session.php';
+require_once __DIR__ . '/../core/RateLimiter.php';
 require_once __DIR__ . '/../models/Admin.php';
 
 $session = Session::getInstance();
 $admin = new Admin();
+$rateLimiter = new RateLimiter();
 $method = $_SERVER['REQUEST_METHOD'];
 $requestUri = $_SERVER['REQUEST_URI'];
 
@@ -43,9 +46,34 @@ if ($method === 'POST' && $action === 'login') {
         exit;
     }
 
+    // SÉCURITÉ: Rate limiting plus strict pour admin (3 tentatives, 60 min lockout)
+    $ip = RateLimiter::getClientIP();
+    $ipCheck = $rateLimiter->check($ip, 'admin_login_ip', 5, 30);
+    $accountCheck = $rateLimiter->check($input['email'], 'admin_login_account', 3, 60);
+
+    if (!$ipCheck['allowed'] || !$accountCheck['allowed']) {
+        $message = !$ipCheck['allowed'] ? $ipCheck['message'] : $accountCheck['message'];
+        $retryAfter = !$ipCheck['allowed'] ? $ipCheck['retry_after'] : $accountCheck['retry_after'];
+
+        // Log de sécurité pour tentative sur compte admin
+        error_log("[SECURITY] Admin login blocked: email={$input['email']}, ip=$ip");
+
+        http_response_code(429);
+        echo json_encode([
+            'error' => 'Trop de tentatives de connexion',
+            'message' => $message,
+            'retry_after' => $retryAfter ?? 3600
+        ]);
+        exit;
+    }
+
     $adminData = $admin->verifyCredentials($input['email'], $input['password']);
 
     if ($adminData) {
+        // SÉCURITÉ: Réinitialiser les compteurs après succès
+        $rateLimiter->resetAttempts($ip, 'admin_login_ip');
+        $rateLimiter->resetAttempts($input['email'], 'admin_login_account');
+
         // Régénérer l'ID de session pour prévenir la fixation de session
         $session->regenerate();
 
@@ -67,6 +95,10 @@ if ($method === 'POST' && $action === 'login') {
             ]
         ]);
     } else {
+        // SÉCURITÉ: Enregistrer la tentative échouée
+        $rateLimiter->hit($ip, 'admin_login_ip', false, 5, 60);
+        $rateLimiter->hit($input['email'], 'admin_login_account', false, 3, 120);
+
         http_response_code(401);
         echo json_encode(['error' => 'Identifiants invalides']);
     }
