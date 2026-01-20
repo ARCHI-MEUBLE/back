@@ -1876,7 +1876,7 @@ def process(sequence,zone,textures=textures) : # cette fonction sert à parser u
 
 # Récupérer les arguments : prompt, output_path et --closed
 if len(sys.argv) < 2:
-    print("[ERROR] Usage: python procedure_real.py <prompt> [output_path] [--closed]", file=sys.stderr)
+    print("[ERROR] Usage: python procedure_real.py <prompt> [output_path] [--closed] [--colors JSON] [--deleted-panels JSON]", file=sys.stderr)
     sys.exit(1)
 
 chaine = sys.argv[1]  # Le prompt M1(...)
@@ -1901,6 +1901,18 @@ elif "--color" in sys.argv:
     if color_index + 1 < len(sys.argv):
         custom_colors = {"all": sys.argv[color_index + 1]}
         print(f"[INFO] Couleur unique: {custom_colors['all']}")
+
+# Récupérer les panneaux supprimés (pour exclure du DXF)
+deleted_panels = []
+if "--deleted-panels" in sys.argv:
+    dp_index = sys.argv.index("--deleted-panels")
+    if dp_index + 1 < len(sys.argv):
+        try:
+            deleted_panels = json.loads(sys.argv[dp_index + 1])
+            print(f"[INFO] Panneaux à exclure du DXF: {deleted_panels}")
+        except json.JSONDecodeError as e:
+            print(f"[WARNING] Format JSON invalide pour --deleted-panels: {e}")
+            deleted_panels = []
 
 print(f"[INFO] Génération du meuble avec prompt: {chaine}")
 print(f"[INFO] Fichier de sortie: {output_path}")
@@ -2118,6 +2130,85 @@ if not closed_mode:
 
 # Filtrer uniquement les vraies planches pour le DXF et la suite
 planches = [p for p in planches if (hasattr(p, 'planche') and p.planche) and getattr(p, 'bloc', None) != "coulisse"]
+
+# Fonction pour générer un ID compatible avec le frontend pour chaque planche
+def get_panel_id(planche, index):
+    """
+    Génère un ID de panneau compatible avec le frontend.
+    Format frontend: "type-row-col" ou "separator-direction-index"
+    Types: left, right, top, bottom, back, separator
+    """
+    zone_type = getattr(planche, 'type', '') if hasattr(planche, 'type') else ''
+    if hasattr(planche, 'zone') and hasattr(planche.zone, 'type'):
+        zone_type = planche.zone.type
+    
+    # Mapper les types Python vers les types frontend
+    type_mapping = {
+        'enveloppe_g': 'left',
+        'enveloppe_d': 'right', 
+        'enveloppe_h': 'top',
+        'enveloppe_b': 'bottom',
+        'enveloppe_f': 'back',
+        'cloisonnement_verticale': 'separator-vertical',
+        'cloisonnement_horizontale': 'separator-horizontal',
+    }
+    
+    panel_type = type_mapping.get(zone_type, None)
+    
+    if panel_type:
+        if panel_type.startswith('separator'):
+            # Pour les séparateurs, on utilise l'index
+            return f"{panel_type}-{index}"
+        else:
+            # Pour les panneaux de structure, on utilise 0-0 par défaut
+            # (le frontend utilise row-col pour des meubles multi-cellules)
+            return f"{panel_type}-0-0"
+    
+    return None
+
+# Filtrer les panneaux supprimés pour le DXF
+if deleted_panels and len(deleted_panels) > 0:
+    original_count = len(planches)
+    # Créer un mapping des IDs pour chaque planche
+    planche_ids = {}
+    separator_counts = {'separator-vertical': 0, 'separator-horizontal': 0}
+    
+    for idx, p in enumerate(planches):
+        zone_type = getattr(p, 'type', '') if hasattr(p, 'type') else ''
+        if hasattr(p, 'zone') and hasattr(p.zone, 'type'):
+            zone_type = p.zone.type
+        
+        type_mapping = {
+            'enveloppe_g': 'left',
+            'enveloppe_d': 'right',
+            'enveloppe_h': 'top',
+            'enveloppe_b': 'bottom',
+            'enveloppe_f': 'back',
+            'cloisonnement_verticale': 'separator-vertical',
+            'cloisonnement_horizontale': 'separator-horizontal',
+        }
+        
+        panel_type = type_mapping.get(zone_type, None)
+        
+        if panel_type:
+            if panel_type.startswith('separator'):
+                panel_id = f"{panel_type}-{separator_counts[panel_type]}"
+                separator_counts[panel_type] += 1
+            else:
+                panel_id = f"{panel_type}-0-0"
+            planche_ids[idx] = panel_id
+    
+    # Filtrer les planches dont l'ID est dans deleted_panels
+    planches_filtered = []
+    for idx, p in enumerate(planches):
+        panel_id = planche_ids.get(idx)
+        if panel_id and panel_id in deleted_panels:
+            print(f"[INFO] Planche exclue du DXF: {panel_id} (type: {getattr(p, 'type', 'N/A')})")
+        else:
+            planches_filtered.append(p)
+    
+    planches = planches_filtered
+    print(f"[INFO] {original_count - len(planches)} planches exclues du DXF sur {original_count}")
 
 # Numéroter les planches pour le DXF
 for i, p in enumerate(planches):

@@ -61,6 +61,12 @@ try {
         $colors = ['all' => trim($data['color'])];
     }
 
+    // Panneaux supprimés (pour exclure du DXF)
+    $deletedPanels = null;
+    if (isset($data['deletedPanels']) && is_array($data['deletedPanels'])) {
+        $deletedPanels = $data['deletedPanels'];
+    }
+
     // VALIDATION 1 : Regex pour valider le format du prompt
     // Format attendu : M[1-5](largeur,profondeur,hauteur[,modules])MODULES(params)
     // Exemple : M1(1700,500,730)EFH3(F,T,F) ou M1(1400,500,800)EbFSH3(VL[30,70],P,T)
@@ -158,14 +164,22 @@ try {
         $colorsFlag = '--colors ' . escapeshellarg($colorsJson);
     }
 
+    // Ajouter --deleted-panels si fourni (format JSON)
+    $deletedPanelsFlag = '';
+    if ($deletedPanels && !empty($deletedPanels)) {
+        $deletedPanelsJson = json_encode($deletedPanels, JSON_UNESCAPED_SLASHES);
+        $deletedPanelsFlag = '--deleted-panels ' . escapeshellarg($deletedPanelsJson);
+    }
+
     $command = sprintf(
-        '"%s" "%s" %s %s %s %s 2>&1',
+        '"%s" "%s" %s %s %s %s %s 2>&1',
         $pythonExe,
         $pythonScript,
         escapeshellarg($prompt),
         escapeshellarg($outputPath),
         $closedFlag,
-        $colorsFlag
+        $colorsFlag,
+        $deletedPanelsFlag
     );
 
     // Log de la commande pour debug
