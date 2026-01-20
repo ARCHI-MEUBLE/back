@@ -24,27 +24,43 @@ $session = Session::getInstance();
 // Vérifier l'authentification (Client OU Admin)
 error_log("SAVE.PHP - Session data: " . print_r($session->all(), true));
 
-// SÉCURITÉ: Un utilisateur doit TOUJOURS être connecté en tant que customer pour sauvegarder une configuration
-// Un admin peut être connecté en plus (pour validation), mais il FAUT un customer_id
-if (!$session->has('customer_id')) {
-    error_log("SAVE.PHP - Unauthorized: No customer_id in session");
+$isAdmin = $session->has('admin_email') && $session->get('is_admin') === true;
+$userId = $session->get('customer_id');
+
+// Lire le body pour vérifier si c'est une mise à jour
+$inputRaw = file_get_contents('php://input');
+$inputData = json_decode($inputRaw, true);
+$isUpdate = isset($inputData['id']) && $inputData['id'];
+
+// SÉCURITÉ: Pour les mises à jour, un admin peut modifier sans customer_id
+// Pour les créations, un customer_id est requis
+if (!$isUpdate && !$session->has('customer_id')) {
+    error_log("SAVE.PHP - Unauthorized: No customer_id in session for new configuration");
     http_response_code(401);
     echo json_encode([
-        'error' => 'Vous devez être connecté en tant que client pour sauvegarder une configuration'
+        'error' => 'Vous devez être connecté en tant que client pour créer une configuration'
     ]);
     exit;
 }
 
-$isAdmin = $session->has('admin_email');
-$userId = $session->get('customer_id');
-error_log("SAVE.PHP - Authenticated: isAdmin=" . ($isAdmin ? 'YES' : 'NO') . ", userId=" . $userId);
+// Pour les mises à jour, vérifier qu'on est soit admin, soit le propriétaire
+if ($isUpdate && !$isAdmin && !$session->has('customer_id')) {
+    error_log("SAVE.PHP - Unauthorized: Neither admin nor customer for update");
+    http_response_code(401);
+    echo json_encode([
+        'error' => 'Vous devez être connecté pour modifier cette configuration'
+    ]);
+    exit;
+}
+
+error_log("SAVE.PHP - Authenticated: isAdmin=" . ($isAdmin ? 'YES' : 'NO') . ", userId=" . ($userId ?: 'NONE') . ", isUpdate=" . ($isUpdate ? 'YES' : 'NO'));
 
 require_once __DIR__ . '/../../models/Configuration.php';
 
 try {
-    $input = file_get_contents('php://input');
-    error_log("SAVE.PHP - Raw input: " . $input);
-    $data = json_decode($input, true);
+    // Utiliser les données déjà parsées plus haut
+    error_log("SAVE.PHP - Raw input: " . $inputRaw);
+    $data = $inputData;
 
     // Validation
     $required = ['prompt', 'price'];

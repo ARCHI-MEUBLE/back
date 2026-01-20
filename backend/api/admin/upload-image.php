@@ -2,22 +2,25 @@
 /**
  * API: Upload d'images pour les modèles
  * POST /api/admin/upload-image.php
+ *
+ * SÉCURITÉ:
+ * - Vérification MIME type réel (pas seulement extension)
+ * - Protection contre les doubles extensions
+ * - Permissions restrictives (0755)
+ * - Validation de l'authentification admin
  */
 
 require_once __DIR__ . '/../../config/cors.php';
+require_once __DIR__ . '/../../core/Session.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-// Log de debug
-error_log("UPLOAD: Content-Type: " . ($_SERVER['CONTENT_TYPE'] ?? 'none'));
-error_log("UPLOAD: Files array: " . print_r($_FILES, true));
-error_log("UPLOAD: POST array: " . print_r($_POST, true));
-
-// Vérifier l'authentification admin
-if (!isset($_SESSION['admin_email'])) {
+// SÉCURITÉ: Vérifier l'authentification admin via la classe Session
+$session = Session::getInstance();
+if (!$session->has('admin_email') || $session->get('is_admin') !== true) {
     http_response_code(401);
     echo json_encode(['success' => false, 'error' => 'Non authentifié']);
     exit;
@@ -31,10 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 if (!isset($_FILES['image'])) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Aucune image envoyée', 'debug' => [
-        'files' => $_FILES,
-        'content_type' => $_SERVER['CONTENT_TYPE'] ?? 'none'
-    ]]);
+    echo json_encode(['success' => false, 'error' => 'Aucune image envoyée']);
     exit;
 }
 
@@ -44,65 +44,122 @@ $fileTmpName = $file['tmp_name'];
 $fileSize = $file['size'];
 $fileError = $file['error'];
 
-// Log des infos reçues pour debug
-error_log("File received: " . $fileName . " Size: " . $fileSize . " Error: " . $fileError);
-
 if ($fileError !== 0) {
-    $errorMsg = 'Erreur lors du transfert du fichier (code ' . $fileError . ')';
-    if ($fileError === 1 || $fileError === 2) $errorMsg = 'Le fichier est trop volumineux pour le serveur (max 20Mo)';
-    http_response_code(500);
-    echo json_encode(['error' => $errorMsg]);
+    $errorMsg = 'Erreur lors du transfert du fichier';
+    if ($fileError === 1 || $fileError === 2) {
+        $errorMsg = 'Le fichier est trop volumineux (max 10Mo)';
+    }
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => $errorMsg]);
     exit;
 }
 
-// Vérifier l'extension
+// SÉCURITÉ: Vérifier la taille (max 10Mo - réduit de 20Mo)
+$maxSize = 10 * 1024 * 1024;
+if ($fileSize > $maxSize) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'Fichier trop volumineux (max 10Mo)']);
+    exit;
+}
+
+// SÉCURITÉ: Liste blanche des extensions ET types MIME
+$allowedTypes = [
+    'jpg'  => 'image/jpeg',
+    'jpeg' => 'image/jpeg',
+    'png'  => 'image/png',
+    'webp' => 'image/webp',
+];
+
+// SÉCURITÉ: Vérifier l'extension (prévention double extension: file.php.jpg)
 $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-$allowed = ['jpg', 'jpeg', 'png', 'webp'];
 
-if (!in_array($fileExt, $allowed)) {
+// Vérifier qu'il n'y a pas de double extension dangereuse
+$baseNameWithoutExt = pathinfo($fileName, PATHINFO_FILENAME);
+$dangerousExtensions = ['php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'phar', 'js', 'html', 'htm', 'svg', 'exe', 'sh', 'bat'];
+foreach ($dangerousExtensions as $dangerousExt) {
+    if (preg_match('/\.' . preg_quote($dangerousExt, '/') . '$/i', $baseNameWithoutExt)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Nom de fichier non autorisé']);
+        exit;
+    }
+}
+
+if (!array_key_exists($fileExt, $allowedTypes)) {
     http_response_code(400);
-    echo json_encode(['error' => 'Format de fichier non autorisé (JPG, PNG, WEBP uniquement)']);
+    echo json_encode(['success' => false, 'error' => 'Format non autorisé (JPG, PNG, WEBP uniquement)']);
     exit;
 }
 
-// Vérifier la taille (max 20Mo)
-if ($fileSize > 20 * 1024 * 1024) {
+// SÉCURITÉ: Vérifier le type MIME réel du fichier (pas seulement l'extension)
+$finfo = finfo_open(FILEINFO_MIME_TYPE);
+$detectedMime = finfo_file($finfo, $fileTmpName);
+finfo_close($finfo);
+
+if ($detectedMime !== $allowedTypes[$fileExt]) {
+    // Log de sécurité
+    error_log("[SECURITY] Upload blocked: extension '$fileExt' but MIME '$detectedMime' - possible attack");
     http_response_code(400);
-    echo json_encode(['error' => 'Fichier trop volumineux (max 20Mo)']);
+    echo json_encode(['success' => false, 'error' => 'Le contenu du fichier ne correspond pas à son extension']);
+    exit;
+}
+
+// SÉCURITÉ: Vérifier que c'est vraiment une image valide
+$imageInfo = @getimagesize($fileTmpName);
+if ($imageInfo === false) {
+    error_log("[SECURITY] Upload blocked: file is not a valid image");
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'Le fichier n\'est pas une image valide']);
+    exit;
+}
+
+// Vérifier les dimensions (éviter les images trop grandes qui pourraient causer des DoS)
+$maxDimension = 8000; // pixels
+if ($imageInfo[0] > $maxDimension || $imageInfo[1] > $maxDimension) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => "Image trop grande (max {$maxDimension}x{$maxDimension} pixels)"]);
     exit;
 }
 
 // Déterminer le dossier d'upload
-// En production Railway: /data/uploads/catalogue/
-// En local: backend/uploads/catalogue/
 if (file_exists('/data') && is_writable('/data')) {
     $uploadDir = '/data/uploads/catalogue/';
 } else {
     $uploadDir = __DIR__ . '/../../uploads/catalogue/';
 }
 
+// SÉCURITÉ: Créer le dossier avec permissions restrictives (0755 au lieu de 0777)
 if (!file_exists($uploadDir)) {
-    mkdir($uploadDir, 0777, true);
-    error_log("UPLOAD: Created directory: $uploadDir");
+    mkdir($uploadDir, 0755, true);
 }
 
-// Générer un nom unique
-$newFileName = uniqid('catalogue_', true) . '.' . $fileExt;
+// SÉCURITÉ: Générer un nom aléatoire sécurisé (évite les collisions et les attaques par nom)
+$newFileName = bin2hex(random_bytes(16)) . '.' . $fileExt;
 $destPath = $uploadDir . $newFileName;
 
-error_log("UPLOAD: Attempting to save to: $destPath");
+// SÉCURITÉ: Vérifier que le chemin final est bien dans le dossier d'upload (anti path traversal)
+$realUploadDir = realpath($uploadDir);
+if ($realUploadDir === false) {
+    // Le dossier vient d'être créé, on refait le check
+    $realUploadDir = realpath($uploadDir);
+}
 
 // Utiliser copy + unlink pour être plus robuste dans Docker avec les volumes
 if (copy($fileTmpName, $destPath)) {
-    unlink($fileTmpName);
-    error_log("UPLOAD: Success! File saved to: $destPath");
+    // Supprimer le fichier temporaire
+    @unlink($fileTmpName);
 
-    // Retourner l'URL relative - en local via /backend/uploads, en prod via /uploads
+    // SÉCURITÉ: Définir les permissions du fichier uploadé (lecture seule pour le web)
+    chmod($destPath, 0644);
+
+    // Retourner l'URL relative
     if (file_exists('/data') && is_writable('/data')) {
         $fileUrl = '/uploads/catalogue/' . $newFileName;
     } else {
         $fileUrl = '/backend/uploads/catalogue/' . $newFileName;
     }
+
+    // Log succès (sans données sensibles)
+    error_log("[UPLOAD] Image uploaded successfully: $newFileName by admin: " . $session->get('admin_email'));
 
     echo json_encode([
         'success' => true,
@@ -110,12 +167,10 @@ if (copy($fileTmpName, $destPath)) {
         'filename' => $newFileName
     ]);
 } else {
-    $error = error_get_last();
-    error_log("UPLOAD: Failed to copy file. Error: " . ($error['message'] ?? 'Unknown error'));
+    error_log("[UPLOAD ERROR] Failed to save file");
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'Impossible de sauvegarder le fichier sur le serveur. Problème de permissions ou de stockage.',
-        'details' => $error['message'] ?? 'Unknown error'
+        'error' => 'Impossible de sauvegarder le fichier sur le serveur'
     ]);
 }

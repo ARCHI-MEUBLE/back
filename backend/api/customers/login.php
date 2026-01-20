@@ -2,10 +2,13 @@
 /**
  * API: Connexion client
  * POST /api/customers/login
+ *
+ * SÉCURITÉ: Rate limiting activé pour protection brute force
  */
 
 require_once __DIR__ . '/../../config/cors.php';
 require_once __DIR__ . '/../../core/Session.php';
+require_once __DIR__ . '/../../core/RateLimiter.php';
 
 header('Content-Type: application/json');
 
@@ -19,21 +22,41 @@ require_once __DIR__ . '/../../models/Customer.php';
 
 try {
     $data = json_decode(file_get_contents('php://input'), true);
-    
+
     if (empty($data['email']) || empty($data['password'])) {
         http_response_code(400);
         echo json_encode(['error' => 'Email et mot de passe requis']);
         exit;
     }
-    
+
+    // SÉCURITÉ: Vérifier le rate limiting AVANT de tenter la connexion
+    $rateLimiter = new RateLimiter();
+    $rateCheck = $rateLimiter->checkLogin($data['email']);
+
+    if (!$rateCheck['allowed']) {
+        http_response_code(429); // Too Many Requests
+        echo json_encode([
+            'error' => 'Trop de tentatives de connexion',
+            'message' => $rateCheck['message'],
+            'retry_after' => $rateCheck['retry_after'] ?? 900
+        ]);
+        exit;
+    }
+
     $customer = new Customer();
     $customerData = $customer->verifyCredentials($data['email'], $data['password']);
-    
+
     if (!$customerData) {
+        // SÉCURITÉ: Enregistrer la tentative échouée
+        $rateLimiter->recordLogin($data['email'], false);
+
         http_response_code(401);
         echo json_encode(['error' => 'Email ou mot de passe incorrect']);
         exit;
     }
+
+    // SÉCURITÉ: Réinitialiser le compteur après succès
+    $rateLimiter->recordLogin($data['email'], true);
 
     // Utiliser la classe Session (sécurisée)
     $session = Session::getInstance();

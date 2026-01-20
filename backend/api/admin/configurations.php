@@ -3,9 +3,12 @@
  * API Admin: Configurations clients
  * GET /api/admin/configurations - Lister toutes les configurations
  * GET /api/admin/configurations?id=123 - Détails d'une configuration
+ *
+ * SÉCURITÉ: Requêtes préparées pour prévenir l'injection SQL
  */
 
 require_once __DIR__ . '/../../config/cors.php';
+require_once __DIR__ . '/../../core/Session.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -23,15 +26,18 @@ if (!$session->has('admin_email') || $session->get('is_admin') !== true) {
 require_once __DIR__ . '/../../core/Database.php';
 
 try {
-    error_log("🔍 Admin configurations API appelée");
-    error_log("👤 Session admin_email: " . ($session->get('admin_email') ?? 'NON DEFINI'));
-
     $db = Database::getInstance();
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         if (isset($_GET['id'])) {
-            // Détails d'une configuration
-            $id = (int)$_GET['id'];
+            // SÉCURITÉ: Validation stricte de l'ID
+            $id = filter_var($_GET['id'], FILTER_VALIDATE_INT);
+            if ($id === false || $id <= 0) {
+                http_response_code(400);
+                echo json_encode(['error' => 'ID invalide']);
+                exit;
+            }
+
             $query = "SELECT c.*,
                              cust.email as customer_email,
                              cust.first_name as customer_first_name,
@@ -60,20 +66,33 @@ try {
             exit;
         }
 
-        // Liste paginée
-        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 100;
-        $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
+        // Liste paginée - SÉCURITÉ: Validation des paramètres
+        $limit = filter_var($_GET['limit'] ?? 100, FILTER_VALIDATE_INT);
+        $offset = filter_var($_GET['offset'] ?? 0, FILTER_VALIDATE_INT);
 
-        // Filtre par statut si fourni
-        $statusFilter = isset($_GET['status']) ? $_GET['status'] : null;
-        $whereClause = '';
+        // Limites de sécurité
+        $limit = ($limit === false || $limit <= 0 || $limit > 500) ? 100 : $limit;
+        $offset = ($offset === false || $offset < 0) ? 0 : $offset;
+
+        // SÉCURITÉ: Liste blanche stricte des statuts + requête préparée
         $validStatuses = ['en_attente_validation', 'validee', 'payee', 'en_production', 'livree', 'annulee', 'en_commande'];
-        if ($statusFilter && in_array($statusFilter, $validStatuses)) {
-            $whereClause = "WHERE c.status = '$statusFilter'";
+        $statusFilter = isset($_GET['status']) ? $_GET['status'] : null;
+
+        $params = [];
+        $whereClause = '';
+
+        if ($statusFilter !== null) {
+            // SÉCURITÉ: Vérification stricte contre la liste blanche
+            if (!in_array($statusFilter, $validStatuses, true)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Statut invalide']);
+                exit;
+            }
+            $whereClause = "WHERE c.status = ?";
+            $params[] = $statusFilter;
         }
 
-        // SQLite a des problèmes avec les paramètres PDO sur LIMIT/OFFSET
-        // On les caste en int pour la sécurité et on les interpole directement
+        // SÉCURITÉ: Requête préparée avec paramètres
         $listQuery = "SELECT c.id, c.user_id, c.template_id as model_id, c.prompt, c.config_string, c.price, c.glb_url, c.dxf_url, c.created_at, c.status,
                               cust.email as customer_email,
                               cust.first_name as customer_first_name,
@@ -85,20 +104,20 @@ try {
                        LEFT JOIN models m ON c.template_id = m.id
                        $whereClause
                        ORDER BY c.created_at DESC
-                       LIMIT $limit OFFSET $offset";
+                       LIMIT ? OFFSET ?";
 
-        error_log("📝 Requête SQL: " . $listQuery);
-        $rows = $db->query($listQuery);
-        // error_log("🔍 Résultat query(): " . print_r($rows, true)); // Trop verbeux
+        // Ajouter limit et offset aux paramètres
+        $params[] = $limit;
+        $params[] = $offset;
 
-        error_log("📊 Nombre de configurations trouvées: " . count($rows));
+        $rows = $db->query($listQuery, $params);
 
         // Enrichir les données (nom de la configuration, nom complet du client)
         foreach ($rows as &$row) {
             if (isset($row['customer_first_name']) || isset($row['customer_last_name'])) {
                 $row['customer_name'] = trim(($row['customer_first_name'] ?? '') . ' ' . ($row['customer_last_name'] ?? ''));
             }
-            
+
             // Extraire le nom de la configuration du JSON
             if (isset($row['config_string'])) {
                 try {
@@ -112,11 +131,11 @@ try {
             }
         }
 
+        // SÉCURITÉ: Requête count aussi préparée
+        $countParams = $statusFilter ? [$statusFilter] : [];
         $countQuery = "SELECT COUNT(*) as count FROM configurations c $whereClause";
-        $countRow = $db->queryOne($countQuery);
+        $countRow = $db->queryOne($countQuery, $countParams);
         $total = $countRow ? (int)$countRow['count'] : 0;
-
-        error_log("✅ Envoi de " . count($rows) . " configurations (total: $total)");
 
         http_response_code(200);
         echo json_encode([
@@ -131,6 +150,8 @@ try {
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed']);
 } catch (Exception $e) {
+    // SÉCURITÉ: Ne pas exposer les détails de l'erreur
+    error_log("[ADMIN CONFIG ERROR] " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(['error' => 'Erreur serveur']);
 }
