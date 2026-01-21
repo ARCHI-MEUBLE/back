@@ -35,7 +35,7 @@ try {
         // Récupérer une commande spécifique
         $orderData = $order->getById($_GET['id']);
 
-        if (!$orderData || $orderData['customer_id'] != $customerId) {
+        if (!$orderData || (int)$orderData['customer_id'] !== (int)$customerId) {
             http_response_code(404);
             echo json_encode(['error' => 'Commande non trouvée']);
             exit;

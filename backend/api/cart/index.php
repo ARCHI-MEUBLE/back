@@ -38,7 +38,8 @@ try {
             echo json_encode([
                 'items' => $items,
                 'total' => $total,
-                'count' => $count
+                'count' => $count,
+                'item_count' => $count
             ]);
             break;
             

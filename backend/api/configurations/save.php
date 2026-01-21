@@ -130,33 +130,57 @@ try {
         $config->update($configId, $updateData);
         $savedConfiguration = $config->getById($configId);
 
+        // Préparer la réponse
+        $responseData = [
+            'success' => true,
+            'message' => 'Configuration mise à jour avec succès',
+            'configuration' => $savedConfiguration
+        ];
+
         // RÉPONSE RAPIDE AU CLIENT (Découplage de l'email)
         if (function_exists('fastcgi_finish_request')) {
-            echo json_encode([
-                'success' => true,
-                'message' => 'Configuration mise à jour avec succès',
-                'configuration' => $savedConfiguration
-            ]);
+            http_response_code(200);
+            echo json_encode($responseData);
             session_write_close();
             fastcgi_finish_request();
+
+            // Notification Admin (après libération du client)
+            try {
+                require_once __DIR__ . '/../../models/Customer.php';
+                require_once __DIR__ . '/../../services/EmailService.php';
+
+                $emailService = new EmailService();
+                $customer = null;
+                if ($userId) {
+                    $customerModel = new Customer();
+                    $customer = $customerModel->getById($userId);
+                }
+                if (!$customer) {
+                    $customer = [
+                        'first_name' => $isAdmin ? 'Admin' : 'Visiteur',
+                        'last_name' => $session->get('admin_email') ?? 'Système',
+                        'email' => $session->get('admin_email') ?? 'noreply@archimeuble.com',
+                        'phone' => ''
+                    ];
+                }
+                $emailService->sendNewConfigurationNotificationToAdmin($savedConfiguration, $customer);
+            } catch (Exception $e) {
+                error_log("Failed to send admin notification (update): " . $e->getMessage());
+            }
+            exit; // Important: ne pas continuer après fastcgi
         }
 
-        // Notification Admin
+        // Sans fastcgi: notification puis réponse
         try {
-            error_log("Triggering admin notification for config update (ID: $configId). UserID: " . ($userId ?: 'ADMIN'));
             require_once __DIR__ . '/../../models/Customer.php';
             require_once __DIR__ . '/../../services/EmailService.php';
-            
+
             $emailService = new EmailService();
-            
-            // Si c'est un client, on récupère ses infos
             $customer = null;
             if ($userId) {
                 $customerModel = new Customer();
                 $customer = $customerModel->getById($userId);
             }
-            
-            // Si pas de client (ex: admin qui crée), on simule un client avec les infos de session ou génériques
             if (!$customer) {
                 $customer = [
                     'first_name' => $isAdmin ? 'Admin' : 'Visiteur',
@@ -165,19 +189,13 @@ try {
                     'phone' => ''
                 ];
             }
-
-            $sent = $emailService->sendNewConfigurationNotificationToAdmin($savedConfiguration, $customer);
-            error_log("Notification sent result: " . ($sent ? 'SUCCESS' : 'FAILURE'));
+            $emailService->sendNewConfigurationNotificationToAdmin($savedConfiguration, $customer);
         } catch (Exception $e) {
             error_log("Failed to send admin notification (update): " . $e->getMessage());
         }
 
         http_response_code(200);
-        echo json_encode([
-            'success' => true,
-            'message' => 'Configuration mise à jour avec succès',
-            'configuration' => $savedConfiguration
-        ]);
+        echo json_encode($responseData);
         exit;
     }
 
@@ -209,41 +227,57 @@ try {
     // Récupérer la configuration créée
     $savedConfiguration = $config->getById($configId);
 
+    // Préparer la réponse
+    $responseData = [
+        'success' => true,
+        'message' => 'Configuration sauvegardée avec succès',
+        'configuration' => $savedConfiguration
+    ];
+
     // RÉPONSE RAPIDE AU CLIENT (Découplage de l'email)
-    // On envoie le succès immédiatement pour éviter le timeout du navigateur
-    // même si l'envoi de l'email prend du temps ou échoue.
-    error_log("SAVE.PHP - Attempting fastcgi_finish_request");
     if (function_exists('fastcgi_finish_request')) {
-        error_log("SAVE.PHP - Sending rapid JSON response");
-        echo json_encode([
-            'success' => true,
-            'message' => 'Configuration sauvegardée avec succès',
-            'configuration' => $savedConfiguration
-        ]);
+        http_response_code(201);
+        echo json_encode($responseData);
         session_write_close();
-        fastcgi_finish_request(); // Libère le navigateur immédiatement
-        error_log("SAVE.PHP - Browser released, continuing in background");
-    } else {
-        // Fallback si pas en FastCGI (on continue normalement, mais le risque de timeout client persiste)
-        error_log("SAVE.PHP - fastcgi_finish_request not available, continuing synchronously");
+        fastcgi_finish_request();
+
+        // Notification Admin (après libération du client)
+        try {
+            require_once __DIR__ . '/../../models/Customer.php';
+            require_once __DIR__ . '/../../services/EmailService.php';
+
+            $emailService = new EmailService();
+            $customer = null;
+            if ($userId) {
+                $customerModel = new Customer();
+                $customer = $customerModel->getById($userId);
+            }
+            if (!$customer) {
+                $customer = [
+                    'first_name' => $isAdmin ? 'Admin' : 'Visiteur',
+                    'last_name' => $session->get('admin_email') ?? 'Système',
+                    'email' => $session->get('admin_email') ?? 'noreply@archimeuble.com',
+                    'phone' => ''
+                ];
+            }
+            $emailService->sendNewConfigurationNotificationToAdmin($savedConfiguration, $customer);
+        } catch (Exception $e) {
+            error_log("Failed to send admin notification (create): " . $e->getMessage());
+        }
+        exit; // Important: ne pas continuer après fastcgi
     }
 
-    // Notification Admin (s'exécute après que le client ait reçu sa réponse si fastcgi_finish_request est dispo)
+    // Sans fastcgi: notification puis réponse
     try {
-        error_log("Triggering admin notification for new config (ID: $configId). UserID: " . ($userId ?: 'ADMIN'));
         require_once __DIR__ . '/../../models/Customer.php';
         require_once __DIR__ . '/../../services/EmailService.php';
-        
+
         $emailService = new EmailService();
-        
-        // Si c'est un client, on récupère ses infos
         $customer = null;
         if ($userId) {
             $customerModel = new Customer();
             $customer = $customerModel->getById($userId);
         }
-        
-        // Si pas de client (ex: admin qui crée), on simule un client avec les infos de session ou génériques
         if (!$customer) {
             $customer = [
                 'first_name' => $isAdmin ? 'Admin' : 'Visiteur',
@@ -252,19 +286,13 @@ try {
                 'phone' => ''
             ];
         }
-
-        $sent = $emailService->sendNewConfigurationNotificationToAdmin($savedConfiguration, $customer);
-        error_log("Notification sent result: " . ($sent ? 'SUCCESS' : 'FAILURE'));
+        $emailService->sendNewConfigurationNotificationToAdmin($savedConfiguration, $customer);
     } catch (Exception $e) {
         error_log("Failed to send admin notification (create): " . $e->getMessage());
     }
-    
+
     http_response_code(201);
-    echo json_encode([
-        'success' => true,
-        'message' => 'Configuration sauvegardée avec succès',
-        'configuration' => $savedConfiguration
-    ]);
+    echo json_encode($responseData);
     
 } catch (Exception $e) {
     error_log("CRITICAL ERROR in save.php: " . $e->getMessage());

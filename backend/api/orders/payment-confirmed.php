@@ -57,7 +57,7 @@ try {
         exit;
     }
 
-    if ($order['customer_id'] != $_SESSION['customer_id']) {
+    if ((int)$order['customer_id'] !== (int)$_SESSION['customer_id']) {
         http_response_code(403);
         echo json_encode(['error' => 'Accès interdit']);
         exit;
