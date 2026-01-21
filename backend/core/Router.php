@@ -169,8 +169,8 @@ class Router {
         $endpoint = str_replace('backend/api/', '', $path);
         $endpoint = explode('?', $endpoint)[0]; // Enlever les query params
 
-        // Enlever l'extension .php si présente
-        $endpoint = preg_replace('/\.php$/', '', $endpoint);
+        // Enlever l'extension .php si présente (même si suivie d'un /)
+        $endpoint = preg_replace('/\.php(\/|$)/', '$1', $endpoint);
 
         // Essayer d'abord le chemin exact (pour les fichiers dans des sous-dossiers)
         $exactFile = $this->baseDir . '/backend/api/' . $endpoint . '.php';
@@ -181,7 +181,7 @@ class Router {
         }
 
         // Sinon, gérer les sous-routes avec fichier principal (ex: admin-auth/login -> admin-auth.php)
-        // Extraire la première partie (ex: admin-auth, admin, customers)
+        // Extraire la première partie (ex: admin-auth, admin, customers, facade-materials)
         $parts = explode('/', $endpoint);
         $mainEndpoint = $parts[0];
         
@@ -242,6 +242,14 @@ class Router {
             $possiblePaths[] = '/data/' . $cleanPath;
             // Local: baseDir/models/...
             $possiblePaths[] = $this->baseDir . '/' . $cleanPath;
+        } elseif (strpos($cleanPath, 'back/textures/') === 0) {
+            // Textures: back/textures/... -> textures/...
+            $texturePath = substr($cleanPath, strlen('back/'));
+            $possiblePaths[] = $this->baseDir . '/' . $texturePath;
+        } elseif (strpos($path, 'back/textures/') === 0) {
+            // Cas où le path original a back/textures/
+            $texturePath = substr($path, strlen('back/'));
+            $possiblePaths[] = $this->baseDir . '/' . $texturePath;
         } else {
             $possiblePaths[] = $this->baseDir . '/' . $path;
         }
