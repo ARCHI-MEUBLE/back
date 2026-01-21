@@ -57,8 +57,8 @@ if (!move_uploaded_file($file['tmp_name'], $destPath)) {
     exit();
 }
 
-// URL publique relative (accessible par le front)
-$publicUrl = '/back/textures/' . $filename;
+// URL publique relative (accessible par le front via proxy)
+$publicUrl = '/textures/' . $filename;
 
 echo json_encode(['success' => true, 'url' => $publicUrl]);
 exit();
