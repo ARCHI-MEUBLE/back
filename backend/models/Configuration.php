@@ -26,9 +26,9 @@ class Configuration {
      * @param string|null $userSession
      * @return int|false ID de la configuration créée ou false en cas d'erreur
      */
-    public function create($userId, $templateId, $configString, $price, $glbUrl = null, $prompt = null, $userSession = null) {
-        $query = "INSERT INTO configurations (user_id, user_session, template_id, config_string, prompt, price, glb_url)
-                  VALUES (:user_id, :user_session, :template_id, :config_string, :prompt, :price, :glb_url)";
+    public function create($userId, $templateId, $configString, $price, $glbUrl = null, $prompt = null, $userSession = null, $status = 'en_attente_validation') {
+        $query = "INSERT INTO configurations (user_id, user_session, template_id, config_string, prompt, price, glb_url, status)
+                  VALUES (:user_id, :user_session, :template_id, :config_string, :prompt, :price, :glb_url, :status)";
 
         $success = $this->db->execute($query, [
             'user_id' => $userId,
@@ -37,7 +37,8 @@ class Configuration {
             'config_string' => $configString,
             'prompt' => $prompt,
             'price' => $price,
-            'glb_url' => $glbUrl
+            'glb_url' => $glbUrl,
+            'status' => $status
         ]);
 
         return $success ? $this->db->lastInsertId() : false;
@@ -60,9 +61,12 @@ class Configuration {
      * @return array|null
      */
     public function getById($id) {
-        $query = "SELECT c.*
+        $query = "SELECT c.*, oi.order_id
                   FROM configurations c
-                  WHERE c.id = :id";
+                  LEFT JOIN order_items oi ON c.id = oi.configuration_id
+                  WHERE c.id = :id
+                  ORDER BY oi.id DESC
+                  LIMIT 1";
         return $this->db->queryOne($query, ['id' => $id]);
     }
 
@@ -72,9 +76,22 @@ class Configuration {
      * @return array
      */
     public function getByUserId($userId) {
-        $query = "SELECT c.*
+        // Ne pas retourner les configurations qui font partie d'une commande payée
+        $query = "SELECT c.*,
+                         (SELECT MAX(order_id) FROM order_items WHERE configuration_id = c.id) as order_id,
+                         (SELECT o.payment_status FROM orders o
+                          JOIN order_items oi ON o.id = oi.order_id
+                          WHERE oi.configuration_id = c.id
+                          LIMIT 1) as order_payment_status
                   FROM configurations c
                   WHERE c.user_id = :user_id
+                  -- Exclure les configurations déjà payées
+                  AND NOT EXISTS (
+                      SELECT 1 FROM order_items oi
+                      JOIN orders o ON oi.order_id = o.id
+                      WHERE oi.configuration_id = c.id
+                      AND o.payment_status = 'paid'
+                  )
                   ORDER BY c.created_at DESC";
         return $this->db->query($query, ['user_id' => $userId]);
     }

@@ -24,7 +24,7 @@ class Sample {
     public function getAllTypes() {
         try {
             return $this->db->query("
-                SELECT id, name, material, description, active, position, created_at, updated_at
+                SELECT id, name, material, description, active, position, price_per_m2, unit_price, created_at, updated_at
                 FROM sample_types
                 ORDER BY material, position, name
             ");
@@ -40,7 +40,7 @@ class Sample {
     public function getTypeById($id) {
         try {
             $results = $this->db->query("
-                SELECT id, name, material, description, active, position, created_at, updated_at
+                SELECT id, name, material, description, active, position, price_per_m2, unit_price, created_at, updated_at
                 FROM sample_types
                 WHERE id = ?
             ", [$id]);
@@ -61,7 +61,7 @@ class Sample {
                 INSERT INTO sample_types (name, material, description, position, active)
                 VALUES (?, ?, ?, ?, 1)
             ");
-            $stmt->execute([$name, $material, $description, $position]);
+            $stmt->execute([$name, $material, $description, (int)$position]);
             return $pdo->lastInsertId();
         } catch (PDOException $e) {
             error_log("Erreur Sample::createType: " . $e->getMessage());
@@ -121,7 +121,7 @@ class Sample {
     public function getColorsByTypeId($type_id) {
         try {
             return $this->db->query("
-                SELECT id, type_id, name, hex, image_url, active, position, created_at, updated_at
+                SELECT id, type_id, name, hex, image_url, active, position, price_per_m2, unit_price, created_at, updated_at
                 FROM sample_colors
                 WHERE type_id = ?
                 ORDER BY position, name
@@ -138,7 +138,7 @@ class Sample {
     public function getColorById($id) {
         try {
             $results = $this->db->query("
-                SELECT id, type_id, name, hex, image_url, active, position, created_at, updated_at
+                SELECT id, type_id, name, hex, image_url, active, position, price_per_m2, unit_price, created_at, updated_at
                 FROM sample_colors
                 WHERE id = ?
             ", [$id]);
@@ -152,7 +152,7 @@ class Sample {
     /**
      * Crée une nouvelle couleur pour un type
      */
-    public function createColor($type_id, $name, $hex = null, $image_url = null, $position = 0) {
+    public function createColor($type_id, $name, $hex = null, $image_url = null, $position = 0, $price_per_m2 = 0, $unit_price = 0) {
         try {
             // Vérifier que le type existe
             if (!$this->getTypeById($type_id)) {
@@ -161,10 +161,10 @@ class Sample {
 
             $pdo = $this->db->getPDO();
             $stmt = $pdo->prepare("
-                INSERT INTO sample_colors (type_id, name, hex, image_url, position, active)
-                VALUES (?, ?, ?, ?, ?, 1)
+                INSERT INTO sample_colors (type_id, name, hex, image_url, position, active, price_per_m2, unit_price)
+                VALUES (?, ?, ?, ?, ?, 1, ?, ?)
             ");
-            $stmt->execute([$type_id, $name, $hex, $image_url, $position]);
+            $stmt->execute([$type_id, $name, $hex, $image_url, (int)$position, (float)$price_per_m2, (float)$unit_price]);
             return $pdo->lastInsertId();
         } catch (PDOException $e) {
             error_log("Erreur Sample::createColor: " . $e->getMessage());
@@ -186,14 +186,17 @@ class Sample {
             $image_url = isset($data['image_url']) ? $data['image_url'] : $color['image_url'];
             $active = isset($data['active']) ? (int)$data['active'] : $color['active'];
             $position = isset($data['position']) ? (int)$data['position'] : $color['position'];
+            $price_per_m2 = isset($data['price_per_m2']) ? (float)$data['price_per_m2'] : $color['price_per_m2'];
+            $unit_price = isset($data['unit_price']) ? (float)$data['unit_price'] : $color['unit_price'];
 
             $stmt = $pdo->prepare("
                 UPDATE sample_colors
                 SET name = ?, hex = ?, image_url = ?, active = ?, position = ?,
+                    price_per_m2 = ?, unit_price = ?,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
             ");
-            return $stmt->execute([$name, $hex, $image_url, $active, $position, $id]);
+            return $stmt->execute([$name, $hex, $image_url, $active, $position, $price_per_m2, $unit_price, $id]);
         } catch (PDOException $e) {
             error_log("Erreur Sample::updateColor: " . $e->getMessage());
             return false;

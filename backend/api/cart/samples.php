@@ -10,6 +10,40 @@
 require_once __DIR__ . '/../../config/cors.php';
 require_once __DIR__ . '/../../core/Database.php';
 
+/**
+ * Convertit un chemin relatif d'image en URL complète
+ */
+function convertImagePath($imagePath) {
+    if (!$imagePath) {
+        return null;
+    }
+
+    // Si c'est déjà une URL complète, la retourner telle quelle
+    if (strpos($imagePath, 'http://') === 0 || strpos($imagePath, 'https://') === 0) {
+        return $imagePath;
+    }
+
+    // S'assurer que le chemin commence par /
+    if (strpos($imagePath, '/') !== 0) {
+        $imagePath = '/' . $imagePath;
+    }
+
+    // Détecter l'environnement
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $isLocal = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
+
+    if ($isLocal) {
+        // En local, on retourne un chemin relatif pour que Next.js le gère via son proxy
+        return $imagePath;
+    }
+
+    // EN PRODUCTION: Les images sont sur Railway backend
+    $protocol = 'https';
+    $baseUrl = $protocol . '://' . $host;
+
+    return $baseUrl . $imagePath;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
@@ -38,6 +72,8 @@ try {
                 sc.name as color_name,
                 sc.hex,
                 sc.image_url,
+                sc.price_per_m2,
+                sc.unit_price,
                 st.name as type_name,
                 st.material,
                 st.description as type_description
@@ -49,6 +85,13 @@ try {
         ";
 
         $items = $db->query($query, [$customerId]);
+
+        // Convertir les chemins d'images en URLs complètes
+        foreach ($items as &$item) {
+            if (isset($item['image_url'])) {
+                $item['image_url'] = convertImagePath($item['image_url']);
+            }
+        }
 
         http_response_code(200);
         echo json_encode([
@@ -72,13 +115,6 @@ try {
         $sampleColorId = $input['sample_color_id'];
         $quantity = $input['quantity'] ?? 1;
 
-        // Vérifier la limite de 3 échantillons gratuits
-        $currentCount = $db->query(
-            "SELECT COUNT(*) as count FROM cart_sample_items WHERE customer_id = ?",
-            [$customerId]
-        );
-        $totalSamples = $currentCount[0]['count'] ?? 0;
-
         // Vérifier si l'échantillon existe déjà dans le panier
         $existing = $db->query(
             "SELECT id, quantity FROM cart_sample_items WHERE customer_id = ? AND sample_color_id = ?",
@@ -94,16 +130,6 @@ try {
             exit;
         }
 
-        // Vérifier la limite
-        if ($totalSamples >= 3) {
-            http_response_code(400);
-            echo json_encode([
-                'error' => 'Limite de 3 échantillons gratuits atteinte',
-                'limit_reached' => true
-            ]);
-            exit;
-        }
-
         // Insérer un nouvel article
         $db->execute(
             "INSERT INTO cart_sample_items (customer_id, sample_color_id, quantity) VALUES (?, ?, ?)",
@@ -115,8 +141,7 @@ try {
         echo json_encode([
             'success' => true,
             'message' => 'Échantillon ajouté au panier',
-            'item_id' => $itemId,
-            'samples_count' => $totalSamples + 1
+            'item_id' => $itemId
         ]);
         exit;
     }

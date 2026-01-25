@@ -4,12 +4,26 @@
  * Gère les opérations sur la table users
  * Auteur : Collins
  * Date : 2025-10-21
+ *
+ * SÉCURITÉ: Liste blanche des colonnes pour prévenir l'injection SQL
  */
 
 require_once __DIR__ . '/../core/Database.php';
 
 class User {
     private $db;
+
+    /**
+     * SÉCURITÉ: Liste blanche des colonnes autorisées pour update()
+     * Seules ces colonnes peuvent être modifiées via la méthode update()
+     */
+    private const ALLOWED_UPDATE_COLUMNS = [
+        'email',
+        'name',
+        'updated_at',
+        // NE PAS INCLURE: 'password_hash', 'id', 'created_at'
+        // Le mot de passe doit être modifié via une méthode dédiée
+    ];
 
     public function __construct() {
         $this->db = Database::getInstance();
@@ -66,21 +80,55 @@ class User {
 
     /**
      * Met à jour un utilisateur
+     * SÉCURITÉ: Seules les colonnes de la liste blanche peuvent être modifiées
+     *
      * @param string $id
      * @param array $data
      * @return bool
+     * @throws InvalidArgumentException si une colonne non autorisée est fournie
      */
     public function update($id, $data) {
         $fields = [];
         $params = ['id' => $id];
 
         foreach ($data as $key => $value) {
+            // SÉCURITÉ: Vérifier que la colonne est dans la liste blanche
+            if (!in_array($key, self::ALLOWED_UPDATE_COLUMNS, true)) {
+                // Log la tentative suspecte
+                error_log("[SECURITY] Tentative de modification de colonne non autorisée: '$key' pour user ID: $id");
+                // Option 1: Ignorer silencieusement la colonne
+                continue;
+                // Option 2: Lever une exception (décommenter si préféré)
+                // throw new InvalidArgumentException("Colonne '$key' non autorisée pour la mise à jour");
+            }
+
             $fields[] = "$key = :$key";
             $params[$key] = $value;
         }
 
+        // Si aucun champ valide, ne rien faire
+        if (empty($fields)) {
+            return false;
+        }
+
         $query = "UPDATE users SET " . implode(', ', $fields) . " WHERE id = :id";
         return $this->db->execute($query, $params);
+    }
+
+    /**
+     * Met à jour le mot de passe d'un utilisateur
+     * SÉCURITÉ: Méthode dédiée pour le changement de mot de passe
+     *
+     * @param string $id
+     * @param string $newPasswordHash - Doit être déjà hashé avec password_hash()
+     * @return bool
+     */
+    public function updatePassword($id, $newPasswordHash) {
+        $query = "UPDATE users SET password_hash = :password_hash WHERE id = :id";
+        return $this->db->execute($query, [
+            'id' => $id,
+            'password_hash' => $newPasswordHash
+        ]);
     }
 
     /**

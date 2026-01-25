@@ -71,11 +71,13 @@ class SMTPMailer {
             ]
         ]);
 
+        $protocol = ($this->port == 465) ? "ssl://" : "tcp://";
+
         $this->socket = stream_socket_client(
-            "tcp://{$this->host}:{$this->port}",
+            "{$protocol}{$this->host}:{$this->port}",
             $errno,
             $errstr,
-            30,
+            10, // Timeout réduit à 10s
             STREAM_CLIENT_CONNECT,
             $context
         );
@@ -99,7 +101,7 @@ class SMTPMailer {
 
             $this->sendCommand("EHLO {$this->host}");
         } else {
-            $this->sendCommand("HELO {$this->host}");
+            $this->sendCommand("EHLO {$this->host}");
         }
     }
 
@@ -116,8 +118,11 @@ class SMTPMailer {
      * Envoie une commande SMTP
      */
     private function sendCommand($command) {
+        error_log("SMTP OUT: " . $command);
         fwrite($this->socket, $command . "\r\n");
-        return $this->getResponse();
+        $response = $this->getResponse();
+        error_log("SMTP IN: " . $response);
+        return $response;
     }
 
     /**

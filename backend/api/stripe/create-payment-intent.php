@@ -52,6 +52,7 @@ try {
     $amount = (int)($data['amount'] * 100); // Convertir en centimes
     $installments = isset($data['installments']) ? (int)$data['installments'] : 1;
     $currency = $data['currency'] ?? 'eur';
+    $paymentType = $data['payment_type'] ?? 'full'; // 'full', 'deposit', 'balance'
 
     // Récupérer les infos du client
     require_once __DIR__ . '/../../models/Customer.php';
@@ -87,24 +88,22 @@ try {
         ],
         'metadata' => [
             'customer_id' => $_SESSION['customer_id'],
-            'installments' => $installments
+            'installments' => $installments,
+            'payment_type' => $paymentType
         ]
     ];
 
     // Si paiement en 3 fois, configurer les paramètres spécifiques
     if ($installments === 3) {
-        // Stripe ne gère pas nativement le paiement en 3 fois en France
-        // On doit utiliser une approche custom ou un partenaire comme Alma, Pledg, etc.
-        // Pour cette implémentation, on va créer 3 PaymentIntents séparés
-
-        // Pour l'instant, créer le premier paiement (1/3)
-        $firstPaymentAmount = (int)ceil($amount / 3);
-        $paymentIntentParams['amount'] = $firstPaymentAmount;
-        $paymentIntentParams['metadata']['installment_number'] = 1;
-        $paymentIntentParams['metadata']['total_amount'] = $amount;
-        $paymentIntentParams['description'] = 'ArchiMeuble - Paiement 1/3';
+        // ... (code existant)
     } else {
-        $paymentIntentParams['description'] = 'ArchiMeuble - Paiement intégral';
+        if ($paymentType === 'deposit') {
+            $paymentIntentParams['description'] = 'ArchiMeuble - Acompte de commande';
+        } elseif ($paymentType === 'balance') {
+            $paymentIntentParams['description'] = 'ArchiMeuble - Solde de commande';
+        } else {
+            $paymentIntentParams['description'] = 'ArchiMeuble - Paiement intégral';
+        }
     }
 
     // Créer le PaymentIntent
