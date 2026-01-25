@@ -53,6 +53,10 @@ try {
         $catalogueItems = $order->getOrderCatalogueItems($_GET['id']);
         $orderData['catalogue_items'] = $catalogueItems;
 
+        // Récupérer les façades de la commande
+        $facadeItems = $order->getOrderFacadeItems($_GET['id']);
+        $orderData['facade_items'] = $facadeItems;
+
         // Formater pour le frontend
         $orderData = $order->formatForFrontend($orderData);
 

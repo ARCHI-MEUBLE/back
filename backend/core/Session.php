@@ -166,6 +166,8 @@ class Session {
      * Régénérer l'ID de session (sécurité)
      */
     public function regenerate() {
-        session_regenerate_id(true);
+        if (!headers_sent()) {
+            session_regenerate_id(true);
+        }
     }
 }

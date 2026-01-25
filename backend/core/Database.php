@@ -411,6 +411,64 @@ class Database {
                 error_log("Database Migration Error (models hover_image_url): " . $e->getMessage());
             }
 
+            // Migration auto pour order_catalogue_items (ajouter colonne 'name' si manquante)
+            try {
+                $check = $this->pdo->query("PRAGMA table_info(order_catalogue_items)");
+                $columns = $check->fetchAll(PDO::FETCH_COLUMN, 1);
+
+                if (!empty($columns)) {
+                    if (!in_array('name', $columns)) {
+                        $this->pdo->exec("ALTER TABLE order_catalogue_items ADD COLUMN name TEXT");
+                        error_log("Database: Added missing column 'name' to order_catalogue_items");
+                    }
+                }
+            } catch (Exception $e) {
+                error_log("Database Migration Error (order_catalogue_items name): " . $e->getMessage());
+            }
+
+            // Migration auto pour orders (ajouter colonne 'confirmation_email_sent' si manquante)
+            try {
+                $check = $this->pdo->query("PRAGMA table_info(orders)");
+                $columns = $check->fetchAll(PDO::FETCH_COLUMN, 1);
+
+                if (!empty($columns)) {
+                    if (!in_array('confirmation_email_sent', $columns)) {
+                        $this->pdo->exec("ALTER TABLE orders ADD COLUMN confirmation_email_sent INTEGER DEFAULT 0");
+                        error_log("Database: Added missing column 'confirmation_email_sent' to orders");
+                    }
+                }
+            } catch (Exception $e) {
+                error_log("Database Migration Error (orders confirmation_email_sent): " . $e->getMessage());
+            }
+
+            // Migration auto pour email_verifications (vérification email inscription)
+            try {
+                $this->pdo->exec("CREATE TABLE IF NOT EXISTS email_verifications (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    email TEXT NOT NULL,
+                    code TEXT NOT NULL,
+                    expires_at DATETIME NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    used INTEGER DEFAULT 0
+                )");
+
+                $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_email_verifications_email ON email_verifications(email)");
+                $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_email_verifications_expires ON email_verifications(expires_at)");
+
+                // Ajouter la colonne email_verified à customers si elle n'existe pas
+                $check = $this->pdo->query("PRAGMA table_info(customers)");
+                $columns = $check->fetchAll(PDO::FETCH_COLUMN, 1);
+
+                if (!empty($columns) && !in_array('email_verified', $columns)) {
+                    $this->pdo->exec("ALTER TABLE customers ADD COLUMN email_verified INTEGER DEFAULT 0");
+                    // Marquer tous les clients existants comme vérifiés
+                    $this->pdo->exec("UPDATE customers SET email_verified = 1");
+                    error_log("Database: Added email_verified column to customers and marked existing as verified");
+                }
+            } catch (Exception $e) {
+                error_log("Database Migration Error (email_verifications): " . $e->getMessage());
+            }
+
             // Migration auto pour pricing_config
             try {
                 $this->pdo->exec("CREATE TABLE IF NOT EXISTS pricing_config (

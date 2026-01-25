@@ -1,4 +1,4 @@
-<?php
+oui<?php
 /**
  * ArchiMeuble - Modèle Realisation
  * Gère les opérations sur la table realisations

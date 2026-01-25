@@ -87,6 +87,10 @@ try {
             $catalogueItems = $order->getOrderCatalogueItems($_GET['id']);
             $orderData['catalogue_items'] = $catalogueItems;
 
+            // Récupérer les façades
+            $facadeItems = $order->getOrderFacadeItems($_GET['id']);
+            $orderData['facade_items'] = $facadeItems;
+
             // Formater pour le frontend
             $orderData = $order->formatForFrontend($orderData);
 
@@ -207,6 +211,31 @@ try {
                 $orderData['order_number'],
                 $newStatus
             );
+
+            // Envoyer un email au client si le statut a changé
+            if ($oldStatus !== $newStatus) {
+                try {
+                    require_once __DIR__ . '/../../services/EmailService.php';
+                    $emailService = new EmailService();
+
+                    // Récupérer les infos du client
+                    $customer = $db->queryOne("SELECT email, first_name FROM customers WHERE id = ?", [$orderData['customer_id']]);
+
+                    if ($customer && !empty($customer['email'])) {
+                        $emailService->sendOrderStatusUpdateEmail(
+                            $customer['email'],
+                            $customer['first_name'] ?? 'Client',
+                            $orderData['order_number'],
+                            $newStatus,
+                            $orderId
+                        );
+                        error_log("[ADMIN ORDERS] Email de mise à jour envoyé à {$customer['email']} pour commande #{$orderData['order_number']}");
+                    }
+                } catch (Exception $emailError) {
+                    // Log l'erreur mais ne bloque pas la mise à jour
+                    error_log("[ADMIN ORDERS] Erreur envoi email: " . $emailError->getMessage());
+                }
+            }
         }
 
         http_response_code(200);

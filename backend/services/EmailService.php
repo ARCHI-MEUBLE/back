@@ -917,7 +917,7 @@ class EmailService {
      */
     private function getPasswordResetTemplate($name, $resetUrl) {
         $year = date('Y');
-        
+
         return "
         <!DOCTYPE html>
         <html>
@@ -946,8 +946,73 @@ class EmailService {
                         <a href='{$resetUrl}' class='button'>Réinitialiser mon mot de passe</a>
                     </div>
                     <p style='margin-top: 30px; font-size: 14px; color: #706F6C;'>
-                        Si vous n'avez pas demandé cette réinitialisation, vous pouvez ignorer cet email en toute sécurité. 
+                        Si vous n'avez pas demandé cette réinitialisation, vous pouvez ignorer cet email en toute sécurité.
                         Votre mot de passe restera inchangé.
+                    </p>
+                </div>
+                <div class='footer'>
+                    <p>&copy; {$year} ArchiMeuble. Tous droits réservés.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        ";
+    }
+
+    /**
+     * Envoie un email de vérification avec code à 6 chiffres
+     */
+    public function sendVerificationEmail($to, $name, $code) {
+        $subject = "Vérifiez votre adresse email - ArchiMeuble";
+        $body = $this->getVerificationEmailTemplate($name, $code);
+        return $this->sendEmail($to, $subject, $body);
+    }
+
+    /**
+     * Template pour vérification email (même design que password reset)
+     */
+    private function getVerificationEmailTemplate($name, $code) {
+        $year = date('Y');
+
+        // Formater le code avec des espaces pour une meilleure lisibilité (123 456)
+        $formattedCode = substr($code, 0, 3) . ' ' . substr($code, 3, 3);
+
+        return "
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='utf-8'>
+            <style>
+                body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 1.6; color: #1A1917; margin: 0; padding: 0; }
+                .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+                .header { text-align: center; margin-bottom: 40px; }
+                .logo { font-size: 24px; font-weight: bold; text-decoration: none; color: #1A1917; }
+                .content { background-color: #FAFAF9; padding: 40px; border: 1px solid #E8E6E3; }
+                .code-box { background-color: #1A1917; padding: 24px 40px; text-align: center; margin: 30px 0; }
+                .code { font-size: 36px; font-weight: bold; color: #FFFFFF; letter-spacing: 8px; font-family: 'Courier New', monospace; }
+                .footer { text-align: center; margin-top: 40px; font-size: 12px; color: #706F6C; }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <span class='logo'>ArchiMeuble</span>
+                </div>
+                <div class='content'>
+                    <h2 style='margin-top: 0;'>Bonjour {$name},</h2>
+                    <p>Merci de vous être inscrit sur ArchiMeuble !</p>
+                    <p>Pour activer votre compte, veuillez entrer le code de vérification ci-dessous sur notre site :</p>
+
+                    <div class='code-box'>
+                        <span class='code'>{$formattedCode}</span>
+                    </div>
+
+                    <p style='text-align: center; font-size: 14px; color: #706F6C;'>
+                        Ce code est valable pendant <strong>15 minutes</strong>.
+                    </p>
+
+                    <p style='margin-top: 30px; font-size: 14px; color: #706F6C;'>
+                        Si vous n'avez pas créé de compte sur ArchiMeuble, vous pouvez ignorer cet email en toute sécurité.
                     </p>
                 </div>
                 <div class='footer'>
@@ -1012,6 +1077,138 @@ class EmailService {
         </body>
         </html>
         ";
+    }
+
+    /**
+     * Envoie un email de mise à jour de statut de commande
+     */
+    public function sendOrderStatusUpdateEmail($to, $name, $orderNumber, $newStatus, $orderId = null) {
+        $statusLabels = [
+            'pending' => 'En attente de validation',
+            'confirmed' => 'Confirmée - En attente de paiement',
+            'paid' => 'Payée',
+            'in_production' => 'En cours de fabrication',
+            'shipped' => 'Expédiée',
+            'delivered' => 'Livrée',
+            'cancelled' => 'Annulée',
+            'refunded' => 'Remboursée'
+        ];
+
+        $statusLabel = $statusLabels[$newStatus] ?? $newStatus;
+        $subject = "Mise à jour de votre commande #{$orderNumber} - ArchiMeuble";
+        $body = $this->getOrderStatusUpdateTemplate($name, $orderNumber, $newStatus, $statusLabel, $orderId);
+        return $this->sendEmail($to, $subject, $body);
+    }
+
+    /**
+     * Template pour mise à jour de statut de commande
+     */
+    private function getOrderStatusUpdateTemplate($name, $orderNumber, $status, $statusLabel, $orderId) {
+        $year = date('Y');
+
+        // Couleurs selon le statut
+        $statusColors = [
+            'pending' => ['bg' => '#FEF3C7', 'text' => '#92400E'],
+            'confirmed' => ['bg' => '#DBEAFE', 'text' => '#1E40AF'],
+            'paid' => ['bg' => '#D1FAE5', 'text' => '#065F46'],
+            'in_production' => ['bg' => '#E9D5FF', 'text' => '#6B21A8'],
+            'shipped' => ['bg' => '#CFFAFE', 'text' => '#0E7490'],
+            'delivered' => ['bg' => '#D1FAE5', 'text' => '#065F46'],
+            'cancelled' => ['bg' => '#FEE2E2', 'text' => '#B91C1C'],
+            'refunded' => ['bg' => '#F3F4F6', 'text' => '#374151']
+        ];
+
+        $colors = $statusColors[$status] ?? ['bg' => '#F3F4F6', 'text' => '#374151'];
+
+        // Messages personnalisés selon le statut
+        $statusMessages = [
+            'pending' => 'Votre commande est en attente de validation par notre équipe. Vous recevrez un email dès qu\'elle sera validée.',
+            'confirmed' => 'Votre commande a été validée ! Vous pouvez maintenant procéder au paiement.',
+            'paid' => 'Votre paiement a bien été reçu. Merci pour votre confiance ! Votre commande va être traitée.',
+            'in_production' => 'Bonne nouvelle ! Votre commande est maintenant en cours de préparation.',
+            'shipped' => 'Votre commande a été expédiée ! Vous recevrez bientôt les informations de livraison.',
+            'delivered' => 'Votre commande a été livrée. Nous espérons que vous êtes satisfait de votre achat !',
+            'cancelled' => 'Votre commande a été annulée. Si vous avez des questions, n\'hésitez pas à nous contacter.',
+            'refunded' => 'Le remboursement de votre commande a été effectué. Le montant sera crédité sous quelques jours.'
+        ];
+
+        $message = $statusMessages[$status] ?? 'Le statut de votre commande a été mis à jour.';
+
+        // Bouton d'action selon le statut
+        $actionButton = '';
+        $siteUrl = getenv('FRONTEND_URL') ?: 'https://archimeuble.com';
+
+        if ($status === 'confirmed') {
+            $actionButton = "
+                <div style='text-align: center; margin: 30px 0;'>
+                    <a href='{$siteUrl}/account?section=orders' style='display: inline-block; padding: 14px 32px; background-color: #1A1917; color: #ffffff; text-decoration: none; font-weight: bold;'>
+                        Voir ma commande
+                    </a>
+                </div>
+            ";
+        } elseif (in_array($status, ['paid', 'in_production', 'shipped', 'delivered'])) {
+            $actionButton = "
+                <div style='text-align: center; margin: 30px 0;'>
+                    <a href='{$siteUrl}/account?section=orders' style='display: inline-block; padding: 14px 32px; background-color: #1A1917; color: #ffffff; text-decoration: none; font-weight: bold;'>
+                        Suivre ma commande
+                    </a>
+                </div>
+            ";
+        }
+
+        return "
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='utf-8'>
+            <style>
+                body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 1.6; color: #1A1917; margin: 0; padding: 0; }
+                .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+                .header { text-align: center; margin-bottom: 40px; }
+                .logo { font-size: 24px; font-weight: bold; text-decoration: none; color: #1A1917; }
+                .content { background-color: #FAFAF9; padding: 40px; border: 1px solid #E8E6E3; }
+                .footer { text-align: center; margin-top: 40px; font-size: 12px; color: #706F6C; }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <span class='logo'>ArchiMeuble</span>
+                </div>
+                <div class='content'>
+                    <div style='display: inline-block; padding: 6px 16px; background-color: {$colors['bg']}; color: {$colors['text']}; font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 20px;'>
+                        {$statusLabel}
+                    </div>
+                    <h2 style='margin-top: 0;'>Bonjour {$name},</h2>
+                    <p>Le statut de votre commande <strong>#{$orderNumber}</strong> a été mis à jour.</p>
+                    <p>{$message}</p>
+                    {$actionButton}
+                    <p style='margin-top: 30px; font-size: 14px; color: #706F6C;'>
+                        Si vous avez des questions, n'hésitez pas à nous contacter à <a href='mailto:pro.archimeuble@gmail.com' style='color: #8B7355;'>pro.archimeuble@gmail.com</a>
+                    </p>
+                    <p style='margin-top: 20px; font-size: 14px; color: #706F6C;'>
+                        Cordialement,<br>
+                        L'équipe ArchiMeuble
+                    </p>
+                </div>
+                <div class='footer'>
+                    <p>&copy; {$year} ArchiMeuble. Tous droits réservés.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        ";
+    }
+
+    /**
+     * Méthode publique pour envoyer un email générique
+     * @param string $to Email du destinataire
+     * @param string $subject Sujet de l'email
+     * @param string $htmlBody Corps HTML de l'email
+     * @return bool
+     */
+    public function send($to, $subject, $htmlBody) {
+        return $this->sendEmail($to, $subject, $htmlBody);
     }
 
     private function sendEmail($to, $subject, $htmlBody) {

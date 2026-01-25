@@ -74,9 +74,14 @@ class Order {
         // Générer un numéro de commande unique
         $orderNumber = 'ORD-' . date('Y') . '-' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
 
+        // Déterminer le statut initial :
+        // - Si la commande contient des configurations 3D (meubles sur mesure) → 'pending' (validation admin requise)
+        // - Sinon (catalogue, façades, échantillons uniquement) → 'confirmed' (paiement direct possible)
+        $initialStatus = empty($cartItems) ? 'confirmed' : 'pending';
+
         // Insérer la commande
-        $query = "INSERT INTO orders (customer_id, order_number, total_amount, shipping_address, billing_address, payment_method, notes)
-                  VALUES (?, ?, ?, ?, ?, ?, ?)";
+        $query = "INSERT INTO orders (customer_id, order_number, total_amount, shipping_address, billing_address, payment_method, notes, status)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         $this->db->execute($query, [
             $customerId,
@@ -85,7 +90,8 @@ class Order {
             $shippingAddress,
             $billingAddress,
             $paymentMethod,
-            $notes
+            $notes,
+            $initialStatus
         ]);
 
         $orderId = $this->db->lastInsertId();
@@ -137,16 +143,16 @@ class Order {
         // Insérer les articles du catalogue de commande
         foreach ($catalogueItems as $catItem) {
             $insertCatQuery = "INSERT INTO order_catalogue_items
-                (order_id, catalogue_item_id, variation_id, product_name, variation_name, image_url, quantity, unit_price, total_price)
+                (order_id, catalogue_item_id, variation_id, name, variation_name, image_url, quantity, unit_price, total_price)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             $this->db->execute($insertCatQuery, [
                 $orderId,
                 $catItem['catalogue_item_id'],
-                $catItem['variation_id'],
-                $catItem['name'],
-                $catItem['variation_name'],
-                $catItem['image_url'],
+                $catItem['variation_id'] ?? null,
+                $catItem['name'] ?? 'Article',
+                $catItem['variation_name'] ?? null,
+                $catItem['image_url'] ?? null,
                 $catItem['quantity'],
                 $catItem['unit_price'],
                 $catItem['unit_price'] * $catItem['quantity']
@@ -183,8 +189,10 @@ class Order {
             'id' => $orderId,
             'order_number' => $orderNumber,
             'total' => $total,
+            'status' => $initialStatus,
             'samples_count' => count($sampleItems),
             'facades_count' => count($facadeItems),
+            'needs_validation' => !empty($cartItems), // true si contient des configs 3D
             'customer' => $customerData
         ];
     }
@@ -225,7 +233,14 @@ class Order {
      * Récupérer les articles du catalogue d'une commande
      */
     public function getOrderCatalogueItems($orderId) {
-        $query = "SELECT * FROM order_catalogue_items WHERE order_id = ? ORDER BY id";
+        $query = "SELECT oci.*, ci.name as item_name,
+                         civ.color_name as variation_name,
+                         COALESCE(oci.image_url, civ.image_url, ci.image_url) as image_url
+                  FROM order_catalogue_items oci
+                  LEFT JOIN catalogue_items ci ON oci.catalogue_item_id = ci.id
+                  LEFT JOIN catalogue_item_variations civ ON oci.variation_id = civ.id
+                  WHERE oci.order_id = ?
+                  ORDER BY oci.id";
         return $this->db->query($query, [$orderId]);
     }
 
@@ -528,6 +543,22 @@ class Order {
         // Ajouter les articles du catalogue si présents
         if (isset($orderData['catalogue_items'])) {
             $formatted['catalogue_items'] = $orderData['catalogue_items'];
+        }
+
+        // Ajouter les façades si présentes
+        if (isset($orderData['facade_items'])) {
+            // Décoder le config_data JSON pour chaque façade
+            foreach ($orderData['facade_items'] as &$facade) {
+                if (isset($facade['config_data']) && is_string($facade['config_data'])) {
+                    $facade['config'] = json_decode($facade['config_data'], true);
+                }
+            }
+            $formatted['facade_items'] = $orderData['facade_items'];
+        }
+
+        // Ajouter les échantillons si présents
+        if (isset($orderData['samples'])) {
+            $formatted['samples'] = $orderData['samples'];
         }
 
         return $formatted;

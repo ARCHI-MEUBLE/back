@@ -104,7 +104,7 @@ class RateLimiter {
         }
 
         // Vérifier si la fenêtre de temps est expirée
-        $firstAttempt = strtotime($record['first_attempt_at']);
+        $firstAttempt = strtotime($record['first_attempt_at'] ?? 'now');
         $windowEnd = $firstAttempt + ($decayMinutes * 60);
 
         if (time() > $windowEnd) {
