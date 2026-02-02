@@ -278,22 +278,32 @@ try:
             cursor.execute("ALTER TABLE payment_links ADD COLUMN amount DECIMAL(10,2)")
             print("✓ Colonne amount ajoutée avec succès!")
 
-            # Mettre à jour les liens existants avec les bons montants
-            print("Migration des montants existants...")
-            cursor.execute("""
-            UPDATE payment_links
-            SET amount = (
-                SELECT CASE
-                    WHEN payment_links.payment_type = 'deposit' THEN o.deposit_amount
-                    WHEN payment_links.payment_type = 'balance' THEN o.remaining_amount
-                    ELSE o.total_amount
-                END
-                FROM orders o
-                WHERE o.id = payment_links.order_id
-            )
-            WHERE amount IS NULL
-            """)
-            print("✓ Montants migrés avec succès!")
+            # Mettre à jour les liens existants avec les bons montants (migration optionnelle)
+            try:
+                # Vérifier d'abord si les colonnes existent dans orders
+                cursor.execute("PRAGMA table_info(orders)")
+                orders_cols = [col[1] for col in cursor.fetchall()]
+
+                if 'deposit_amount' in orders_cols and 'remaining_amount' in orders_cols and 'total_amount' in orders_cols:
+                    print("Migration des montants existants...")
+                    cursor.execute("""
+                    UPDATE payment_links
+                    SET amount = (
+                        SELECT CASE
+                            WHEN payment_links.payment_type = 'deposit' THEN o.deposit_amount
+                            WHEN payment_links.payment_type = 'balance' THEN o.remaining_amount
+                            ELSE o.total_amount
+                        END
+                        FROM orders o
+                        WHERE o.id = payment_links.order_id
+                    )
+                    WHERE amount IS NULL
+                    """)
+                    print("✓ Montants migrés avec succès!")
+                else:
+                    print("⚠️  Colonnes de montant non trouvées dans orders, migration ignorée (non-fatal)")
+            except Exception as migration_err:
+                print(f"⚠️  Migration des montants ignorée (non-fatal): {migration_err}")
         else:
             print("✓ Colonne amount existe déjà")
     else:
