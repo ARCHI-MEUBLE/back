@@ -38,7 +38,11 @@ fi
 # Toujours vérifier que toutes les tables existent (ne supprime pas les données)
 echo ""
 echo "Ensuring all tables exist with Python..."
-python3 /app/create_missing_tables.py
+if python3 /app/create_missing_tables.py; then
+    echo "✓ Tables verified successfully"
+else
+    echo "⚠ Table verification script failed (non-fatal, continuing...)"
+fi
 
 # Créer le répertoire pour les sessions PHP
 mkdir -p /data/sessions
@@ -58,10 +62,13 @@ fi
 mkdir -p /data/backups
 chmod 777 /data/backups
 
-# Démarrer le service cron en arrière-plan
+# Démarrer le service cron en arrière-plan (optionnel)
 echo "Starting cron service..."
-cron
-echo "✓ Cron service started"
+if cron 2>/dev/null; then
+    echo "✓ Cron service started"
+else
+    echo "⚠ Cron service could not start (non-fatal)"
+fi
 
 # Démarrer le serveur PHP avec les sessions dans /data
 echo ""
