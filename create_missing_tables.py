@@ -536,6 +536,43 @@ try:
             """, (name, color, texture, modifier, price_m2))
         print("✓ Matériaux par défaut façades ajoutés")
 
+    # Ajouter les colonnes manquantes aux tables sample_types et sample_colors
+    print("\nVérification des colonnes dans sample_types...")
+    cursor.execute("PRAGMA table_info(sample_types)")
+    sample_types_columns = [col[1] for col in cursor.fetchall()]
+
+    if 'price_per_m2' not in sample_types_columns:
+        print("Ajout de la colonne price_per_m2 à sample_types...")
+        cursor.execute("ALTER TABLE sample_types ADD COLUMN price_per_m2 REAL DEFAULT 0")
+        print("✓ Colonne price_per_m2 ajoutée à sample_types")
+    else:
+        print("✓ Colonne price_per_m2 existe déjà dans sample_types")
+
+    if 'unit_price' not in sample_types_columns:
+        print("Ajout de la colonne unit_price à sample_types...")
+        cursor.execute("ALTER TABLE sample_types ADD COLUMN unit_price REAL DEFAULT 0")
+        print("✓ Colonne unit_price ajoutée à sample_types")
+    else:
+        print("✓ Colonne unit_price existe déjà dans sample_types")
+
+    print("\nVérification des colonnes dans sample_colors...")
+    cursor.execute("PRAGMA table_info(sample_colors)")
+    sample_colors_columns = [col[1] for col in cursor.fetchall()]
+
+    if 'price_per_m2' not in sample_colors_columns:
+        print("Ajout de la colonne price_per_m2 à sample_colors...")
+        cursor.execute("ALTER TABLE sample_colors ADD COLUMN price_per_m2 REAL DEFAULT 0")
+        print("✓ Colonne price_per_m2 ajoutée à sample_colors")
+    else:
+        print("✓ Colonne price_per_m2 existe déjà dans sample_colors")
+
+    if 'unit_price' not in sample_colors_columns:
+        print("Ajout de la colonne unit_price à sample_colors...")
+        cursor.execute("ALTER TABLE sample_colors ADD COLUMN unit_price REAL DEFAULT 0")
+        print("✓ Colonne unit_price ajoutée à sample_colors")
+    else:
+        print("✓ Colonne unit_price existe déjà dans sample_colors")
+
     # Ajouter les paramètres de prix manquants (penderie, poignées, etc.)
     print("\nVérification des paramètres de prix manquants...")
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='pricing_config'")
