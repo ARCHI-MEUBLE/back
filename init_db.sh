@@ -280,6 +280,8 @@ CREATE TABLE IF NOT EXISTS sample_types (
     description TEXT,
     active INTEGER DEFAULT 1,
     position INTEGER DEFAULT 0,
+    price_per_m2 REAL DEFAULT 0,
+    unit_price REAL DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -292,6 +294,8 @@ CREATE TABLE IF NOT EXISTS sample_colors (
     image_url TEXT,
     active INTEGER DEFAULT 1,
     position INTEGER DEFAULT 0,
+    price_per_m2 REAL DEFAULT 0,
+    unit_price REAL DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (type_id) REFERENCES sample_types(id) ON DELETE CASCADE
