@@ -137,63 +137,8 @@ try {
             'configuration' => $savedConfiguration
         ];
 
-        // RÉPONSE RAPIDE AU CLIENT (Découplage de l'email)
-        if (function_exists('fastcgi_finish_request')) {
-            http_response_code(200);
-            echo json_encode($responseData);
-            session_write_close();
-            fastcgi_finish_request();
-
-            // Notification Admin (après libération du client)
-            try {
-                require_once __DIR__ . '/../../models/Customer.php';
-                require_once __DIR__ . '/../../services/EmailService.php';
-
-                $emailService = new EmailService();
-                $customer = null;
-                if ($userId) {
-                    $customerModel = new Customer();
-                    $customer = $customerModel->getById($userId);
-                }
-                if (!$customer) {
-                    $customer = [
-                        'first_name' => $isAdmin ? 'Admin' : 'Visiteur',
-                        'last_name' => $session->get('admin_email') ?? 'Système',
-                        'email' => $session->get('admin_email') ?? 'noreply@archimeuble.com',
-                        'phone' => ''
-                    ];
-                }
-                $emailService->sendNewConfigurationNotificationToAdmin($savedConfiguration, $customer);
-            } catch (Exception $e) {
-                error_log("Failed to send admin notification (update): " . $e->getMessage());
-            }
-            exit; // Important: ne pas continuer après fastcgi
-        }
-
-        // Sans fastcgi: notification puis réponse
-        try {
-            require_once __DIR__ . '/../../models/Customer.php';
-            require_once __DIR__ . '/../../services/EmailService.php';
-
-            $emailService = new EmailService();
-            $customer = null;
-            if ($userId) {
-                $customerModel = new Customer();
-                $customer = $customerModel->getById($userId);
-            }
-            if (!$customer) {
-                $customer = [
-                    'first_name' => $isAdmin ? 'Admin' : 'Visiteur',
-                    'last_name' => $session->get('admin_email') ?? 'Système',
-                    'email' => $session->get('admin_email') ?? 'noreply@archimeuble.com',
-                    'phone' => ''
-                ];
-            }
-            $emailService->sendNewConfigurationNotificationToAdmin($savedConfiguration, $customer);
-        } catch (Exception $e) {
-            error_log("Failed to send admin notification (update): " . $e->getMessage());
-        }
-
+        // NOTE: Pas d'email de notification pour les mises à jour de configuration
+        // L'email "Nouveau projet client" est uniquement envoyé lors de la création
         http_response_code(200);
         echo json_encode($responseData);
         exit;
