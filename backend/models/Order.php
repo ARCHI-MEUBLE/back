@@ -143,7 +143,7 @@ class Order {
         // Insérer les articles du catalogue de commande
         foreach ($catalogueItems as $catItem) {
             $insertCatQuery = "INSERT INTO order_catalogue_items
-                (order_id, catalogue_item_id, variation_id, name, variation_name, image_url, quantity, unit_price, total_price)
+                (order_id, catalogue_item_id, variation_id, product_name, variation_name, image_url, quantity, unit_price, total_price)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             $this->db->execute($insertCatQuery, [
