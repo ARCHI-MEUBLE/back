@@ -35,14 +35,10 @@ try {
     // Helper pour vérifier si une colonne existe
     function columnExists($pdo, $table, $column) {
         try {
-            $stmt = $pdo->query("PRAGMA table_info($table)");
-            $columns = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            foreach ($columns as $col) {
-                if ($col['name'] === $column) {
-                    return true;
-                }
-            }
-            return false;
+            $stmt = $pdo->prepare("SELECT column_name FROM information_schema.columns WHERE table_name = :table AND table_schema = 'public'");
+            $stmt->execute(['table' => $table]);
+            $columns = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
+            return in_array($column, $columns);
         } catch (Exception $e) {
             return false;
         }

@@ -261,7 +261,7 @@ class Sample {
 
             foreach ($types as $type) {
                 // Ne retourner que les types actifs pour l'API publique
-                if ($type['active'] != 1) continue;
+                if (!$type['active']) continue;
 
                 $material = $type['material'];
                 if (!isset($grouped[$material])) {
@@ -271,7 +271,7 @@ class Sample {
                 // Récupérer les couleurs actives uniquement
                 $allColors = $this->getColorsByTypeId($type['id']);
                 $activeColors = array_filter($allColors, function($c) {
-                    return $c['active'] == 1;
+                    return $c['active'];
                 });
 
                 $grouped[$material][] = [

@@ -4,7 +4,7 @@
  * Protection contre les attaques par brute force
  *
  * SÉCURITÉ: Limite le nombre de tentatives par IP et par compte
- * Utilise SQLite pour la persistance des données
+ * Utilise PostgreSQL pour la persistance des données
  *
  * Auteur : Security Fix
  * Date : 2025
@@ -33,15 +33,15 @@ class RateLimiter {
      */
     private function ensureTableExists(): void {
         $query = "CREATE TABLE IF NOT EXISTS rate_limits (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             identifier VARCHAR(255) NOT NULL,
             type VARCHAR(50) NOT NULL DEFAULT 'ip',
             attempts INTEGER DEFAULT 0,
             lockout_count INTEGER DEFAULT 0,
-            first_attempt_at DATETIME,
-            locked_until DATETIME,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            first_attempt_at TIMESTAMP,
+            locked_until TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(identifier, type)
         )";
 
@@ -156,7 +156,7 @@ class RateLimiter {
         if (!$record) {
             // Première tentative
             $query = "INSERT INTO rate_limits (identifier, type, attempts, first_attempt_at, updated_at)
-                      VALUES (:identifier, :type, 1, datetime('now'), datetime('now'))";
+                      VALUES (:identifier, :type, 1, NOW(), NOW())";
             $this->db->execute($query, [
                 'identifier' => $identifier,
                 'type' => $type
@@ -175,8 +175,8 @@ class RateLimiter {
                 $query = "UPDATE rate_limits
                           SET attempts = :attempts,
                               lockout_count = :lockout_count,
-                              locked_until = datetime('now', '+' || :lockout || ' minutes'),
-                              updated_at = datetime('now')
+                              locked_until = NOW() + make_interval(mins => :lockout),
+                              updated_at = NOW()
                           WHERE identifier = :identifier AND type = :type";
 
                 $this->db->execute($query, [
@@ -191,7 +191,7 @@ class RateLimiter {
                 error_log("[SECURITY] Rate limit lockout: $type=$identifier, attempts=$newAttempts, lockout={$actualLockout}min");
             } else {
                 $query = "UPDATE rate_limits
-                          SET attempts = :attempts, updated_at = datetime('now')
+                          SET attempts = :attempts, updated_at = NOW()
                           WHERE identifier = :identifier AND type = :type";
 
                 $this->db->execute($query, [
@@ -211,7 +211,7 @@ class RateLimiter {
                   SET attempts = 0,
                       first_attempt_at = NULL,
                       locked_until = NULL,
-                      updated_at = datetime('now')
+                      updated_at = NOW()
                   WHERE identifier = :identifier AND type = :type";
 
         $this->db->execute($query, [
@@ -236,8 +236,8 @@ class RateLimiter {
      */
     private function cleanup(): void {
         $query = "DELETE FROM rate_limits
-                  WHERE updated_at < datetime('now', '-24 hours')
-                  AND (locked_until IS NULL OR locked_until < datetime('now'))";
+                  WHERE updated_at < NOW() - INTERVAL '24 hours'
+                  AND (locked_until IS NULL OR locked_until < NOW())";
 
         try {
             $this->db->execute($query);

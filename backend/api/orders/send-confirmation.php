@@ -236,7 +236,7 @@ try {
 
     if ($result) {
         // Marquer l'email comme envoyé
-        $db->execute("UPDATE orders SET confirmation_email_sent = 1 WHERE id = ?", [$orderId]);
+        $db->execute("UPDATE orders SET confirmation_email_sent = TRUE WHERE id = ?", [$orderId]);
 
         http_response_code(200);
         echo json_encode(['success' => true, 'message' => 'Email de confirmation envoyé']);

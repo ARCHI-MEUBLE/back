@@ -52,7 +52,7 @@ try {
     }
 
     // Vérifier si déjà vérifié
-    if (isset($customerData['email_verified']) && $customerData['email_verified'] == 1) {
+    if (isset($customerData['email_verified']) && $customerData['email_verified']) {
         http_response_code(400);
         echo json_encode(['error' => 'Ce compte est déjà vérifié. Vous pouvez vous connecter.']);
         exit;
@@ -60,7 +60,7 @@ try {
 
     // Vérifier le rate limiting (max 3 codes par heure)
     $recentCodes = $db->queryOne(
-        "SELECT COUNT(*) as count FROM email_verifications WHERE email = ? AND created_at > datetime('now', '-1 hour')",
+        "SELECT COUNT(*) as count FROM email_verifications WHERE email = ? AND created_at > NOW() - INTERVAL '1 hour'",
         [$email]
     );
 
@@ -75,7 +75,7 @@ try {
     $expiresAt = date('Y-m-d H:i:s', strtotime('+15 minutes'));
 
     // Supprimer les anciens codes non utilisés
-    $db->execute("DELETE FROM email_verifications WHERE email = ? AND used = 0", [$email]);
+    $db->execute("DELETE FROM email_verifications WHERE email = ? AND used = FALSE", [$email]);
 
     // Insérer le nouveau code
     $db->execute(

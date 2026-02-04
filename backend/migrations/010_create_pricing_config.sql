@@ -2,16 +2,16 @@
 -- Cette table remplace tous les prix hardcodés dans le frontend
 
 CREATE TABLE IF NOT EXISTS pricing_config (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     category TEXT NOT NULL,        -- Catégorie principale (materials, drawers, shelves, etc.)
     item_type TEXT NOT NULL,       -- Type spécifique dans la catégorie
     param_name TEXT NOT NULL,      -- Nom du paramètre (base_price, coefficient, price_per_m2, etc.)
-    param_value REAL NOT NULL,     -- Valeur numérique du paramètre
+    param_value DECIMAL(10,2) NOT NULL,     -- Valeur numérique du paramètre
     unit TEXT NOT NULL,            -- Unité (eur, eur_m2, eur_m3, coefficient, eur_linear_m, meters)
     description TEXT,              -- Description pour l'interface admin
-    is_active INTEGER NOT NULL DEFAULT 1,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(category, item_type, param_name)
 );
 
@@ -148,9 +148,16 @@ INSERT INTO pricing_config (category, item_type, param_name, param_value, unit, 
 -- ============================================================================
 -- Trigger pour mise à jour automatique de updated_at
 -- ============================================================================
-CREATE TRIGGER IF NOT EXISTS update_pricing_config_timestamp
-AFTER UPDATE ON pricing_config
-FOR EACH ROW
+CREATE OR REPLACE FUNCTION update_pricing_config_timestamp()
+RETURNS TRIGGER AS $$
 BEGIN
-    UPDATE pricing_config SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
 END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS update_pricing_config_timestamp ON pricing_config;
+CREATE TRIGGER update_pricing_config_timestamp
+BEFORE UPDATE ON pricing_config
+FOR EACH ROW
+EXECUTE FUNCTION update_pricing_config_timestamp();

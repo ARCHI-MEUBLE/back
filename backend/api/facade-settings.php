@@ -20,12 +20,9 @@ try {
             // Récupérer tous les paramètres
             $query = "SELECT * FROM facade_settings ORDER BY setting_key";
             $result = $db->query($query);
-            
-            $settings = [];
-            while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-                $settings[] = $row;
-            }
-            
+
+            $settings = $result->fetchAll(PDO::FETCH_ASSOC);
+
             echo json_encode([
                 'success' => true,
                 'data' => $settings
@@ -35,19 +32,19 @@ try {
         case 'PUT':
             // Mettre à jour un paramètre
             $input = json_decode(file_get_contents('php://input'), true);
-            
+
             if (!isset($input['setting_key']) || !isset($input['setting_value'])) {
                 throw new Exception('setting_key et setting_value sont requis');
             }
 
             $stmt = $db->prepare('
-                UPDATE facade_settings 
+                UPDATE facade_settings
                 SET setting_value = :value, updated_at = CURRENT_TIMESTAMP
                 WHERE setting_key = :key
             ');
-            $stmt->bindValue(':value', $input['setting_value'], SQLITE3_TEXT);
-            $stmt->bindValue(':key', $input['setting_key'], SQLITE3_TEXT);
-            
+            $stmt->bindValue(':value', $input['setting_value'], PDO::PARAM_STR);
+            $stmt->bindValue(':key', $input['setting_key'], PDO::PARAM_STR);
+
             if ($stmt->execute()) {
                 echo json_encode([
                     'success' => true,

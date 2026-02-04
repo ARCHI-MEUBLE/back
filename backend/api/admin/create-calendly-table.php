@@ -11,25 +11,20 @@ error_reporting(E_ALL);
 header('Content-Type: application/json');
 
 try {
-    // Connexion directe à SQLite sans passer par la classe Database
-    $dbPath = getenv('DB_PATH') ?: '/app/database/archimeuble.db';
-
-    if (!file_exists($dbPath)) {
-        throw new Exception("Base de données introuvable: $dbPath");
-    }
-
-    $db = new PDO('sqlite:' . $dbPath);
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // Connexion via la classe Database (PostgreSQL)
+    require_once __DIR__ . '/../../core/Database.php';
+    $dbInstance = Database::getInstance();
+    $db = $dbInstance->getPDO();
 
     // Créer la table calendly_appointments
     $sql = "CREATE TABLE IF NOT EXISTS calendly_appointments (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         calendly_event_id TEXT UNIQUE NOT NULL,
         client_name TEXT NOT NULL,
         client_email TEXT NOT NULL,
         event_type TEXT,
-        start_time DATETIME NOT NULL,
-        end_time DATETIME NOT NULL,
+        start_time TIMESTAMP NOT NULL,
+        end_time TIMESTAMP NOT NULL,
         timezone TEXT DEFAULT 'Europe/Paris',
         config_url TEXT,
         additional_notes TEXT,
@@ -37,14 +32,14 @@ try {
         phone_number TEXT,
         status TEXT DEFAULT 'scheduled',
         confirmation_sent INTEGER DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
 
     $db->exec($sql);
 
     // Vérifier que la table a été créée
-    $stmt = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='calendly_appointments'");
+    $stmt = $db->query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'calendly_appointments'");
     $table = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($table) {

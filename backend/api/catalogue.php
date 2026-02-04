@@ -36,7 +36,7 @@ try {
             $sql = "SELECT id, name, category, description, material, dimensions,
                            unit_price, unit, min_order_quantity, image_url, weight, tags, variation_label
                     FROM catalogue_items
-                    WHERE is_available = 1";
+                    WHERE is_available = TRUE";
             $params = [];
 
             if ($category) {
@@ -83,7 +83,7 @@ try {
             }
 
             // Compter le total pour la pagination
-            $countSql = "SELECT COUNT(*) FROM catalogue_items WHERE is_available = 1";
+            $countSql = "SELECT COUNT(*) FROM catalogue_items WHERE is_available = TRUE";
             $countParams = [];
             if ($category) {
                 $countSql .= " AND category = ?";
@@ -123,7 +123,7 @@ try {
             $stmt = $pdo->prepare("SELECT id, name, category, description, material, dimensions,
                                           unit_price, unit, min_order_quantity, image_url, weight, tags, variation_label
                                    FROM catalogue_items
-                                   WHERE id = ? AND is_available = 1");
+                                   WHERE id = ? AND is_available = TRUE");
             $stmt->execute([$id]);
             $item = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -154,7 +154,7 @@ try {
 
         case 'categories':
             // Récupérer les catégories disponibles
-            $stmt = $pdo->query("SELECT DISTINCT category FROM catalogue_items WHERE is_available = 1 ORDER BY category");
+            $stmt = $pdo->query("SELECT DISTINCT category FROM catalogue_items WHERE is_available = TRUE ORDER BY category");
             $categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
             echo json_encode([
                 'success' => true,

@@ -11,10 +11,10 @@
  */
 
 require_once __DIR__ . '/EmailService.php';
+require_once __DIR__ . '/../../core/Database.php';
 
 // Configuration
 $isDocker = file_exists('/app');
-$dbPath = $isDocker ? '/app/database/archimeuble.db' : __DIR__ . '/../../database/archimeuble.db';
 $logFile = $isDocker ? '/app/logs/calendly_reminders.log' : __DIR__ . '/../../logs/calendly_reminders.log';
 $logDir = dirname($logFile);
 
@@ -29,12 +29,15 @@ file_put_contents($logFile, $startLog, FILE_APPEND);
 
 try {
     // Connexion à la base de données
-    $db = new PDO('sqlite:' . $dbPath);
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $db = Database::getInstance();
+    $pdo = $db->getPDO();
 
     // Vérifier si les colonnes reminder_24h_sent et reminder_1h_sent existent
-    $tableInfo = $db->query("PRAGMA table_info(calendly_appointments)")->fetchAll(PDO::FETCH_ASSOC);
-    $columns = array_column($tableInfo, 'name');
+    $columnCheckStmt = $pdo->prepare(
+        "SELECT column_name FROM information_schema.columns WHERE table_name = 'calendly_appointments' AND table_schema = 'public'"
+    );
+    $columnCheckStmt->execute();
+    $columns = $columnCheckStmt->fetchAll(PDO::FETCH_COLUMN, 0);
 
     $has24hColumn = in_array('reminder_24h_sent', $columns);
     $has1hColumn = in_array('reminder_1h_sent', $columns);
@@ -42,18 +45,17 @@ try {
 
     // Ajouter les colonnes si elles n'existent pas
     if (!$has24hColumn && $hasOldColumn) {
-        // Renommer l'ancienne colonne n'est pas possible en SQLite, donc on ajoute la nouvelle
-        $db->exec("ALTER TABLE calendly_appointments ADD COLUMN reminder_24h_sent BOOLEAN DEFAULT 0");
+        $db->execute("ALTER TABLE calendly_appointments ADD COLUMN reminder_24h_sent BOOLEAN DEFAULT FALSE");
         // Copier les valeurs de reminder_sent vers reminder_24h_sent
-        $db->exec("UPDATE calendly_appointments SET reminder_24h_sent = reminder_sent WHERE reminder_sent = 1");
+        $db->execute("UPDATE calendly_appointments SET reminder_24h_sent = reminder_sent WHERE reminder_sent = TRUE");
         $has24hColumn = true;
     } elseif (!$has24hColumn) {
-        $db->exec("ALTER TABLE calendly_appointments ADD COLUMN reminder_24h_sent BOOLEAN DEFAULT 0");
+        $db->execute("ALTER TABLE calendly_appointments ADD COLUMN reminder_24h_sent BOOLEAN DEFAULT FALSE");
         $has24hColumn = true;
     }
 
     if (!$has1hColumn) {
-        $db->exec("ALTER TABLE calendly_appointments ADD COLUMN reminder_1h_sent BOOLEAN DEFAULT 0");
+        $db->execute("ALTER TABLE calendly_appointments ADD COLUMN reminder_1h_sent BOOLEAN DEFAULT FALSE");
         $has1hColumn = true;
     }
 
@@ -66,20 +68,16 @@ try {
     $reminder24hEnd = clone $now;
     $reminder24hEnd->add(new DateInterval('PT25H'));
 
-    $stmt24h = $db->prepare("
+    $appointments24h = $db->query("
         SELECT *
         FROM calendly_appointments
         WHERE status = 'scheduled'
-          AND reminder_24h_sent = 0
-          AND datetime(start_time) BETWEEN datetime(:start) AND datetime(:end)
-    ");
-
-    $stmt24h->execute([
+          AND reminder_24h_sent = FALSE
+          AND start_time BETWEEN :start AND :end
+    ", [
         ':start' => $reminder24hStart->format('Y-m-d H:i:s'),
         ':end' => $reminder24hEnd->format('Y-m-d H:i:s')
     ]);
-
-    $appointments24h = $stmt24h->fetchAll(PDO::FETCH_ASSOC);
     $count24h = count($appointments24h);
 
     $log24h = sprintf("[%s] Found %d appointment(s) requiring 24h reminder\n", $timestamp, $count24h);
@@ -104,8 +102,8 @@ try {
             );
 
             if ($sent) {
-                $db->prepare("UPDATE calendly_appointments SET reminder_24h_sent = 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id")
-                   ->execute([':id' => $appointment['id']]);
+                $db->execute("UPDATE calendly_appointments SET reminder_24h_sent = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = :id",
+                    [':id' => $appointment['id']]);
                 $success24h++;
                 $log = sprintf("[%s] 24h reminder sent to %s (%s)\n", $timestamp, $appointment['client_name'], $appointment['client_email']);
                 file_put_contents($logFile, $log, FILE_APPEND);
@@ -122,20 +120,16 @@ try {
     $reminder1hEnd = clone $now;
     $reminder1hEnd->add(new DateInterval('PT70M')); // 70 minutes
 
-    $stmt1h = $db->prepare("
+    $appointments1h = $db->query("
         SELECT *
         FROM calendly_appointments
         WHERE status = 'scheduled'
-          AND reminder_1h_sent = 0
-          AND datetime(start_time) BETWEEN datetime(:start) AND datetime(:end)
-    ");
-
-    $stmt1h->execute([
+          AND reminder_1h_sent = FALSE
+          AND start_time BETWEEN :start AND :end
+    ", [
         ':start' => $reminder1hStart->format('Y-m-d H:i:s'),
         ':end' => $reminder1hEnd->format('Y-m-d H:i:s')
     ]);
-
-    $appointments1h = $stmt1h->fetchAll(PDO::FETCH_ASSOC);
     $count1h = count($appointments1h);
 
     $log1h = sprintf("[%s] Found %d appointment(s) requiring 1h reminder\n", $timestamp, $count1h);
@@ -160,8 +154,8 @@ try {
             );
 
             if ($sent) {
-                $db->prepare("UPDATE calendly_appointments SET reminder_1h_sent = 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id")
-                   ->execute([':id' => $appointment['id']]);
+                $db->execute("UPDATE calendly_appointments SET reminder_1h_sent = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = :id",
+                    [':id' => $appointment['id']]);
                 $success1h++;
                 $log = sprintf("[%s] 1h reminder sent to %s (%s)\n", $timestamp, $appointment['client_name'], $appointment['client_email']);
                 file_put_contents($logFile, $log, FILE_APPEND);
