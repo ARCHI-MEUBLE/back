@@ -35,13 +35,10 @@ class Admin {
     private function columnExists($table, $column) {
         try {
             $pdo = $this->db->getPDO();
-            $stmt = $pdo->query("PRAGMA table_info($table)");
-            $cols = $stmt->fetchAll();
-            foreach ($cols as $col) {
-                if (isset($col['name']) && $col['name'] === $column) return true;
-                // Certaines versions retournent indexés
-                if (isset($col[1]) && $col[1] === $column) return true;
-            }
+            $stmt = $pdo->prepare("SELECT column_name FROM information_schema.columns WHERE table_name = :table AND table_schema = 'public'");
+            $stmt->execute(['table' => $table]);
+            $columns = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
+            return in_array($column, $columns);
         } catch (\Throwable $e) {
             // ignore
         }

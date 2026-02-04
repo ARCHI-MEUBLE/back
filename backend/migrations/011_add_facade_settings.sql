@@ -3,11 +3,11 @@
 
 -- Table pour stocker les paramètres configurables
 CREATE TABLE IF NOT EXISTS facade_settings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     setting_key VARCHAR(100) UNIQUE NOT NULL,
     setting_value TEXT NOT NULL,
     description TEXT,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Insertion des valeurs par défaut

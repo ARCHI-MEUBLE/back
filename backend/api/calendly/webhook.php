@@ -16,9 +16,7 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, X-Calendly-Webhook-Signature');
 
-// Détection de l'environnement et chemin vers la base de données
-$isDocker = file_exists('/app');
-$dbPath = $isDocker ? '/app/database/archimeuble.db' : __DIR__ . '/../../database/archimeuble.db';
+require_once __DIR__ . '/../../core/Database.php';
 
 // Gestion de la requête OPTIONS pour CORS
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -108,14 +106,24 @@ if (isset($event['event']) && $event['event'] === 'invitee.created') {
 
     // Connexion à la base de données et enregistrement du rendez-vous
     try {
-        $db = new PDO('sqlite:' . $dbPath);
-        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $db = Database::getInstance()->getPDO();
 
         // Insertion du rendez-vous dans la base de données
         $stmt = $db->prepare("
-            INSERT OR REPLACE INTO calendly_appointments
+            INSERT INTO calendly_appointments
             (calendly_event_id, client_name, client_email, event_type, start_time, end_time, timezone, config_url, additional_notes, status, confirmation_sent)
             VALUES (:event_id, :name, :email, :event_type, :start_time, :end_time, :timezone, :config_url, :notes, 'scheduled', 1)
+            ON CONFLICT (calendly_event_id) DO UPDATE SET
+                client_name = EXCLUDED.client_name,
+                client_email = EXCLUDED.client_email,
+                event_type = EXCLUDED.event_type,
+                start_time = EXCLUDED.start_time,
+                end_time = EXCLUDED.end_time,
+                timezone = EXCLUDED.timezone,
+                config_url = EXCLUDED.config_url,
+                additional_notes = EXCLUDED.additional_notes,
+                status = EXCLUDED.status,
+                confirmation_sent = EXCLUDED.confirmation_sent
         ");
 
         $stmt->execute([

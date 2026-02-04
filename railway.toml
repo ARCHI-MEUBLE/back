@@ -19,9 +19,9 @@ restartPolicyMaxRetries = 10
 healthcheckPath = "/backend/api/test.php"
 healthcheckTimeout = 30
 
-# Volume persistant pour la base de données
-# Railway crée automatiquement un volume monté sur /data
-# Assurez-vous que DB_PATH=/data/archimeuble_test.db dans vos variables d'env
+# Volume persistant pour les uploads, sessions et backups
+# La base de données est maintenant sur PostgreSQL (plugin Railway)
+# DATABASE_URL est fourni automatiquement par le plugin PostgreSQL
 [[deploy.volumes]]
 mountPath = "/data"
-name = "archimeuble_db_volume"
+name = "archimeuble_data_volume"

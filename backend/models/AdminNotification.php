@@ -48,7 +48,7 @@ class AdminNotification {
      */
     public function getUnread($adminId, $limit = 50) {
         $sql = "SELECT * FROM admin_notifications
-                WHERE admin_id = ? AND is_read = 0
+                WHERE admin_id = ? AND is_read = FALSE
                 ORDER BY created_at DESC
                 LIMIT ?";
 
@@ -77,7 +77,7 @@ class AdminNotification {
      * @return int
      */
     public function countUnread($adminId) {
-        $sql = "SELECT COUNT(*) as count FROM admin_notifications WHERE admin_id = ? AND is_read = 0";
+        $sql = "SELECT COUNT(*) as count FROM admin_notifications WHERE admin_id = ? AND is_read = FALSE";
         $result = $this->db->queryOne($sql, [$adminId]);
         return $result ? (int)$result['count'] : 0;
     }
@@ -88,7 +88,7 @@ class AdminNotification {
      * @return bool
      */
     public function markAllAsRead($adminId) {
-        $sql = "UPDATE admin_notifications SET is_read = 1 WHERE admin_id = ? AND is_read = 0";
+        $sql = "UPDATE admin_notifications SET is_read = TRUE WHERE admin_id = ? AND is_read = FALSE";
         return $this->db->execute($sql, [$adminId]);
     }
 
@@ -96,7 +96,7 @@ class AdminNotification {
      * Marquer une notification comme lue
      */
     public function markAsRead($id) {
-        $sql = "UPDATE admin_notifications SET is_read = 1 WHERE id = ?";
+        $sql = "UPDATE admin_notifications SET is_read = TRUE WHERE id = ?";
         return $this->db->execute($sql, [$id]);
     }
 

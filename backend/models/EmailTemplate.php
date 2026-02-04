@@ -48,7 +48,7 @@ class EmailTemplate {
      * Récupère un template par son nom
      */
     public function getByName($templateName) {
-        $sql = "SELECT * FROM email_templates WHERE template_name = ? AND is_active = 1";
+        $sql = "SELECT * FROM email_templates WHERE template_name = ? AND is_active = TRUE";
         return $this->db->queryOne($sql, [$templateName]);
     }
 

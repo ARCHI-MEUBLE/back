@@ -58,7 +58,7 @@ try {
     if ($groupByDay) {
         // Grouper par jour pour les périodes courtes
         $revenueByPeriodQuery = "SELECT
-            strftime('%Y-%m-%d', created_at) as period,
+            TO_CHAR(created_at, 'YYYY-MM-DD') as period,
             SUM(CASE WHEN payment_status = 'paid' THEN total_amount ELSE 0 END) as revenue
         FROM orders
         WHERE created_at >= ?
@@ -99,10 +99,10 @@ try {
         };
 
         $revenueByMonthQuery = "SELECT
-            strftime('%Y-%m', created_at) as month,
+            TO_CHAR(created_at, 'YYYY-MM') as month,
             SUM(CASE WHEN payment_status = 'paid' THEN total_amount ELSE 0 END) as revenue
         FROM orders
-        WHERE created_at >= date('now', '-{$monthsCount} months')
+        WHERE created_at >= NOW() - INTERVAL '{$monthsCount} months'
         GROUP BY month
         ORDER BY month ASC";
 

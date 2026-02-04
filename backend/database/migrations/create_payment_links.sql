@@ -4,14 +4,14 @@
 
 -- Table des liens de paiement
 CREATE TABLE IF NOT EXISTS payment_links (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL,
     token TEXT NOT NULL UNIQUE, -- Token sécurisé pour l'URL (ex: uuid v4)
     status TEXT DEFAULT 'active', -- active, used, expired, revoked
-    expires_at DATETIME NOT NULL, -- Date d'expiration (ex: 30 jours)
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    accessed_at DATETIME, -- Première fois que le lien a été consulté
-    paid_at DATETIME, -- Quand le paiement a été effectué via ce lien
+    expires_at TIMESTAMP NOT NULL, -- Date d'expiration (ex: 30 jours)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    accessed_at TIMESTAMP, -- Première fois que le lien a été consulté
+    paid_at TIMESTAMP, -- Quand le paiement a été effectué via ce lien
     created_by_admin TEXT, -- Email de l'admin qui a créé le lien
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );

@@ -2,25 +2,25 @@
 -- Description: Table to store customer quote requests with photo/video attachments
 
 CREATE TABLE IF NOT EXISTS quote_requests (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     email TEXT NOT NULL,
     phone TEXT NOT NULL,
     description TEXT,
     status TEXT NOT NULL DEFAULT 'pending', -- pending, replied, archived
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS quote_request_files (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     quote_request_id INTEGER NOT NULL,
     file_name TEXT NOT NULL,
     file_path TEXT NOT NULL,
     file_type TEXT NOT NULL, -- image or video
     file_size INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (quote_request_id) REFERENCES quote_requests(id) ON DELETE CASCADE
 );
 

@@ -21,16 +21,16 @@ $path = $_SERVER['PATH_INFO'] ?? '/';
 
 try {
     $db = getDbConnection();
-    
+
     // GET - Récupérer tous les types de perçages
     if ($method === 'GET') {
         if (preg_match('/^\/(\d+)$/', $path, $matches)) {
             $id = $matches[1];
             $stmt = $db->prepare('SELECT * FROM facade_drilling_types WHERE id = :id');
-            $stmt->bindValue(':id', $id, SQLITE3_INTEGER);
-            $result = $stmt->execute();
-            $type = $result->fetchArray(SQLITE3_ASSOC);
-            
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            $type = $stmt->fetch(PDO::FETCH_ASSOC);
+
             if ($type) {
                 echo json_encode(['success' => true, 'data' => $type]);
             } else {
@@ -41,100 +41,97 @@ try {
             $activeOnly = isset($_GET['active']) ? (bool)$_GET['active'] : false;
             $query = 'SELECT * FROM facade_drilling_types';
             if ($activeOnly) {
-                $query .= ' WHERE is_active = 1';
+                $query .= ' WHERE is_active = TRUE';
             }
             $query .= ' ORDER BY name ASC';
-            
+
             $result = $db->query($query);
-            $types = [];
-            while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-                $types[] = $row;
-            }
-            
+            $types = $result->fetchAll(PDO::FETCH_ASSOC);
+
             echo json_encode(['success' => true, 'data' => $types]);
         }
     }
-    
+
     // POST - Créer un nouveau type
     elseif ($method === 'POST') {
         $input = json_decode(file_get_contents('php://input'), true);
-        
+
         if (!isset($input['name'])) {
             http_response_code(400);
             echo json_encode(['success' => false, 'error' => 'Nom manquant']);
             exit;
         }
-        
+
         $stmt = $db->prepare('
             INSERT INTO facade_drilling_types (name, description, icon_svg, price, is_active)
             VALUES (:name, :description, :icon_svg, :price, :is_active)
         ');
-        
-        $stmt->bindValue(':name', $input['name'], SQLITE3_TEXT);
-        $stmt->bindValue(':description', $input['description'] ?? '', SQLITE3_TEXT);
-        $stmt->bindValue(':icon_svg', $input['icon_svg'] ?? '', SQLITE3_TEXT);
-        $stmt->bindValue(':price', $input['price'] ?? 0, SQLITE3_FLOAT);
-        $stmt->bindValue(':is_active', $input['is_active'] ?? 1, SQLITE3_INTEGER);
-        
+
+        $stmt->bindValue(':name', $input['name'], PDO::PARAM_STR);
+        $stmt->bindValue(':description', $input['description'] ?? '', PDO::PARAM_STR);
+        $stmt->bindValue(':icon_svg', $input['icon_svg'] ?? '', PDO::PARAM_STR);
+        $stmt->bindValue(':price', $input['price'] ?? 0);
+        $stmt->bindValue(':is_active', $input['is_active'] ?? 1, PDO::PARAM_INT);
+
         $stmt->execute();
-        $id = $db->lastInsertRowID();
-        
+        $id = $db->lastInsertId();
+
         echo json_encode(['success' => true, 'data' => ['id' => $id]]);
     }
-    
+
     // PUT - Mettre à jour un type
     elseif ($method === 'PUT') {
         if (preg_match('/^\/(\d+)$/', $path, $matches)) {
             $id = $matches[1];
             $input = json_decode(file_get_contents('php://input'), true);
-            
+
             $fields = [];
             $values = [];
-            
+
             if (isset($input['name'])) {
                 $fields[] = 'name = :name';
-                $values[':name'] = [$input['name'], SQLITE3_TEXT];
+                $values[':name'] = [$input['name'], PDO::PARAM_STR];
             }
             if (isset($input['description'])) {
                 $fields[] = 'description = :description';
-                $values[':description'] = [$input['description'], SQLITE3_TEXT];
+                $values[':description'] = [$input['description'], PDO::PARAM_STR];
             }
             if (isset($input['icon_svg'])) {
                 $fields[] = 'icon_svg = :icon_svg';
-                $values[':icon_svg'] = [$input['icon_svg'], SQLITE3_TEXT];
+                $values[':icon_svg'] = [$input['icon_svg'], PDO::PARAM_STR];
             }
             if (isset($input['price'])) {
                 $fields[] = 'price = :price';
-                $values[':price'] = [$input['price'], SQLITE3_FLOAT];
+                $values[':price'] = [$input['price'], PDO::PARAM_STR];
             }
             if (isset($input['is_active'])) {
                 $fields[] = 'is_active = :is_active';
-                $values[':is_active'] = [$input['is_active'], SQLITE3_INTEGER];
+                $values[':is_active'] = [$input['is_active'], PDO::PARAM_INT];
             }
-            
+
             if (empty($fields)) {
                 http_response_code(400);
                 echo json_encode(['success' => false, 'error' => 'Aucune donnée à mettre à jour']);
                 exit;
             }
-            
+
             $query = 'UPDATE facade_drilling_types SET ' . implode(', ', $fields) . ' WHERE id = :id';
-            
+
             $stmt = $db->prepare($query);
-            $stmt->bindValue(':id', $id, SQLITE3_INTEGER);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
             foreach ($values as $key => $value) {
                 $stmt->bindValue($key, $value[0], $value[1]);
             }
-            
+
             $stmt->execute();
-            
+
             echo json_encode(['success' => true, 'message' => 'Type de perçage mis à jour']);
         } else {
             http_response_code(400);
             echo json_encode(['success' => false, 'error' => 'ID manquant']);
         }
     }
-    
+
     // DELETE
     elseif ($method === 'DELETE') {
         $id = null;
@@ -146,7 +143,7 @@ try {
 
         if ($id) {
             $stmt = $db->prepare('DELETE FROM facade_drilling_types WHERE id = :id');
-            $stmt->bindValue(':id', $id, SQLITE3_INTEGER);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
 
             echo json_encode(['success' => true, 'message' => 'Type de perçage supprimé']);
@@ -155,12 +152,12 @@ try {
             echo json_encode(['success' => false, 'error' => 'ID manquant']);
         }
     }
-    
+
     else {
         http_response_code(405);
         echo json_encode(['success' => false, 'error' => 'Méthode non autorisée']);
     }
-    
+
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);

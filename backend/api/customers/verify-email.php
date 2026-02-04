@@ -50,7 +50,7 @@ try {
     }
 
     // Vérifier si déjà vérifié
-    if (isset($customerData['email_verified']) && $customerData['email_verified'] == 1) {
+    if (isset($customerData['email_verified']) && $customerData['email_verified']) {
         http_response_code(400);
         echo json_encode(['error' => 'Ce compte est déjà vérifié']);
         exit;
@@ -58,7 +58,7 @@ try {
 
     // Récupérer le code de vérification
     $verification = $db->queryOne(
-        "SELECT * FROM email_verifications WHERE email = ? AND code = ? AND used = 0 ORDER BY created_at DESC LIMIT 1",
+        "SELECT * FROM email_verifications WHERE email = ? AND code = ? AND used = FALSE ORDER BY created_at DESC LIMIT 1",
         [$email, $code]
     );
 
@@ -76,10 +76,10 @@ try {
     }
 
     // Marquer le code comme utilisé
-    $db->execute("UPDATE email_verifications SET used = 1 WHERE id = ?", [$verification['id']]);
+    $db->execute("UPDATE email_verifications SET used = TRUE WHERE id = ?", [$verification['id']]);
 
     // Marquer le compte comme vérifié
-    $db->execute("UPDATE customers SET email_verified = 1 WHERE email = ?", [$email]);
+    $db->execute("UPDATE customers SET email_verified = TRUE WHERE email = ?", [$email]);
 
     // Récupérer les infos mises à jour du client
     $customerData = $customer->getById($customerData['id']);

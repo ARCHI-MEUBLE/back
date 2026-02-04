@@ -23,7 +23,7 @@ class Category {
     public function getAll($onlyActive = false) {
         $query = "SELECT * FROM categories";
         if ($onlyActive) {
-            $query .= " WHERE is_active = 1";
+            $query .= " WHERE is_active = TRUE";
         }
         $query .= " ORDER BY display_order ASC, name ASC";
         return $this->db->query($query);
@@ -76,7 +76,7 @@ class Category {
             'description' => $description,
             'image_url' => $imageUrl,
             'display_order' => $displayOrder,
-            'is_active' => $isActive ? 1 : 0
+            'is_active' => $isActive ? true : false
         ]);
 
         if (!$success) {
@@ -150,7 +150,7 @@ class Category {
     public function count($onlyActive = false) {
         $query = "SELECT COUNT(*) as total FROM categories";
         if ($onlyActive) {
-            $query .= " WHERE is_active = 1";
+            $query .= " WHERE is_active = TRUE";
         }
         $result = $this->db->queryOne($query);
         return $result ? (int)$result['total'] : 0;
@@ -197,7 +197,7 @@ class Category {
         $query = "UPDATE categories SET is_active = :is_active, updated_at = CURRENT_TIMESTAMP WHERE id = :id";
         return $this->db->execute($query, [
             'id' => $id,
-            'is_active' => $isActive ? 1 : 0
+            'is_active' => $isActive ? true : false
         ]);
     }
 }

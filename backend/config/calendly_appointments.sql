@@ -2,24 +2,24 @@
 -- Stocke les informations des rendez-vous pour permettre l'envoi de rappels
 
 CREATE TABLE IF NOT EXISTS calendly_appointments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     calendly_event_id TEXT UNIQUE NOT NULL,
     client_name TEXT NOT NULL,
     client_email TEXT NOT NULL,
     event_type TEXT NOT NULL,
-    start_time DATETIME NOT NULL,
-    end_time DATETIME NOT NULL,
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP NOT NULL,
     timezone TEXT DEFAULT 'Europe/Paris',
     config_url TEXT,
     additional_notes TEXT,
     meeting_url TEXT,
     phone_number TEXT,
     status TEXT DEFAULT 'scheduled',
-    confirmation_sent BOOLEAN DEFAULT 0,
-    reminder_24h_sent BOOLEAN DEFAULT 0,
-    reminder_1h_sent BOOLEAN DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    confirmation_sent BOOLEAN DEFAULT FALSE,
+    reminder_24h_sent BOOLEAN DEFAULT FALSE,
+    reminder_1h_sent BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Index pour optimiser les requêtes

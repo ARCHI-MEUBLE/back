@@ -82,7 +82,7 @@ try {
     $username = explode('@', $email)[0];
 
     // Insérer le nouvel admin
-    $query = "INSERT INTO admins (username, email, password, created_at) VALUES (?, ?, ?, datetime('now'))";
+    $query = "INSERT INTO admins (username, email, password, created_at) VALUES (?, ?, ?, NOW())";
     $success = $db->execute($query, [$username, $email, $passwordHash]);
 
     if (!$success) {

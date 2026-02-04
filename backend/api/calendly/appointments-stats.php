@@ -55,26 +55,26 @@ try {
     // Rendez-vous par semaine (4 dernières semaines)
     $weeklyStats = $db->query(
         "SELECT
-            strftime('%Y-%W', start_time) as week,
+            TO_CHAR(start_time, 'IYYY-IW') as week,
             COUNT(*) as count,
-            strftime('%Y', start_time) as year,
-            strftime('%W', start_time) as week_num
+            EXTRACT(YEAR FROM start_time)::TEXT as year,
+            EXTRACT(WEEK FROM start_time)::TEXT as week_num
          FROM calendly_appointments
-         WHERE start_time >= datetime('now', '-4 weeks')
-         GROUP BY week
+         WHERE start_time >= NOW() - INTERVAL '4 weeks'
+         GROUP BY week, year, week_num
          ORDER BY week"
     );
 
     // Rendez-vous par mois (6 derniers mois)
     $monthlyStats = $db->query(
         "SELECT
-            strftime('%Y-%m', start_time) as month,
+            TO_CHAR(start_time, 'YYYY-MM') as month,
             COUNT(*) as count,
-            strftime('%Y', start_time) as year,
-            strftime('%m', start_time) as month_num
+            EXTRACT(YEAR FROM start_time)::TEXT as year,
+            EXTRACT(MONTH FROM start_time)::TEXT as month_num
          FROM calendly_appointments
-         WHERE start_time >= datetime('now', '-6 months')
-         GROUP BY month
+         WHERE start_time >= NOW() - INTERVAL '6 months'
+         GROUP BY month, year, month_num
          ORDER BY month"
     );
 
@@ -94,12 +94,12 @@ try {
     // KPIs du mois en cours
     $thisMonthCount = $db->queryOne(
         "SELECT COUNT(*) as count FROM calendly_appointments
-         WHERE strftime('%Y-%m', start_time) = strftime('%Y-%m', 'now')"
+         WHERE TO_CHAR(start_time, 'YYYY-MM') = TO_CHAR(NOW(), 'YYYY-MM')"
     )['count'];
 
     $lastMonthCount = $db->queryOne(
         "SELECT COUNT(*) as count FROM calendly_appointments
-         WHERE strftime('%Y-%m', start_time) = strftime('%Y-%m', 'now', '-1 month')"
+         WHERE TO_CHAR(start_time, 'YYYY-MM') = TO_CHAR(NOW() - INTERVAL '1 month', 'YYYY-MM')"
     )['count'];
 
     // Tendance mois en cours vs mois dernier

@@ -9,3 +9,5 @@ svgwrite
 scipy
 networkx
 svgpathtools
+# PostgreSQL driver for Python migration scripts
+psycopg2-binary

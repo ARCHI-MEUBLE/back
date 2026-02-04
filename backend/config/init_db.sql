@@ -4,22 +4,22 @@
 
 -- Créer la table templates
 CREATE TABLE IF NOT EXISTS templates (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     prompt TEXT NOT NULL,
-    base_price REAL NOT NULL,
+    base_price DECIMAL(10,2) NOT NULL,
     image_url TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Créer la table configurations
 CREATE TABLE IF NOT EXISTS configurations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     user_session TEXT NOT NULL,
     prompt TEXT NOT NULL,
-    price REAL NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
     glb_url TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Insérer les 3 meubles TV

@@ -53,7 +53,7 @@ class Notification {
         $query = "SELECT * FROM notifications WHERE customer_id = :customer_id";
 
         if ($unreadOnly) {
-            $query .= " AND is_read = 0";
+            $query .= " AND is_read = FALSE";
         }
 
         $query .= " ORDER BY created_at DESC LIMIT :limit";
@@ -73,7 +73,7 @@ class Notification {
      */
     public function countUnread($customerId) {
         $query = "SELECT COUNT(*) as count FROM notifications
-                  WHERE customer_id = :customer_id AND is_read = 0";
+                  WHERE customer_id = :customer_id AND is_read = FALSE";
 
         $result = $this->db->queryOne($query, ['customer_id' => $customerId]);
         return (int)($result['count'] ?? 0);
@@ -86,7 +86,7 @@ class Notification {
      * @return bool
      */
     public function markAsRead($id, $customerId) {
-        $query = "UPDATE notifications SET is_read = 1
+        $query = "UPDATE notifications SET is_read = TRUE
                   WHERE id = :id AND customer_id = :customer_id";
 
         $this->db->execute($query, [
@@ -103,7 +103,7 @@ class Notification {
      * @return bool
      */
     public function markAllAsRead($customerId) {
-        $query = "UPDATE notifications SET is_read = 1 WHERE customer_id = :customer_id";
+        $query = "UPDATE notifications SET is_read = TRUE WHERE customer_id = :customer_id";
 
         $this->db->execute($query, ['customer_id' => $customerId]);
 

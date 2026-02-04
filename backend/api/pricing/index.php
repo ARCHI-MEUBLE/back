@@ -21,13 +21,13 @@ try {
     if ($method === 'GET') {
         // Get all pricing options or a specific one
         if (isset($_GET['name'])) {
-            $stmt = $db->prepare('SELECT * FROM pricing WHERE name = :name AND is_active = 1');
+            $stmt = $db->prepare('SELECT * FROM pricing WHERE name = :name AND is_active = TRUE');
             $stmt->execute([':name' => $_GET['name']]);
             $pricing = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$pricing) {
                 // Si le tarif demandé n'existe pas, retourner le premier tarif actif ou un tarif par défaut
-                $stmt = $db->query('SELECT * FROM pricing WHERE is_active = 1 ORDER BY id ASC LIMIT 1');
+                $stmt = $db->query('SELECT * FROM pricing WHERE is_active = TRUE ORDER BY id ASC LIMIT 1');
                 $pricing = $stmt->fetch(PDO::FETCH_ASSOC);
 
                 // Si toujours aucun tarif, créer un tarif par défaut
@@ -50,7 +50,7 @@ try {
             ]);
         } else {
             // Get all pricing
-            $stmt = $db->query('SELECT * FROM pricing WHERE is_active = 1 ORDER BY price_per_m3 ASC');
+            $stmt = $db->query('SELECT * FROM pricing WHERE is_active = TRUE ORDER BY price_per_m3 ASC');
             $pricings = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             echo json_encode([
@@ -141,7 +141,7 @@ try {
             throw new Exception('ID requis');
         }
 
-        $stmt = $db->prepare('UPDATE pricing SET is_active = 0 WHERE id = :id');
+        $stmt = $db->prepare('UPDATE pricing SET is_active = FALSE WHERE id = :id');
         $stmt->execute([':id' => $data['id']]);
 
         echo json_encode([

@@ -34,45 +34,45 @@ try {
     
     // 1. Table calendly_appointments (avec structure robuste)
     $pdo->exec("CREATE TABLE IF NOT EXISTS calendly_appointments (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         event_uri TEXT UNIQUE,
         invitee_uri TEXT,
         event_type_uri TEXT,
-        start_time DATETIME,
-        end_time DATETIME,
+        start_time TIMESTAMP,
+        end_time TIMESTAMP,
         invitee_name TEXT,
         invitee_email TEXT,
         status TEXT DEFAULT 'active',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )");
     $messages[] = "✅ Table 'calendly_appointments' créée ou déjà présente";
 
     // 2. Table categories (nécessaire pour le configurateur)
     $pdo->exec("CREATE TABLE IF NOT EXISTS categories (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
         slug TEXT UNIQUE,
         description TEXT,
         image_url TEXT,
         is_active INTEGER DEFAULT 1,
         display_order INTEGER DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )");
     $messages[] = "✅ Table 'categories' créée ou déjà présente";
 
     // 3. Table pricing (pour les prix dynamiques)
     $pdo->exec("CREATE TABLE IF NOT EXISTS pricing (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         name TEXT UNIQUE,
         value REAL,
         description TEXT,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )");
     $messages[] = "✅ Table 'pricing' créée ou déjà présente";
 
     // 4. Table payment_links (pour les liens de paiement Stripe)
     $pdo->exec("CREATE TABLE IF NOT EXISTS payment_links (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         order_id INTEGER NOT NULL,
         token TEXT UNIQUE,
         stripe_link_id TEXT,
@@ -81,10 +81,10 @@ try {
         status TEXT DEFAULT 'active',
         payment_type TEXT DEFAULT 'full',
         created_by_admin TEXT,
-        accessed_at DATETIME,
-        paid_at DATETIME,
-        expires_at DATETIME,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        accessed_at TIMESTAMP,
+        paid_at TIMESTAMP,
+        expires_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (order_id) REFERENCES orders(id)
     )");
     $messages[] = "✅ Table 'payment_links' synchronisée avec le modèle PHP";
@@ -98,8 +98,9 @@ try {
 
     foreach ($migrations as $table => $columns) {
         // Récupérer les colonnes existantes
-        $stmt = $pdo->query("PRAGMA table_info($table)");
-        $existingColumns = $stmt->fetchAll(PDO::FETCH_COLUMN, 1);
+        $stmt = $pdo->prepare("SELECT column_name FROM information_schema.columns WHERE table_name = :table AND table_schema = 'public'");
+        $stmt->execute(['table' => $table]);
+        $existingColumns = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
 
         foreach ($columns as $column) {
             if (!in_array($column, $existingColumns)) {

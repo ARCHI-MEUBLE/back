@@ -234,9 +234,22 @@ try {
 
     // Insertion du rendez-vous
     $stmt = $db->prepare("
-        INSERT OR REPLACE INTO calendly_appointments
+        INSERT INTO calendly_appointments
         (calendly_event_id, client_name, client_email, event_type, start_time, end_time, timezone, config_url, additional_notes, meeting_url, phone_number, status, confirmation_sent)
         VALUES (:event_id, :name, :email, :event_type, :start_time, :end_time, :timezone, :config_url, :notes, :meeting_url, :phone_number, 'scheduled', 1)
+        ON CONFLICT (calendly_event_id) DO UPDATE SET
+            client_name = EXCLUDED.client_name,
+            client_email = EXCLUDED.client_email,
+            event_type = EXCLUDED.event_type,
+            start_time = EXCLUDED.start_time,
+            end_time = EXCLUDED.end_time,
+            timezone = EXCLUDED.timezone,
+            config_url = EXCLUDED.config_url,
+            additional_notes = EXCLUDED.additional_notes,
+            meeting_url = EXCLUDED.meeting_url,
+            phone_number = EXCLUDED.phone_number,
+            status = EXCLUDED.status,
+            confirmation_sent = EXCLUDED.confirmation_sent
     ");
 
     $stmt->execute([

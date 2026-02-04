@@ -2,16 +2,16 @@
 -- Date: 2025-01-25
 
 -- Ajouter la colonne email_verified à la table customers
-ALTER TABLE customers ADD COLUMN email_verified INTEGER DEFAULT 0;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE;
 
 -- Créer la table pour stocker les codes de vérification
 CREATE TABLE IF NOT EXISTS email_verifications (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     email TEXT NOT NULL,
     code TEXT NOT NULL,
-    expires_at DATETIME NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    used INTEGER DEFAULT 0
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    used BOOLEAN DEFAULT FALSE
 );
 
 -- Index pour recherche rapide par email

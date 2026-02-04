@@ -2,7 +2,7 @@
 /**
  * ENDPOINT CACHÉ DE GESTION DES BACKUPS
  *
- * ⚠️ ATTENTION : Cet endpoint est CONFIDENTIEL
+ * ATTENTION : Cet endpoint est CONFIDENTIEL
  * - Ne JAMAIS mentionner dans l'interface admin
  * - Ne JAMAIS créer de lien vers cet endpoint
  * - Authentification par clé API secrète uniquement
@@ -12,6 +12,7 @@
  * GET  /api/system/db-maintenance?key=SECRET               → Liste backups
  * GET  /api/system/db-maintenance/download/:file?key=SECRET → Télécharge backup
  * POST /api/system/db-maintenance/restore?key=SECRET       → Restaure backup
+ * POST /api/system/db-maintenance/create?key=SECRET        → Crée un backup
  */
 
 // Désactiver l'affichage des erreurs
@@ -31,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 // Configuration - Using $GLOBALS to ensure cross-scope availability
 $GLOBALS['BACKUP_DIR'] = '/data/backups';
-$GLOBALS['DB_PATH'] = getenv('DB_PATH') ?: '/data/archimeuble_test.db';
+$GLOBALS['DATABASE_URL'] = getenv('DATABASE_URL');
 $GLOBALS['BACKUP_API_KEY'] = getenv('BACKUP_API_KEY');
 $GLOBALS['LOG_FILE'] = '/data/backup-access.log';
 
@@ -128,7 +129,7 @@ function listBackups() {
         mkdir($GLOBALS['BACKUP_DIR'], 0755, true);
     }
 
-    $files = glob($GLOBALS['BACKUP_DIR'] . '/database-backup-*.db');
+    $files = glob($GLOBALS['BACKUP_DIR'] . '/database-backup-*.sql');
     $backups = [];
 
     foreach ($files as $file) {
@@ -154,11 +155,43 @@ function listBackups() {
 }
 
 /**
+ * Créer un nouveau backup via pg_dump
+ */
+function createBackup() {
+    $backupDate = date('Y-m-d_H-i-s');
+    $backupFile = $GLOBALS['BACKUP_DIR'] . '/database-backup-' . $backupDate . '.sql';
+
+    if (!is_dir($GLOBALS['BACKUP_DIR'])) {
+        mkdir($GLOBALS['BACKUP_DIR'], 0755, true);
+    }
+
+    $databaseUrl = $GLOBALS['DATABASE_URL'];
+    $cmd = "pg_dump " . escapeshellarg($databaseUrl) . " > " . escapeshellarg($backupFile) . " 2>&1";
+    $output = shell_exec($cmd);
+
+    if (file_exists($backupFile) && filesize($backupFile) > 0) {
+        return [
+            'success' => true,
+            'message' => 'Backup created successfully',
+            'filename' => basename($backupFile),
+            'size' => round(filesize($backupFile) / 1024 / 1024, 2) . ' MB'
+        ];
+    } else {
+        if (file_exists($backupFile)) {
+            unlink($backupFile);
+        }
+        http_response_code(500);
+        echo json_encode(['error' => 'Backup failed', 'details' => $output]);
+        exit;
+    }
+}
+
+/**
  * Télécharger un backup
  */
 function downloadBackup($filename) {
     // Sécurité: vérifier que le nom de fichier est valide
-    if (!preg_match('/^database-backup-[\d_-]+\.db$/', $filename)) {
+    if (!preg_match('/^database-backup-[\d_-]+\.sql$/', $filename)) {
         http_response_code(400);
         echo json_encode(['error' => 'Invalid filename']);
         exit;
@@ -181,14 +214,14 @@ function downloadBackup($filename) {
 }
 
 /**
- * Restaurer un backup
+ * Restaurer un backup via psql
  */
 function restoreBackup() {
     $input = json_decode(file_get_contents('php://input'), true);
     $filename = $input['filename'] ?? '';
 
     // Sécurité
-    if (!preg_match('/^database-backup-[\d_-]+\.db$/', $filename)) {
+    if (!preg_match('/^database-backup-[\d_-]+\.sql$/', $filename)) {
         http_response_code(400);
         echo json_encode(['error' => 'Invalid filename']);
         exit;
@@ -203,26 +236,22 @@ function restoreBackup() {
     }
 
     // Créer un backup de sécurité avant restauration
-    $emergencyBackup = $GLOBALS['DB_PATH'] . '.before-restore-' . date('Y-m-d_H-i-s');
-    copy($GLOBALS['DB_PATH'], $emergencyBackup);
+    $emergencyFile = $GLOBALS['BACKUP_DIR'] . '/database-backup-before-restore-' . date('Y-m-d_H-i-s') . '.sql';
+    $databaseUrl = $GLOBALS['DATABASE_URL'];
+
+    $dumpCmd = "pg_dump " . escapeshellarg($databaseUrl) . " > " . escapeshellarg($emergencyFile) . " 2>&1";
+    shell_exec($dumpCmd);
 
     // Restaurer
-    if (copy($backupPath, $GLOBALS['DB_PATH'])) {
-        return [
-            'success' => true,
-            'message' => 'Database restored successfully',
-            'restored_from' => $filename,
-            'emergency_backup' => basename($emergencyBackup)
-        ];
-    } else {
-        // Restaurer le backup d'urgence si échec
-        copy($emergencyBackup, $GLOBALS['DB_PATH']);
-        unlink($emergencyBackup);
+    $restoreCmd = "psql " . escapeshellarg($databaseUrl) . " < " . escapeshellarg($backupPath) . " 2>&1";
+    $output = shell_exec($restoreCmd);
 
-        http_response_code(500);
-        echo json_encode(['error' => 'Restore failed']);
-        exit;
-    }
+    return [
+        'success' => true,
+        'message' => 'Database restored successfully',
+        'restored_from' => $filename,
+        'emergency_backup' => basename($emergencyFile)
+    ];
 }
 
 // === POINT D'ENTRÉE PRINCIPAL ===
@@ -251,6 +280,14 @@ try {
         $filename = $matches[1];
         logAccess('DOWNLOAD_BACKUP', true, $ip, "File: $filename");
         downloadBackup($filename);
+        exit;
+    }
+
+    // Créer un nouveau backup
+    if ($method === 'POST' && str_contains($path, '/create')) {
+        logAccess('CREATE_BACKUP', true, $ip);
+        $result = createBackup();
+        echo json_encode($result);
         exit;
     }
 

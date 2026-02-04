@@ -43,7 +43,7 @@ if ($method === 'GET') {
         $params = [];
 
         if ($active_only) {
-            $sql .= ' AND is_active = 1';
+            $sql .= ' AND is_active = TRUE';
         }
 
         if ($id) {
@@ -260,7 +260,7 @@ if ($method === 'DELETE') {
     }
 
     try {
-        $stmt = $db->prepare('UPDATE pricing_config SET is_active = 0 WHERE id = :id');
+        $stmt = $db->prepare('UPDATE pricing_config SET is_active = FALSE WHERE id = :id');
         $stmt->execute([':id' => $id]);
 
         if ($stmt->rowCount() === 0) {

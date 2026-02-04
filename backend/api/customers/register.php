@@ -67,7 +67,7 @@ try {
     $existingCustomer = $customer->getByEmail($data['email']);
     if ($existingCustomer) {
         // Si le compte existe mais n'est pas vérifié, permettre de renvoyer le code
-        if (isset($existingCustomer['email_verified']) && $existingCustomer['email_verified'] == 0) {
+        if (isset($existingCustomer['email_verified']) && !$existingCustomer['email_verified']) {
             // Générer un nouveau code et renvoyer
             $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
             $expiresAt = date('Y-m-d H:i:s', strtotime('+15 minutes'));
