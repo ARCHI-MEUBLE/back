@@ -59,7 +59,7 @@ class Sample {
             $pdo = $this->db->getPDO();
             $stmt = $pdo->prepare("
                 INSERT INTO sample_types (name, material, description, position, active)
-                VALUES (?, ?, ?, ?, 1)
+                VALUES (?, ?, ?, ?, TRUE)
             ");
             $stmt->execute([$name, $material, $description, (int)$position]);
             return $pdo->lastInsertId();
@@ -81,7 +81,7 @@ class Sample {
             $name = $data['name'] ?? $type['name'];
             $material = $data['material'] ?? $type['material'];
             $description = isset($data['description']) ? $data['description'] : $type['description'];
-            $active = isset($data['active']) ? (int)$data['active'] : $type['active'];
+            $active = isset($data['active']) ? (bool)$data['active'] : $type['active'];
             $position = isset($data['position']) ? (int)$data['position'] : $type['position'];
 
             $stmt = $pdo->prepare("
@@ -162,7 +162,7 @@ class Sample {
             $pdo = $this->db->getPDO();
             $stmt = $pdo->prepare("
                 INSERT INTO sample_colors (type_id, name, hex, image_url, position, active, price_per_m2, unit_price)
-                VALUES (?, ?, ?, ?, ?, 1, ?, ?)
+                VALUES (?, ?, ?, ?, ?, TRUE, ?, ?)
             ");
             $stmt->execute([$type_id, $name, $hex, $image_url, (int)$position, (float)$price_per_m2, (float)$unit_price]);
             return $pdo->lastInsertId();
@@ -184,7 +184,7 @@ class Sample {
             $name = $data['name'] ?? $color['name'];
             $hex = isset($data['hex']) ? $data['hex'] : $color['hex'];
             $image_url = isset($data['image_url']) ? $data['image_url'] : $color['image_url'];
-            $active = isset($data['active']) ? (int)$data['active'] : $color['active'];
+            $active = isset($data['active']) ? (bool)$data['active'] : $color['active'];
             $position = isset($data['position']) ? (int)$data['position'] : $color['position'];
             $price_per_m2 = isset($data['price_per_m2']) ? (float)$data['price_per_m2'] : $color['price_per_m2'];
             $unit_price = isset($data['unit_price']) ? (float)$data['unit_price'] : $color['unit_price'];

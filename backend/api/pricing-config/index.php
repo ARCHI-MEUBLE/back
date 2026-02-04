@@ -143,7 +143,7 @@ if ($method === 'POST') {
             ':param_value' => floatval($data['param_value']),
             ':unit' => trim($data['unit']),
             ':description' => isset($data['description']) ? trim($data['description']) : null,
-            ':is_active' => isset($data['is_active']) ? intval($data['is_active']) : 1
+            ':is_active' => isset($data['is_active']) ? (bool)$data['is_active'] : true
         ]);
 
         $new_id = $db->lastInsertId();
@@ -223,7 +223,7 @@ if ($method === 'PUT') {
 
         if (isset($data['is_active'])) {
             $updates[] = 'is_active = :is_active';
-            $params[':is_active'] = intval($data['is_active']);
+            $params[':is_active'] = (bool)$data['is_active'];
         }
 
         if (count($updates) === 0) {

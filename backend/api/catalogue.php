@@ -73,7 +73,7 @@ try {
                         'id' => (int)$v['id'],
                         'color_name' => $v['color_name'],
                         'image_url' => $v['image_url'],
-                        'is_default' => (int)$v['is_default']
+                        'is_default' => (bool)$v['is_default']
                     ];
                 }
 
@@ -142,7 +142,7 @@ try {
                     'id' => (int)$v['id'],
                     'color_name' => $v['color_name'],
                     'image_url' => $v['image_url'],
-                    'is_default' => (int)$v['is_default']
+                    'is_default' => (bool)$v['is_default']
                 ];
             }
 

@@ -112,7 +112,7 @@ if (isset($event['event']) && $event['event'] === 'invitee.created') {
         $stmt = $db->prepare("
             INSERT INTO calendly_appointments
             (calendly_event_id, client_name, client_email, event_type, start_time, end_time, timezone, config_url, additional_notes, status, confirmation_sent)
-            VALUES (:event_id, :name, :email, :event_type, :start_time, :end_time, :timezone, :config_url, :notes, 'scheduled', 1)
+            VALUES (:event_id, :name, :email, :event_type, :start_time, :end_time, :timezone, :config_url, :notes, 'scheduled', TRUE)
             ON CONFLICT (calendly_event_id) DO UPDATE SET
                 client_name = EXCLUDED.client_name,
                 client_email = EXCLUDED.client_email,

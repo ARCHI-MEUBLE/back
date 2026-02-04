@@ -31,7 +31,7 @@ try {
         meeting_url TEXT,
         phone_number TEXT,
         status TEXT DEFAULT 'scheduled',
-        confirmation_sent INTEGER DEFAULT 0,
+        confirmation_sent BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";

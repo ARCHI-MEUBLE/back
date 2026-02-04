@@ -236,7 +236,7 @@ try {
     $stmt = $db->prepare("
         INSERT INTO calendly_appointments
         (calendly_event_id, client_name, client_email, event_type, start_time, end_time, timezone, config_url, additional_notes, meeting_url, phone_number, status, confirmation_sent)
-        VALUES (:event_id, :name, :email, :event_type, :start_time, :end_time, :timezone, :config_url, :notes, :meeting_url, :phone_number, 'scheduled', 1)
+        VALUES (:event_id, :name, :email, :event_type, :start_time, :end_time, :timezone, :config_url, :notes, :meeting_url, :phone_number, 'scheduled', TRUE)
         ON CONFLICT (calendly_event_id) DO UPDATE SET
             client_name = EXCLUDED.client_name,
             client_email = EXCLUDED.client_email,

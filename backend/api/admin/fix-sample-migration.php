@@ -54,7 +54,7 @@ try {
         slug TEXT UNIQUE,
         description TEXT,
         image_url TEXT,
-        is_active INTEGER DEFAULT 1,
+        is_active BOOLEAN DEFAULT TRUE,
         display_order INTEGER DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )");
