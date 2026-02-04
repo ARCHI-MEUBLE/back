@@ -3,6 +3,15 @@
 -- Ce fichier crée le schéma de base de données complet
 -- =============================================================================
 
+-- Supprimer les clés étrangères invalides (user_id → users) si elles existent
+-- Ces FK ne sont plus utilisées car les clients sont dans la table 'customers'
+DO $$ BEGIN
+    ALTER TABLE configurations DROP CONSTRAINT IF EXISTS configurations_user_id_fkey;
+    ALTER TABLE configurations DROP CONSTRAINT IF EXISTS configurations_template_id_fkey;
+    ALTER TABLE avis DROP CONSTRAINT IF EXISTS avis_user_id_fkey;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
 -- Table des utilisateurs
 CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
@@ -48,9 +57,7 @@ CREATE TABLE IF NOT EXISTS configurations (
     glb_url TEXT,
     dxf_url TEXT,
     status TEXT DEFAULT 'en_attente_validation',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (template_id) REFERENCES models(id) ON DELETE SET NULL
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Table des sessions
@@ -131,8 +138,7 @@ CREATE TABLE IF NOT EXISTS avis (
     rating INTEGER NOT NULL CHECK(rating >= 1 AND rating <= 5),
     text TEXT NOT NULL,
     date TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Table des configurations sauvegardées par les clients
