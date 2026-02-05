@@ -70,6 +70,9 @@ $allowedTypes = [
     'webp' => 'image/webp',
 ];
 
+// Liste de tous les MIME types acceptés (pour vérification flexible)
+$allowedMimeTypes = array_unique(array_values($allowedTypes));
+
 // SÉCURITÉ: Vérifier l'extension (prévention double extension: file.php.jpg)
 $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
@@ -95,12 +98,19 @@ $finfo = finfo_open(FILEINFO_MIME_TYPE);
 $detectedMime = finfo_file($finfo, $fileTmpName);
 finfo_close($finfo);
 
-if ($detectedMime !== $allowedTypes[$fileExt]) {
+// Vérification flexible: le MIME détecté doit être dans la liste des types autorisés
+if (!in_array($detectedMime, $allowedMimeTypes, true)) {
     // Log de sécurité
-    error_log("[SECURITY] Upload blocked: extension '$fileExt' but MIME '$detectedMime' - possible attack");
+    error_log("[SECURITY] Upload blocked: MIME '$detectedMime' not in allowed list");
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Le contenu du fichier ne correspond pas à son extension']);
+    echo json_encode(['success' => false, 'error' => 'Type de fichier non autorisé (MIME: ' . $detectedMime . ')']);
     exit;
+}
+
+// Corriger l'extension si le MIME est valide mais l'extension ne correspond pas
+$mimeToExt = array_flip($allowedTypes);
+if (isset($mimeToExt[$detectedMime]) && $allowedTypes[$fileExt] !== $detectedMime) {
+    $fileExt = $mimeToExt[$detectedMime];
 }
 
 // SÉCURITÉ: Vérifier que c'est vraiment une image valide
