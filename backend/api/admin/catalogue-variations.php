@@ -98,16 +98,21 @@ function handlePost($action, $pdo) {
                 return;
             }
 
-            $sql = "INSERT INTO catalogue_item_variations (catalogue_item_id, color_name, image_url, is_default) 
+            $sql = "INSERT INTO catalogue_item_variations (catalogue_item_id, color_name, image_url, is_default)
                     VALUES (?, ?, ?, ?)";
-            
+
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                $data['catalogue_item_id'],
-                $data['color_name'],
-                $data['image_url'],
-                (isset($data['is_default']) && $data['is_default'] !== '') ? filter_var($data['is_default'], FILTER_VALIDATE_BOOLEAN) : false
-            ]);
+
+            // Convertir is_default en booléen PostgreSQL explicite
+            $isDefault = (isset($data['is_default']) && $data['is_default'] !== '')
+                ? filter_var($data['is_default'], FILTER_VALIDATE_BOOLEAN)
+                : false;
+
+            $stmt->bindValue(1, $data['catalogue_item_id'], PDO::PARAM_INT);
+            $stmt->bindValue(2, $data['color_name'], PDO::PARAM_STR);
+            $stmt->bindValue(3, $data['image_url'], PDO::PARAM_STR);
+            $stmt->bindValue(4, $isDefault, PDO::PARAM_BOOL);
+            $stmt->execute();
 
             $newId = $pdo->lastInsertId();
             http_response_code(201);
