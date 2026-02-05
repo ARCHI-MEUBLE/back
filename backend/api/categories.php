@@ -155,7 +155,9 @@ if ($method === 'POST') {
     $imageUrl = $input['image_url'] ?? $input['imageUrl'] ?? null;
     $description = $input['description'] ?? null;
     $displayOrder = $input['display_order'] ?? $input['displayOrder'] ?? 0;
-    $isActive = isset($input['is_active']) ? (bool)$input['is_active'] : (isset($input['isActive']) ? (bool)$input['isActive'] : true);
+    $isActive = (isset($input['is_active']) && $input['is_active'] !== '')
+        ? filter_var($input['is_active'], FILTER_VALIDATE_BOOLEAN)
+        : ((isset($input['isActive']) && $input['isActive'] !== '') ? filter_var($input['isActive'], FILTER_VALIDATE_BOOLEAN) : true);
 
     try {
         $categoryId = $category->create(
@@ -252,7 +254,7 @@ if ($method === 'PUT') {
             $input['display_order'] = $input['displayOrder'];
         }
         if (isset($input['isActive'])) {
-            $input['is_active'] = $input['isActive'] ? 1 : 0;
+            $input['is_active'] = ($input['isActive'] !== '') ? filter_var($input['isActive'], FILTER_VALIDATE_BOOLEAN) : true;
         }
 
         foreach ($allowedFields as $field) {

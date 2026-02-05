@@ -93,7 +93,7 @@ try {
         $stmt->bindValue(':texture_url', $textureUrl, PDO::PARAM_STR);
         $stmt->bindValue(':price_modifier', $input['price_modifier'] ?? 0);
         $stmt->bindValue(':price_per_m2', $input['price_per_m2'] ?? 150);
-        $stmt->bindValue(':is_active', $input['is_active'] ?? 1, PDO::PARAM_INT);
+        $stmt->bindValue(':is_active', (isset($input['is_active']) && $input['is_active'] !== '') ? filter_var($input['is_active'], FILTER_VALIDATE_BOOLEAN) : true, PDO::PARAM_BOOL);
 
         $stmt->execute();
         $id = $db->lastInsertId();
@@ -149,7 +149,7 @@ try {
             }
             if (isset($input['is_active'])) {
                 $fields[] = 'is_active = :is_active';
-                $values[':is_active'] = [$input['is_active'], PDO::PARAM_INT];
+                $values[':is_active'] = [($input['is_active'] !== '') ? filter_var($input['is_active'], FILTER_VALIDATE_BOOLEAN) : true, PDO::PARAM_BOOL];
             }
 
             if (empty($fields)) {

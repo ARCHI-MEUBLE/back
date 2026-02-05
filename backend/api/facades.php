@@ -76,7 +76,7 @@ try {
         $stmt->bindValue(':depth', $input['depth']);
         $stmt->bindValue(':base_price', $input['base_price'] ?? 0);
         $stmt->bindValue(':image_url', $input['image_url'] ?? '', PDO::PARAM_STR);
-        $stmt->bindValue(':is_active', $input['is_active'] ?? 1, PDO::PARAM_INT);
+        $stmt->bindValue(':is_active', (isset($input['is_active']) && $input['is_active'] !== '') ? filter_var($input['is_active'], FILTER_VALIDATE_BOOLEAN) : true, PDO::PARAM_BOOL);
 
         $stmt->execute();
         $id = $db->lastInsertId();
@@ -123,7 +123,7 @@ try {
             }
             if (isset($input['is_active'])) {
                 $fields[] = 'is_active = :is_active';
-                $values[':is_active'] = [$input['is_active'], PDO::PARAM_INT];
+                $values[':is_active'] = [($input['is_active'] !== '') ? filter_var($input['is_active'], FILTER_VALIDATE_BOOLEAN) : true, PDO::PARAM_BOOL];
             }
 
             if (empty($fields)) {

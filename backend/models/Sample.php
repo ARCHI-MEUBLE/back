@@ -81,7 +81,7 @@ class Sample {
             $name = $data['name'] ?? $type['name'];
             $material = $data['material'] ?? $type['material'];
             $description = isset($data['description']) ? $data['description'] : $type['description'];
-            $active = isset($data['active']) ? (bool)$data['active'] : $type['active'];
+            $active = (isset($data['active']) && $data['active'] !== '') ? filter_var($data['active'], FILTER_VALIDATE_BOOLEAN) : $type['active'];
             $position = isset($data['position']) ? (int)$data['position'] : $type['position'];
 
             $stmt = $pdo->prepare("
@@ -184,7 +184,7 @@ class Sample {
             $name = $data['name'] ?? $color['name'];
             $hex = isset($data['hex']) ? $data['hex'] : $color['hex'];
             $image_url = isset($data['image_url']) ? $data['image_url'] : $color['image_url'];
-            $active = isset($data['active']) ? (bool)$data['active'] : $color['active'];
+            $active = (isset($data['active']) && $data['active'] !== '') ? filter_var($data['active'], FILTER_VALIDATE_BOOLEAN) : $color['active'];
             $position = isset($data['position']) ? (int)$data['position'] : $color['position'];
             $price_per_m2 = isset($data['price_per_m2']) ? (float)$data['price_per_m2'] : $color['price_per_m2'];
             $unit_price = isset($data['unit_price']) ? (float)$data['unit_price'] : $color['unit_price'];

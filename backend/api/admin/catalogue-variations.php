@@ -106,7 +106,7 @@ function handlePost($action, $pdo) {
                 $data['catalogue_item_id'],
                 $data['color_name'],
                 $data['image_url'],
-                isset($data['is_default']) ? (bool)$data['is_default'] : false
+                (isset($data['is_default']) && $data['is_default'] !== '') ? filter_var($data['is_default'], FILTER_VALIDATE_BOOLEAN) : false
             ]);
 
             $newId = $pdo->lastInsertId();

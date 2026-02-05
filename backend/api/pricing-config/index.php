@@ -143,7 +143,7 @@ if ($method === 'POST') {
             ':param_value' => floatval($data['param_value']),
             ':unit' => trim($data['unit']),
             ':description' => isset($data['description']) ? trim($data['description']) : null,
-            ':is_active' => isset($data['is_active']) ? (bool)$data['is_active'] : true
+            ':is_active' => (isset($data['is_active']) && $data['is_active'] !== '') ? filter_var($data['is_active'], FILTER_VALIDATE_BOOLEAN) : true
         ]);
 
         $new_id = $db->lastInsertId();
@@ -223,7 +223,7 @@ if ($method === 'PUT') {
 
         if (isset($data['is_active'])) {
             $updates[] = 'is_active = :is_active';
-            $params[':is_active'] = (bool)$data['is_active'];
+            $params[':is_active'] = ($data['is_active'] !== '') ? filter_var($data['is_active'], FILTER_VALIDATE_BOOLEAN) : true;
         }
 
         if (count($updates) === 0) {
