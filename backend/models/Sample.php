@@ -160,6 +160,22 @@ class Sample {
             }
 
             $pdo = $this->db->getPDO();
+
+            // Vérifier si une couleur similaire existe déjà (éviter les doublons)
+            if ($image_url) {
+                $checkStmt = $pdo->prepare("SELECT id FROM sample_colors WHERE type_id = ? AND image_url = ?");
+                $checkStmt->execute([$type_id, $image_url]);
+                if ($checkStmt->fetch()) {
+                    throw new Exception("Cette image existe déjà pour ce type");
+                }
+            } elseif ($hex) {
+                $checkStmt = $pdo->prepare("SELECT id FROM sample_colors WHERE type_id = ? AND hex = ?");
+                $checkStmt->execute([$type_id, $hex]);
+                if ($checkStmt->fetch()) {
+                    throw new Exception("Cette couleur existe déjà pour ce type");
+                }
+            }
+
             $stmt = $pdo->prepare("
                 INSERT INTO sample_colors (type_id, name, hex, image_url, position, active, price_per_m2, unit_price)
                 VALUES (?, ?, ?, ?, ?, TRUE, ?, ?)
