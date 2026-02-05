@@ -213,7 +213,7 @@ class Router {
      * @return bool
      */
     private function isStaticFile($path) {
-        $extensions = ['css', 'js', 'jpg', 'jpeg', 'png', 'gif', 'svg', 'glb', 'gltf', 'ico', 'woff', 'woff2', 'ttf', 'eot', 'dxf'];
+        $extensions = ['css', 'js', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'glb', 'gltf', 'ico', 'woff', 'woff2', 'ttf', 'eot', 'dxf'];
         $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
         return in_array($ext, $extensions);
     }
@@ -357,6 +357,7 @@ class Router {
             'jpg' => 'image/jpeg',
             'jpeg' => 'image/jpeg',
             'png' => 'image/png',
+            'webp' => 'image/webp',
             'gif' => 'image/gif',
             'svg' => 'image/svg+xml',
             'glb' => 'model/gltf-binary',
