@@ -178,22 +178,27 @@ function handlePost($action, $pdo) {
                 is_available, image_url, weight, tags, variation_label
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                $data['name'],
-                $data['category'],
-                $data['description'] ?? null,
-                $data['material'] ?? null,
-                $data['dimensions'] ?? null,
-                (float)$data['unit_price'],
-                $data['unit'] ?? 'pièce',
-                (int)($data['stock_quantity'] ?? 0),
-                (int)($data['min_order_quantity'] ?? 1),
-                (isset($data['is_available']) && $data['is_available'] !== '') ? filter_var($data['is_available'], FILTER_VALIDATE_BOOLEAN) : true,
-                $data['image_url'] ?? null,
-                isset($data['weight']) ? (float)$data['weight'] : null,
-                $data['tags'] ?? null,
-                $data['variation_label'] ?? 'Couleur / Finition'
-            ]);
+
+            // Convertir is_available en booléen PostgreSQL explicite
+            $isAvailable = (isset($data['is_available']) && $data['is_available'] !== '')
+                ? filter_var($data['is_available'], FILTER_VALIDATE_BOOLEAN)
+                : true;
+
+            $stmt->bindValue(1, $data['name'], PDO::PARAM_STR);
+            $stmt->bindValue(2, $data['category'], PDO::PARAM_STR);
+            $stmt->bindValue(3, $data['description'] ?? null, PDO::PARAM_STR);
+            $stmt->bindValue(4, $data['material'] ?? null, PDO::PARAM_STR);
+            $stmt->bindValue(5, $data['dimensions'] ?? null, PDO::PARAM_STR);
+            $stmt->bindValue(6, (float)$data['unit_price']);
+            $stmt->bindValue(7, $data['unit'] ?? 'pièce', PDO::PARAM_STR);
+            $stmt->bindValue(8, (int)($data['stock_quantity'] ?? 0), PDO::PARAM_INT);
+            $stmt->bindValue(9, (int)($data['min_order_quantity'] ?? 1), PDO::PARAM_INT);
+            $stmt->bindValue(10, $isAvailable, PDO::PARAM_BOOL);
+            $stmt->bindValue(11, $data['image_url'] ?? null, PDO::PARAM_STR);
+            $stmt->bindValue(12, isset($data['weight']) ? (float)$data['weight'] : null);
+            $stmt->bindValue(13, $data['tags'] ?? null, PDO::PARAM_STR);
+            $stmt->bindValue(14, $data['variation_label'] ?? 'Couleur / Finition', PDO::PARAM_STR);
+            $stmt->execute();
 
             $newId = $pdo->lastInsertId();
             http_response_code(201);
@@ -240,23 +245,28 @@ function handlePut($action, $pdo) {
                 updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?";
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                $data['name'] ?? '',
-                $data['category'] ?? '',
-                $data['description'] ?? null,
-                $data['material'] ?? null,
-                $data['dimensions'] ?? null,
-                isset($data['unit_price']) ? (float)$data['unit_price'] : 0,
-                $data['unit'] ?? 'pièce',
-                isset($data['stock_quantity']) ? (int)$data['stock_quantity'] : 0,
-                isset($data['min_order_quantity']) ? (int)$data['min_order_quantity'] : 1,
-                (isset($data['is_available']) && $data['is_available'] !== '') ? filter_var($data['is_available'], FILTER_VALIDATE_BOOLEAN) : true,
-                $data['image_url'] ?? null,
-                isset($data['weight']) ? (float)$data['weight'] : null,
-                $data['tags'] ?? null,
-                $data['variation_label'] ?? 'Couleur / Finition',
-                $id
-            ]);
+
+            // Convertir is_available en booléen PostgreSQL explicite
+            $isAvailable = (isset($data['is_available']) && $data['is_available'] !== '')
+                ? filter_var($data['is_available'], FILTER_VALIDATE_BOOLEAN)
+                : true;
+
+            $stmt->bindValue(1, $data['name'] ?? '', PDO::PARAM_STR);
+            $stmt->bindValue(2, $data['category'] ?? '', PDO::PARAM_STR);
+            $stmt->bindValue(3, $data['description'] ?? null, PDO::PARAM_STR);
+            $stmt->bindValue(4, $data['material'] ?? null, PDO::PARAM_STR);
+            $stmt->bindValue(5, $data['dimensions'] ?? null, PDO::PARAM_STR);
+            $stmt->bindValue(6, isset($data['unit_price']) ? (float)$data['unit_price'] : 0);
+            $stmt->bindValue(7, $data['unit'] ?? 'pièce', PDO::PARAM_STR);
+            $stmt->bindValue(8, isset($data['stock_quantity']) ? (int)$data['stock_quantity'] : 0, PDO::PARAM_INT);
+            $stmt->bindValue(9, isset($data['min_order_quantity']) ? (int)$data['min_order_quantity'] : 1, PDO::PARAM_INT);
+            $stmt->bindValue(10, $isAvailable, PDO::PARAM_BOOL);
+            $stmt->bindValue(11, $data['image_url'] ?? null, PDO::PARAM_STR);
+            $stmt->bindValue(12, isset($data['weight']) ? (float)$data['weight'] : null);
+            $stmt->bindValue(13, $data['tags'] ?? null, PDO::PARAM_STR);
+            $stmt->bindValue(14, $data['variation_label'] ?? 'Couleur / Finition', PDO::PARAM_STR);
+            $stmt->bindValue(15, $id, PDO::PARAM_INT);
+            $stmt->execute();
 
             http_response_code(200);
             echo json_encode(['success' => true, 'message' => 'Article mis à jour avec succès']);
