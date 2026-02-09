@@ -69,9 +69,15 @@ try {
             $quantity = isset($data['quantity']) ? (int)$data['quantity'] : 1;
             
             // Vérifier si l'item existe déjà avec la même variation
-            $query = "SELECT id, quantity FROM cart_catalogue_items WHERE customer_id = ? AND catalogue_item_id = ? AND (variation_id = ? OR (variation_id IS NULL AND ? IS NULL))";
-            $stmt = $pdo->prepare($query);
-            $stmt->execute([$customerId, $catalogueItemId, $variationId, $variationId]);
+            if ($variationId === null) {
+                $query = "SELECT id, quantity FROM cart_catalogue_items WHERE customer_id = ? AND catalogue_item_id = ? AND variation_id IS NULL";
+                $stmt = $pdo->prepare($query);
+                $stmt->execute([$customerId, $catalogueItemId]);
+            } else {
+                $query = "SELECT id, quantity FROM cart_catalogue_items WHERE customer_id = ? AND catalogue_item_id = ? AND variation_id = ?";
+                $stmt = $pdo->prepare($query);
+                $stmt->execute([$customerId, $catalogueItemId, $variationId]);
+            }
             $existing = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if ($existing) {
