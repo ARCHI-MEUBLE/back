@@ -78,17 +78,6 @@ try {
 
     error_log("GENERATE LINK - URL built: " . $fullUrl);
 
-    // Enregistrer une notification admin
-    require_once __DIR__ . '/../../models/Notification.php';
-    $notification = new Notification();
-    $notification->create(
-        'payment_link_created',
-        'Lien de paiement généré',
-        "Un lien de paiement a été généré pour la commande #" . $orderId,
-        $orderId,
-        null
-    );
-
     // Envoyer un email au client avec le lien de paiement
     require_once __DIR__ . '/../../services/EmailService.php';
     require_once __DIR__ . '/../../core/Database.php';
@@ -104,6 +93,20 @@ try {
                    LEFT JOIN customers c ON o.customer_id = c.id
                    WHERE o.id = ?";
     $orderDetails = $db->queryOne($orderQuery, [$orderId]);
+
+    // Enregistrer une notification client
+    if ($orderDetails && $orderDetails['customer_id']) {
+        require_once __DIR__ . '/../../models/Notification.php';
+        $notification = new Notification();
+        $notification->create(
+            $orderDetails['customer_id'],
+            'payment_link_created',
+            'Lien de paiement généré',
+            "Un lien de paiement a été généré pour la commande #" . $orderId,
+            $orderId,
+            'order'
+        );
+    }
 
     if ($orderDetails && !empty($orderDetails['customer_email'])) {
         $customerName = trim(($orderDetails['first_name'] ?? '') . ' ' . ($orderDetails['last_name'] ?? ''));
