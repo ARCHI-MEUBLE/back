@@ -48,17 +48,6 @@ try {
     }
 
     $token = trim($data['token']);
-    $installments = isset($data['installments']) ? intval($data['installments']) : 1;
-
-    // Valider le nombre d'acomptes
-    if (!in_array($installments, [1, 3])) {
-        http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'error' => 'Nombre d\'acomptes invalide (1 ou 3 uniquement)'
-        ]);
-        exit;
-    }
 
     // Instancier le modèle
     $paymentLink = new PaymentLink();
@@ -172,22 +161,11 @@ try {
             'order_number' => $order['order_number'],
             'customer_id' => $customer['customer_id'],
             'payment_link_token' => $token,
-            'installments' => $installments,
             'payment_type' => $paymentType,
             'source' => 'payment_link'
-        ]
+        ],
+        'description' => 'ArchiMeuble - Commande ' . $order['order_number'] . ' - Paiement ' . $paymentType
     ];
-
-    // Si paiement en 3 fois
-    if ($installments === 3) {
-        $firstPaymentAmount = (int)ceil($amountInCents / 3);
-        $paymentIntentParams['amount'] = $firstPaymentAmount;
-        $paymentIntentParams['metadata']['installment_number'] = 1;
-        $paymentIntentParams['metadata']['total_amount'] = $amountInCents;
-        $paymentIntentParams['description'] = 'ArchiMeuble - Commande ' . $order['order_number'] . ' - Paiement 1/3 (' . $paymentType . ')';
-    } else {
-        $paymentIntentParams['description'] = 'ArchiMeuble - Commande ' . $order['order_number'] . ' - Paiement ' . $paymentType;
-    }
 
     // Créer le PaymentIntent
     error_log("CREATE-PI: Creating Stripe PaymentIntent with amount {$amountInCents}...");
@@ -231,7 +209,6 @@ try {
             'clientSecret' => $paymentIntent->client_secret,
             'paymentIntentId' => $paymentIntent->id,
             'amount' => $paymentIntent->amount,
-            'installments' => $installments,
             'order_number' => $order['order_number']
         ]
     ]);
