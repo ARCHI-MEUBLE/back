@@ -25,9 +25,10 @@ echo "Directories created: /data, /data/uploads, /data/models, /data/sessions, /
 # Attendre que PostgreSQL soit prêt
 echo ""
 echo "Waiting for PostgreSQL..."
-MAX_RETRIES=30
+echo "DATABASE_URL set: $([ -n "$DATABASE_URL" ] && echo 'YES' || echo 'NO')"
+MAX_RETRIES=15
 RETRY_COUNT=0
-while ! pg_isready -d "$DATABASE_URL" -q 2>/dev/null; do
+while ! psql "$DATABASE_URL" -c "SELECT 1" > /dev/null 2>&1; do
     RETRY_COUNT=$((RETRY_COUNT + 1))
     if [ "$RETRY_COUNT" -ge "$MAX_RETRIES" ]; then
         echo "PostgreSQL not ready after $MAX_RETRIES attempts. Starting anyway..."
