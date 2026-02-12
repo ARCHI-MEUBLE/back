@@ -118,9 +118,12 @@ try {
     $outputDir = getenv('OUTPUT_DIR');
 
     if (!$outputDir || empty($outputDir)) {
-        // En production (Docker/Railway), utiliser /data/models (volume persistant)
+        // En production (Docker/Railway), utiliser /data/models (volume persistant) ou /app/models
         if (file_exists('/data')) {
             $outputDir = '/data/models';
+        } elseif (file_exists('/app/models')) {
+            // Docker sans volume persistant (Railway)
+            $outputDir = '/app/models';
         } else {
             // En local, utiliser le chemin relatif vers front
             $outputDir = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'front' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'models';
