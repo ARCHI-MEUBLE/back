@@ -259,7 +259,9 @@ try:
             ('deposit_payment_status', "TEXT DEFAULT 'pending'"),
             ('balance_payment_status', "TEXT DEFAULT 'pending'"),
             ('deposit_amount', 'DECIMAL(10,2)'),
+            ('deposit_percentage', 'DECIMAL(5,2) DEFAULT 0'),
             ('remaining_amount', 'DECIMAL(10,2)'),
+            ('payment_strategy', "TEXT DEFAULT 'full'"),
             ('name', 'TEXT'),
             ('confirmation_email_sent', 'BOOLEAN DEFAULT FALSE'),
         ]

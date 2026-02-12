@@ -187,6 +187,8 @@ CREATE TABLE IF NOT EXISTS orders (
     admin_notes TEXT,
     name TEXT,
     confirmation_email_sent BOOLEAN DEFAULT FALSE,
+    payment_strategy TEXT DEFAULT 'full',
+    deposit_percentage DECIMAL(5,2) DEFAULT 0,
     deposit_amount DECIMAL(10,2),
     remaining_amount DECIMAL(10,2),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
