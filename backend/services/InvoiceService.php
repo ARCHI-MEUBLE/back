@@ -14,6 +14,42 @@ class InvoiceService {
     private $companySiret = '123 456 789 00012';
     private $companyTVA = 'FR 12 123456789';
 
+    private function toLatin1(string $str): string {
+        return mb_convert_encoding($str, 'ISO-8859-1', 'UTF-8');
+    }
+
+    /**
+     * Détermine le nom à afficher pour un article de commande
+     */
+    private function getItemDisplayName($item) {
+        $prompt = $item['prompt'] ?? '';
+        // Chercher le nom du modèle dans la table models
+        try {
+            require_once __DIR__ . '/../core/Database.php';
+            $db = Database::getInstance();
+            $models = $db->query("SELECT name, prompt FROM models ORDER BY id");
+            foreach ($models as $model) {
+                $modelPrefix = substr($model['prompt'], 0, 2);
+                $itemPrefix = substr($prompt, 0, 2);
+                if ($modelPrefix === $itemPrefix) {
+                    return $model['name'];
+                }
+            }
+        } catch (Exception $e) {
+            error_log("InvoiceService: Error fetching model name: " . $e->getMessage());
+        }
+
+        // Fallback sur le nom dans config_data
+        if (isset($item['config_data'])) {
+            $config = is_string($item['config_data']) ? json_decode($item['config_data'], true) : $item['config_data'];
+            if (isset($config['name']) && !empty($config['name'])) {
+                return $config['name'];
+            }
+        }
+
+        return 'Meuble sur mesure';
+    }
+
     /**
      * Génère une facture PDF pour une commande
      */
@@ -68,7 +104,7 @@ class InvoiceService {
         // Logo / Nom entreprise
         $pdf->SetFont('Arial', 'B', 24);
         $pdf->SetTextColor(217, 119, 6); // #d97706
-        $pdf->Cell(100, 15, utf8_decode($this->companyName), 0, 0);
+        $pdf->Cell(100, 15, $this->toLatin1($this->companyName), 0, 0);
         
         // Titre Facture
         $pdf->SetFont('Arial', 'B', 32);
@@ -88,21 +124,21 @@ class InvoiceService {
         $startX = $pdf->GetX();
         $startY = $pdf->GetY();
         
-        $pdf->Cell(100, 5, utf8_decode($this->companyAddress), 0, 1);
-        $pdf->Cell(100, 5, utf8_decode('Tél: ' . $this->companyPhone), 0, 1);
-        $pdf->Cell(100, 5, utf8_decode('Email: ' . $this->companyEmail), 0, 1);
-        $pdf->Cell(100, 5, utf8_decode('SIRET: ' . $this->companySiret), 0, 1);
-        $pdf->Cell(100, 5, utf8_decode('N° TVA: ' . $this->companyTVA), 0, 1);
+        $pdf->Cell(100, 5, $this->toLatin1($this->companyAddress), 0, 1);
+        $pdf->Cell(100, 5, $this->toLatin1('Tél: ' . $this->companyPhone), 0, 1);
+        $pdf->Cell(100, 5, $this->toLatin1('Email: ' . $this->companyEmail), 0, 1);
+        $pdf->Cell(100, 5, $this->toLatin1('SIRET: ' . $this->companySiret), 0, 1);
+        $pdf->Cell(100, 5, $this->toLatin1('N° TVA: ' . $this->companyTVA), 0, 1);
         
         // Infos Facture (Droite)
         $pdf->SetY($startY);
-        $pdf->Cell(190, 5, utf8_decode('N°: ' . $invoiceNumber), 0, 1, 'R');
+        $pdf->Cell(190, 5, $this->toLatin1('N°: ' . $invoiceNumber), 0, 1, 'R');
         $pdf->SetX($startX);
         $pdf->SetY($startY + 5);
-        $pdf->Cell(190, 5, utf8_decode('Date: ' . $invoiceDate), 0, 1, 'R');
+        $pdf->Cell(190, 5, $this->toLatin1('Date: ' . $invoiceDate), 0, 1, 'R');
         $pdf->SetX($startX);
         $pdf->SetY($startY + 10);
-        $pdf->Cell(190, 5, utf8_decode('Commande: ' . $order['order_number']), 0, 1, 'R');
+        $pdf->Cell(190, 5, $this->toLatin1('Commande: ' . $order['order_number']), 0, 1, 'R');
 
         // Type de paiement
         $pdf->SetX($startX);
@@ -116,7 +152,7 @@ class InvoiceService {
             }
         }
         $pdf->SetFont('Arial', 'B', 10);
-        $pdf->Cell(190, 5, utf8_decode($paymentTypeLabel), 0, 1, 'R');
+        $pdf->Cell(190, 5, $this->toLatin1($paymentTypeLabel), 0, 1, 'R');
         
         $pdf->Ln(10);
         $pdf->SetDrawColor(217, 119, 6);
@@ -128,12 +164,12 @@ class InvoiceService {
         
         // Facturé à
         $pdf->SetFont('Arial', 'B', 12);
-        $pdf->Cell(95, 7, utf8_decode('FACTURÉ À'), 0, 1);
+        $pdf->Cell(95, 7, $this->toLatin1('FACTURÉ À'), 0, 1);
         $pdf->SetFont('Arial', '', 10);
-        $pdf->Cell(95, 5, utf8_decode($customer['first_name'] . ' ' . $customer['last_name']), 0, 1);
-        $pdf->Cell(95, 5, utf8_decode($customer['email']), 0, 1);
-        $pdf->Cell(95, 5, utf8_decode($customer['phone']), 0, 1);
-        $pdf->MultiCell(90, 5, utf8_decode($order['billing_address']), 0, 'L');
+        $pdf->Cell(95, 5, $this->toLatin1($customer['first_name'] . ' ' . $customer['last_name']), 0, 1);
+        $pdf->Cell(95, 5, $this->toLatin1($customer['email']), 0, 1);
+        $pdf->Cell(95, 5, $this->toLatin1($customer['phone']), 0, 1);
+        $pdf->MultiCell(90, 5, $this->toLatin1($order['billing_address']), 0, 'L');
         
         $yAfterBilling = $pdf->GetY();
         
@@ -141,12 +177,12 @@ class InvoiceService {
         $pdf->SetY($yBeforeBlocks);
         $pdf->SetX(110);
         $pdf->SetFont('Arial', 'B', 12);
-        $pdf->Cell(90, 7, utf8_decode('ADRESSE DE LIVRAISON'), 0, 1);
+        $pdf->Cell(90, 7, $this->toLatin1('ADRESSE DE LIVRAISON'), 0, 1);
         $pdf->SetX(110);
         $pdf->SetFont('Arial', '', 10);
-        $pdf->Cell(90, 5, utf8_decode($customer['first_name'] . ' ' . $customer['last_name']), 0, 1);
+        $pdf->Cell(90, 5, $this->toLatin1($customer['first_name'] . ' ' . $customer['last_name']), 0, 1);
         $pdf->SetX(110);
-        $pdf->MultiCell(90, 5, utf8_decode($order['shipping_address'] ?? $order['billing_address']), 0, 'L');
+        $pdf->MultiCell(90, 5, $this->toLatin1($order['shipping_address'] ?? $order['billing_address']), 0, 'L');
         
         $yAfterShipping = $pdf->GetY();
         $pdf->SetY(max($yAfterBilling, $yAfterShipping) + 10);
@@ -154,33 +190,21 @@ class InvoiceService {
         // Tableau des articles
         $pdf->SetFont('Arial', 'B', 10);
         $pdf->SetFillColor(249, 250, 251);
-        $pdf->Cell(100, 10, utf8_decode('Désignation'), 1, 0, 'L', true);
-        $pdf->Cell(20, 10, utf8_decode('Qté'), 1, 0, 'C', true);
-        $pdf->Cell(35, 10, utf8_decode('Prix HT'), 1, 0, 'R', true);
-        $pdf->Cell(35, 10, utf8_decode('Prix TTC'), 1, 1, 'R', true);
+        $pdf->Cell(100, 10, $this->toLatin1('Désignation'), 1, 0, 'L', true);
+        $pdf->Cell(20, 10, $this->toLatin1('Qté'), 1, 0, 'C', true);
+        $pdf->Cell(35, 10, $this->toLatin1('Prix HT'), 1, 0, 'R', true);
+        $pdf->Cell(35, 10, $this->toLatin1('Prix TTC'), 1, 1, 'R', true);
         
         $pdf->SetFont('Arial', '', 10);
         foreach ($items as $item) {
-            // Récupérer le nom depuis config_data si disponible
-            $itemName = 'Meuble personnalisé';
-            if (isset($item['config_data'])) {
-                $config = is_string($item['config_data']) ? json_decode($item['config_data'], true) : $item['config_data'];
-                if (isset($config['name']) && !empty($config['name'])) {
-                    $itemName = $config['name'];
-                } else if (isset($item['prompt'])) {
-                    $itemName = $item['prompt'];
-                }
-            } else if (isset($item['prompt'])) {
-                $itemName = $item['prompt'];
-            }
-
+            $itemName = $this->getItemDisplayName($item);
             $itemPrice = $item['total_price'] ?? ($item['unit_price'] * $item['quantity']);
             $itemPriceHT = $itemPrice / 1.20;
             
             // Calculer la hauteur nécessaire pour le nom (MultiCell)
             $x = $pdf->GetX();
             $y = $pdf->GetY();
-            $pdf->MultiCell(100, 7, utf8_decode($itemName), 'LBR', 'L');
+            $pdf->MultiCell(100, 7, $this->toLatin1($itemName), 'LBR', 'L');
             $newY = $pdf->GetY();
             $h = $newY - $y;
             
@@ -195,7 +219,7 @@ class InvoiceService {
             $sampleName = "Échantillon: " . ($sample['sample_name'] ?? 'Échantillon') . " - " . ($sample['material'] ?? '');
             
             $pdf->SetFillColor(240, 253, 244);
-            $pdf->Cell(100, 8, utf8_decode($sampleName), 'LBR', 0, 'L', true);
+            $pdf->Cell(100, 8, $this->toLatin1($sampleName), 'LBR', 0, 'L', true);
             $pdf->Cell(20, 8, $sample['quantity'], 'BR', 0, 'C', true);
             $pdf->Cell(35, 8, 'GRATUIT', 'BR', 0, 'R', true);
             $pdf->Cell(35, 8, '0,00 ' . chr(128), 'BR', 1, 'R', true);
@@ -209,20 +233,20 @@ class InvoiceService {
         
         $pdf->SetX(130);
         $pdf->SetFont('Arial', 'B', 10);
-        $pdf->Cell(35, 8, utf8_decode('Total HT:'), 0, 0, 'R');
+        $pdf->Cell(35, 8, $this->toLatin1('Total HT:'), 0, 0, 'R');
         $pdf->SetFont('Arial', '', 10);
         $pdf->Cell(25, 8, number_format($totalHT, 2, ',', ' ') . ' ' . chr(128), 0, 1, 'R');
         
         $pdf->SetX(130);
         $pdf->SetFont('Arial', 'B', 10);
-        $pdf->Cell(35, 8, utf8_decode('TVA (20%):'), 0, 0, 'R');
+        $pdf->Cell(35, 8, $this->toLatin1('TVA (20%):'), 0, 0, 'R');
         $pdf->SetFont('Arial', '', 10);
         $pdf->Cell(25, 8, number_format($tva, 2, ',', ' ') . ' ' . chr(128), 0, 1, 'R');
         
         $pdf->SetX(130);
         $pdf->SetFillColor(254, 243, 199);
         $pdf->SetFont('Arial', 'B', 12);
-        $pdf->Cell(35, 10, utf8_decode('Total TTC:'), 0, 0, 'R', true);
+        $pdf->Cell(35, 10, $this->toLatin1('Total TTC:'), 0, 0, 'R', true);
         $pdf->Cell(25, 10, number_format($order['total_amount'], 2, ',', ' ') . ' ' . chr(128), 0, 1, 'R', true);
 
         // Détail Acompte / Solde si applicable
@@ -233,14 +257,14 @@ class InvoiceService {
             $pdf->SetX(110);
             $pdf->SetFont('Arial', 'B', 11);
             $pdf->SetFillColor(217, 249, 225); // Vert clair
-            $pdf->Cell(55, 10, utf8_decode($currentPaidLabel), 0, 0, 'R', true);
+            $pdf->Cell(55, 10, $this->toLatin1($currentPaidLabel), 0, 0, 'R', true);
             $pdf->Cell(25, 10, number_format($currentPaidAmount, 2, ',', ' ') . ' ' . chr(128), 0, 1, 'R', true);
 
             if (($order['balance_payment_status'] ?? '') !== 'paid') {
                 $pdf->SetX(130);
                 $pdf->SetFont('Arial', 'B', 10);
                 $pdf->SetTextColor(217, 30, 30); // Rouge pour le solde dû
-                $pdf->Cell(35, 8, utf8_decode('Reste à percevoir:'), 0, 0, 'R');
+                $pdf->Cell(35, 8, $this->toLatin1('Reste à percevoir:'), 0, 0, 'R');
                 $pdf->SetFont('Arial', '', 10);
                 $pdf->Cell(25, 8, number_format($order['remaining_amount'], 2, ',', ' ') . ' ' . chr(128), 0, 1, 'R');
                 $pdf->SetTextColor(51, 51, 51); // Reset couleur
@@ -252,15 +276,15 @@ class InvoiceService {
         $pdf->SetFillColor(254, 243, 199);
         $pdf->SetFont('Arial', 'B', 10);
         $paymentDate = ($order['confirmed_at'] ? date('d/m/Y', strtotime($order['confirmed_at'])) : date('d/m/Y', strtotime($order['created_at'])));
-        $pdf->Cell(190, 10, utf8_decode('Paiement effectué par ' . ucfirst($order['payment_method']) . ' le ' . $paymentDate), 0, 1, 'L', true);
+        $pdf->Cell(190, 10, $this->toLatin1('Paiement effectué par ' . ucfirst($order['payment_method']) . ' le ' . $paymentDate), 0, 1, 'L', true);
         
         // Footer
         $pdf->SetY(-30);
         $pdf->SetFont('Arial', '', 8);
         $pdf->SetTextColor(102, 102, 102);
-        $pdf->Cell(190, 4, utf8_decode('Merci pour votre confiance !'), 0, 1, 'C');
-        $pdf->Cell(190, 4, utf8_decode($this->companyName . ' - ' . $this->companyAddress), 0, 1, 'C');
-        $pdf->Cell(190, 4, utf8_decode('SIRET: ' . $this->companySiret . ' | N° TVA: ' . $this->companyTVA), 0, 1, 'C');
+        $pdf->Cell(190, 4, $this->toLatin1('Merci pour votre confiance !'), 0, 1, 'C');
+        $pdf->Cell(190, 4, $this->toLatin1($this->companyName . ' - ' . $this->companyAddress), 0, 1, 'C');
+        $pdf->Cell(190, 4, $this->toLatin1('SIRET: ' . $this->companySiret . ' | N° TVA: ' . $this->companyTVA), 0, 1, 'C');
         
         $pdf->Output('F', $filepath);
     }
@@ -303,19 +327,7 @@ class InvoiceService {
 
         // Ajouter les configurations
         foreach ($items as $item) {
-            // Récupérer le nom depuis config_data si disponible
-            $itemName = 'Meuble personnalisé';
-            if (isset($item['config_data'])) {
-                $config = is_string($item['config_data']) ? json_decode($item['config_data'], true) : $item['config_data'];
-                if (isset($config['name']) && !empty($config['name'])) {
-                    $itemName = $config['name'];
-                } else if (isset($item['prompt'])) {
-                    $itemName = $item['prompt'];
-                }
-            } else if (isset($item['prompt'])) {
-                $itemName = $item['prompt'];
-            }
-
+            $itemName = $this->getItemDisplayName($item);
             $itemPrice = $item['total_price'] ?? ($item['unit_price'] * $item['quantity']);
             $itemPriceHT = $itemPrice / 1.20;
 

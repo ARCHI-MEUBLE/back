@@ -486,31 +486,72 @@ class EmailService {
     }
 
     /**
+     * Récupère le nom du modèle depuis la table models via le prompt
+     */
+    private function getModelNameFromPrompt($prompt) {
+        try {
+            require_once __DIR__ . '/../core/Database.php';
+            $db = Database::getInstance();
+            // Extraire le préfixe du prompt (ex: M1) pour identifier le type de meuble
+            // Chercher une correspondance dans la table models
+            $models = $db->query("SELECT name, prompt FROM models ORDER BY id");
+            foreach ($models as $model) {
+                // Comparer le début du prompt (même préfixe de modèle)
+                $modelPrefix = substr($model['prompt'], 0, 2); // M1, M2, etc.
+                $itemPrefix = substr($prompt, 0, 2);
+                if ($modelPrefix === $itemPrefix) {
+                    return $model['name'];
+                }
+            }
+        } catch (Exception $e) {
+            error_log("EmailService: Error fetching model name: " . $e->getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Détermine le nom à afficher pour un article de commande
+     */
+    private function getItemDisplayName($item) {
+        // Priorité : nom du modèle admin > nom dans config_data > fallback générique
+        $prompt = $item['prompt'] ?? '';
+        $modelName = $this->getModelNameFromPrompt($prompt);
+        if ($modelName) {
+            return $modelName;
+        }
+
+        // Fallback sur le nom dans config_data
+        if (isset($item['config_data'])) {
+            $config = is_string($item['config_data']) ? json_decode($item['config_data'], true) : $item['config_data'];
+            if (isset($config['name']) && !empty($config['name'])) {
+                return $config['name'];
+            }
+        }
+
+        return 'Meuble sur mesure';
+    }
+
+    /**
      * Template HTML pour confirmation de commande client
      */
     private function getOrderConfirmationTemplate($order, $customer, $items, $paymentType = 'full') {
+        $year = date('Y');
         $totalOrder = $order['total_amount'] ?? $order['total'] ?? 0;
         $totalFormatted = number_format($totalOrder, 2, ',', ' ') . ' €';
-        
+
         $amountPaid = $totalOrder;
         $paymentLabel = "Paiement intégral";
         $remainingHtml = "";
-
-        // Fallback check: if paymentType is full but amount matches deposit
-        if ($paymentType === 'full' && ($order['payment_strategy'] ?? '') === 'deposit' && ($order['deposit_payment_status'] ?? '') === 'paid') {
-            // Check if we just paid the deposit (common if metadata was missing)
-            // We can't know for sure which intent triggered this without metadata, 
-            // but the webhook now forces the type.
-        }
 
         if ($paymentType === 'deposit') {
             $amountPaid = $order['deposit_amount'] ?? 0;
             $paymentLabel = "Acompte (" . ($order['deposit_percentage'] ?? 0) . "%)";
             $remainingAmount = $order['remaining_amount'] ?? ($totalOrder - $amountPaid);
             $remainingHtml = "
-                <p style='margin: 10px 0 0 0; color: #ef4444; font-size: 16px;'>
-                    <strong>Reste à payer : " . number_format($remainingAmount, 2, ',', ' ') . " €</strong>
-                </p>
+                <tr>
+                    <td style='padding: 10px 0; color: #706F6C; font-size: 14px;'>Reste à payer</td>
+                    <td style='padding: 10px 0; color: #B91C1C; text-align: right; font-weight: 600;'>" . number_format($remainingAmount, 2, ',', ' ') . " €</td>
+                </tr>
             ";
         } elseif ($paymentType === 'balance') {
             $amountPaid = $order['remaining_amount'] ?? 0;
@@ -523,13 +564,13 @@ class EmailService {
         $itemsHtml = '';
         foreach ($items as $item) {
             $price = $item['price'] ?? $item['unit_price'] ?? 0;
-            $name = $item['name'] ?? $item['prompt'] ?? 'Article';
+            $name = $this->getItemDisplayName($item);
             $itemPrice = number_format($price * $item['quantity'], 2, ',', ' ') . ' €';
             $itemsHtml .= "
                 <tr>
-                    <td style='padding: 12px; border-bottom: 1px solid #e5e7eb;'>{$name}</td>
-                    <td style='padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;'>{$item['quantity']}</td>
-                    <td style='padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;'>{$itemPrice}</td>
+                    <td style='padding: 10px 0; color: #1A1917; font-size: 14px; border-bottom: 1px solid #F0EFEA;'>{$name}</td>
+                    <td style='padding: 10px 0; color: #1A1917; text-align: center; border-bottom: 1px solid #F0EFEA;'>{$item['quantity']}</td>
+                    <td style='padding: 10px 0; color: #1A1917; text-align: right; font-weight: 600; border-bottom: 1px solid #F0EFEA;'>{$itemPrice}</td>
                 </tr>
             ";
         }
@@ -542,9 +583,9 @@ class EmailService {
             $samplePrice = number_format($sample['price'] * $sample['quantity'], 2, ',', ' ') . ' €';
             $itemsHtml .= "
                 <tr>
-                    <td style='padding: 12px; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-style: italic;'>{$sampleName}</td>
-                    <td style='padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center; color: #6b7280;'>{$sample['quantity']}</td>
-                    <td style='padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right; color: #6b7280;'>{$samplePrice}</td>
+                    <td style='padding: 10px 0; color: #706F6C; font-size: 14px; font-style: italic; border-bottom: 1px solid #F0EFEA;'>{$sampleName}</td>
+                    <td style='padding: 10px 0; color: #706F6C; text-align: center; border-bottom: 1px solid #F0EFEA;'>{$sample['quantity']}</td>
+                    <td style='padding: 10px 0; color: #706F6C; text-align: right; border-bottom: 1px solid #F0EFEA;'>{$samplePrice}</td>
                 </tr>
             ";
         }
@@ -556,115 +597,104 @@ class EmailService {
             $statusText = "Nous avons bien reçu le paiement du solde de votre commande. Votre commande est maintenant intégralement payée.";
         }
 
+        $siteUrl = getenv('FRONTEND_URL') ?: 'https://archimeuble.com';
+
         return "
         <!DOCTYPE html>
         <html>
         <head>
             <meta charset='UTF-8'>
             <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+            <style>
+                body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 1.6; color: #1A1917; margin: 0; padding: 0; }
+                .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+                .header { text-align: center; margin-bottom: 40px; }
+                .logo { font-size: 24px; font-weight: bold; text-decoration: none; color: #1A1917; }
+                .content { background-color: #FAFAF9; padding: 40px; border: 1px solid #E8E6E3; }
+                .footer { text-align: center; margin-top: 40px; font-size: 12px; color: #706F6C; }
+            </style>
         </head>
-        <body style='margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;'>
-            <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #f3f4f6; padding: 20px;'>
-                <tr>
-                    <td align='center'>
-                        <table width='600' cellpadding='0' cellspacing='0' style='background-color: #ffffff; border-radius: 8px; overflow: hidden;'>
-                            <!-- Header -->
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <span class='logo'>ArchiMeuble</span>
+                </div>
+                <div class='content'>
+                    <div style='display: inline-block; padding: 6px 16px; background-color: #D1FAE5; color: #065F46; font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 20px;'>
+                        Paiement confirmé
+                    </div>
+
+                    <h2 style='margin-top: 0;'>Bonjour {$customer['first_name']},</h2>
+
+                    <p>{$statusText}</p>
+
+                    <!-- Récapitulatif paiement -->
+                    <div style='background-color: #FFFFFF; padding: 24px; border: 1px solid #E8E6E3; margin: 24px 0;'>
+                        <table style='width: 100%; border-collapse: collapse;'>
                             <tr>
-                                <td style='background: linear-gradient(135deg, #d97706 0%, #b45309 100%); padding: 40px; text-align: center;'>
-                                    <h1 style='margin: 0; color: #ffffff; font-size: 28px;'>{$this->siteName}</h1>
-                                </td>
+                                <td style='padding: 10px 0; color: #706F6C; font-size: 14px; border-bottom: 1px solid #F0EFEA;'>Commande</td>
+                                <td style='padding: 10px 0; color: #1A1917; text-align: right; font-weight: 600;'>#{$order['order_number']}</td>
                             </tr>
-
-                            <!-- Content -->
                             <tr>
-                                <td style='padding: 40px;'>
-                                    <h2 style='margin: 0 0 20px 0; color: #111827; font-size: 24px;'>
-                                        Merci pour votre commande !
-                                    </h2>
-
-                                    <p style='margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.6;'>
-                                        Bonjour {$customer['first_name']},
-                                    </p>
-
-                                    <p style='margin: 0 0 30px 0; color: #4b5563; font-size: 16px; line-height: 1.6;'>
-                                        {$statusText}
-                                        Nous allons la préparer dans les plus brefs délais.
-                                    </p>
-
-                                    <div style='background-color: #fef3c7; border-left: 4px solid #d97706; padding: 20px; margin-bottom: 30px; border-radius: 4px;'>
-                                        <p style='margin: 0; color: #92400e; font-size: 16px; font-weight: bold;'>
-                                            Type de paiement : {$paymentLabel}
-                                        </p>
-                                        <p style='margin: 5px 0 0 0; color: #92400e; font-size: 18px;'>
-                                            Montant payé : <strong>{$paidFormatted}</strong>
-                                        </p>
-                                        {$remainingHtml}
-                                    </div>
-
-                                    <!-- Order Info -->
-                                    <table width='100%' cellpadding='0' cellspacing='0' style='margin: 0 0 30px 0; background-color: #f9fafb; border-radius: 8px; padding: 20px;'>
-                                        <tr>
-                                            <td>
-                                                <p style='margin: 0 0 10px 0; color: #6b7280; font-size: 14px;'>Numéro de commande</p>
-                                                <p style='margin: 0 0 20px 0; color: #111827; font-size: 18px; font-weight: bold;'>#{$order['order_number']}</p>
-
-                                                <p style='margin: 0 0 10px 0; color: #6b7280; font-size: 14px;'>Date de commande</p>
-                                                <p style='margin: 0; color: #111827; font-size: 16px;'>{$orderDate}</p>
-                                            </td>
-                                        </tr>
-                                    </table>
-
-                                    <!-- Items Table -->
-                                    <h3 style='margin: 0 0 15px 0; color: #111827; font-size: 18px;'>Détails de la commande</h3>
-                                    <table width='100%' cellpadding='0' cellspacing='0' style='margin: 0 0 30px 0; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;'>
-                                        <thead>
-                                            <tr style='background-color: #f9fafb;'>
-                                                <th style='padding: 12px; text-align: left; color: #6b7280; font-size: 14px; font-weight: 600;'>Article</th>
-                                                <th style='padding: 12px; text-align: center; color: #6b7280; font-size: 14px; font-weight: 600;'>Quantité</th>
-                                                <th style='padding: 12px; text-align: right; color: #6b7280; font-size: 14px; font-weight: 600;'>Prix</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {$itemsHtml}
-                                        </tbody>
-                                        <tfoot>
-                                            <tr>
-                                                <td colspan='2' style='padding: 16px; text-align: right; font-weight: bold; color: #111827; font-size: 18px;'>Total Commande</td>
-                                                <td style='padding: 16px; text-align: right; font-weight: bold; color: #d97706; font-size: 18px;'>{$totalFormatted}</td>
-                                            </tr>
-                                        </tfoot>
-                                    </table>
-
-                                    <!-- Shipping Address -->
-                                    <h3 style='margin: 0 0 15px 0; color: #111827; font-size: 18px;'>Adresse de livraison</h3>
-                                    <div style='padding: 15px; background-color: #f9fafb; border-radius: 8px; margin: 0 0 30px 0;'>
-                                        <p style='margin: 0; color: #4b5563; font-size: 14px; line-height: 1.6;'>
-                                            {$customer['first_name']} {$customer['last_name']}<br>
-                                            {$order['shipping_address']}
-                                        </p>
-                                    </div>
-
-                                    <p style='margin: 0; color: #4b5563; font-size: 14px; line-height: 1.6;'>
-                                        Vous recevrez un email avec le numéro de suivi dès que votre commande sera expédiée.
-                                    </p>
-                                </td>
+                                <td style='padding: 10px 0; color: #706F6C; font-size: 14px; border-bottom: 1px solid #F0EFEA;'>Date</td>
+                                <td style='padding: 10px 0; color: #1A1917; text-align: right; font-weight: 600;'>{$orderDate}</td>
                             </tr>
-
-                            <!-- Footer -->
                             <tr>
-                                <td style='background-color: #f9fafb; padding: 30px; text-align: center;'>
-                                    <p style='margin: 0 0 10px 0; color: #6b7280; font-size: 14px;'>
-                                        Merci d'avoir choisi {$this->siteName}
-                                    </p>
-                                    <p style='margin: 0; color: #9ca3af; font-size: 12px;'>
-                                        © " . date('Y') . " {$this->siteName}. Tous droits réservés.
-                                    </p>
-                                </td>
+                                <td style='padding: 10px 0; color: #706F6C; font-size: 14px; border-bottom: 1px solid #F0EFEA;'>Type de paiement</td>
+                                <td style='padding: 10px 0; color: #1A1917; text-align: right; font-weight: 600;'>{$paymentLabel}</td>
+                            </tr>
+                            <tr>
+                                <td style='padding: 10px 0; color: #706F6C; font-size: 14px; border-bottom: 1px solid #F0EFEA;'>Montant payé</td>
+                                <td style='padding: 10px 0; color: #065F46; text-align: right; font-weight: 700; font-size: 16px;'>{$paidFormatted}</td>
+                            </tr>
+                            {$remainingHtml}
+                        </table>
+                    </div>
+
+                    <!-- Articles -->
+                    <h3 style='margin: 24px 0 16px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: #1A1917;'>Articles commandés</h3>
+                    <div style='background-color: #FFFFFF; padding: 24px; border: 1px solid #E8E6E3;'>
+                        <table style='width: 100%; border-collapse: collapse;'>
+                            <tr>
+                                <td style='padding: 8px 0; color: #706F6C; font-size: 12px; font-weight: 600; text-transform: uppercase; border-bottom: 1px solid #E8E6E3;'>Article</td>
+                                <td style='padding: 8px 0; color: #706F6C; font-size: 12px; font-weight: 600; text-transform: uppercase; text-align: center; border-bottom: 1px solid #E8E6E3;'>Qté</td>
+                                <td style='padding: 8px 0; color: #706F6C; font-size: 12px; font-weight: 600; text-transform: uppercase; text-align: right; border-bottom: 1px solid #E8E6E3;'>Prix</td>
+                            </tr>
+                            {$itemsHtml}
+                            <tr>
+                                <td colspan='2' style='padding: 12px 0; text-align: right; font-weight: 700; color: #1A1917; font-size: 16px;'>Total</td>
+                                <td style='padding: 12px 0; text-align: right; font-weight: 700; color: #8B7355; font-size: 16px;'>{$totalFormatted}</td>
                             </tr>
                         </table>
-                    </td>
-                </tr>
-            </table>
+                    </div>
+
+                    <!-- Adresse de livraison -->
+                    <h3 style='margin: 24px 0 16px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: #1A1917;'>Adresse de livraison</h3>
+                    <div style='background-color: #FFFFFF; padding: 24px; border: 1px solid #E8E6E3;'>
+                        <p style='margin: 0; color: #1A1917; font-size: 14px; line-height: 1.6;'>
+                            {$customer['first_name']} {$customer['last_name']}<br>
+                            {$order['shipping_address']}
+                        </p>
+                    </div>
+
+                    <div style='text-align: center; margin-top: 32px;'>
+                        <a href='{$siteUrl}/account?section=orders' style='display: inline-block; padding: 14px 32px; background-color: #1A1917; color: #FFFFFF; text-decoration: none; font-weight: 600;'>
+                            Suivre ma commande
+                        </a>
+                    </div>
+
+                    <p style='margin-top: 30px; font-size: 14px; color: #706F6C;'>
+                        Si vous avez des questions, n'hésitez pas à nous contacter à <a href='mailto:pro.archimeuble@gmail.com' style='color: #8B7355;'>pro.archimeuble@gmail.com</a>
+                    </p>
+                    <p style='font-size: 14px; color: #706F6C;'>
+                        Cordialement,<br>
+                        L'équipe ArchiMeuble
+                    </p>
+                </div>
+                <div class='footer'>
+                    <p>&copy; {$year} ArchiMeuble. Tous droits réservés.</p>
+                </div>
+            </div>
         </body>
         </html>
         ";
@@ -688,7 +718,7 @@ class EmailService {
 
         $itemsList = '';
         foreach ($items as $item) {
-            $itemName = $item['name'] ?? $item['prompt'] ?? 'Configuration personnalisée';
+            $itemName = $this->getItemDisplayName($item);
             $itemsList .= "• {$itemName} (x{$item['quantity']})\n";
         }
 
@@ -819,6 +849,7 @@ class EmailService {
      * Template HTML pour email de lien de paiement
      */
     private function getPaymentLinkTemplate($customerName, $orderNumber, $paymentUrl, $expiresAt, $totalAmount) {
+        $year = date('Y');
         $totalFormatted = number_format($totalAmount, 2, ',', ' ') . ' €';
         $expiryDate = date('d/m/Y à H:i', strtotime($expiresAt));
 
@@ -828,76 +859,72 @@ class EmailService {
         <head>
             <meta charset='UTF-8'>
             <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+            <style>
+                body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 1.6; color: #1A1917; margin: 0; padding: 0; }
+                .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+                .header { text-align: center; margin-bottom: 40px; }
+                .logo { font-size: 24px; font-weight: bold; text-decoration: none; color: #1A1917; }
+                .content { background-color: #FAFAF9; padding: 40px; border: 1px solid #E8E6E3; }
+                .footer { text-align: center; margin-top: 40px; font-size: 12px; color: #706F6C; }
+            </style>
         </head>
-        <body style='margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;'>
-            <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #f3f4f6; padding: 20px;'>
-                <tr>
-                    <td align='center'>
-                        <table width='600' cellpadding='0' cellspacing='0' style='background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
-                            <!-- Header -->
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <span class='logo'>ArchiMeuble</span>
+                </div>
+                <div class='content'>
+                    <h2 style='margin-top: 0;'>Bonjour {$customerName},</h2>
+
+                    <p>Votre lien de paiement sécurisé est prêt pour la commande <strong>#{$orderNumber}</strong>.</p>
+
+                    <!-- Détails -->
+                    <div style='background-color: #FFFFFF; padding: 24px; border: 1px solid #E8E6E3; margin: 24px 0;'>
+                        <table style='width: 100%; border-collapse: collapse;'>
                             <tr>
-                                <td style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;'>
-                                    <h1 style='color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;'>
-                                        {$this->siteName}
-                                    </h1>
-                                </td>
+                                <td style='padding: 10px 0; color: #706F6C; font-size: 14px; border-bottom: 1px solid #F0EFEA;'>Commande</td>
+                                <td style='padding: 10px 0; color: #1A1917; text-align: right; font-weight: 600;'>#{$orderNumber}</td>
                             </tr>
-
-                            <!-- Content -->
                             <tr>
-                                <td style='padding: 40px 30px;'>
-                                    <h2 style='color: #1f2937; margin: 0 0 20px 0; font-size: 24px;'>
-                                        Bonjour {$customerName},
-                                    </h2>
-
-                                    <p style='color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;'>
-                                        Votre lien de paiement sécurisé est prêt ! Vous pouvez maintenant procéder au paiement de votre commande <strong>#{$orderNumber}</strong>.
-                                    </p>
-
-                                    <div style='background-color: #f9fafb; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0; border-radius: 4px;'>
-                                        <p style='margin: 0 0 10px 0; color: #1f2937; font-size: 14px;'>
-                                            <strong>Montant total :</strong> {$totalFormatted}
-                                        </p>
-                                        <p style='margin: 0; color: #6b7280; font-size: 14px;'>
-                                            <strong>Valable jusqu'au :</strong> {$expiryDate}
-                                        </p>
-                                    </div>
-
-                                    <div style='text-align: center; margin: 30px 0;'>
-                                        <a href='{$paymentUrl}' style='display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);'>
-                                            Procéder au paiement
-                                        </a>
-                                    </div>
-
-                                    <p style='color: #6b7280; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;'>
-                                        Si le bouton ne fonctionne pas, copiez et collez ce lien dans votre navigateur :
-                                    </p>
-                                    <p style='color: #667eea; font-size: 14px; word-break: break-all; margin: 10px 0;'>
-                                        {$paymentUrl}
-                                    </p>
-
-                                    <div style='margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;'>
-                                        <p style='color: #6b7280; font-size: 14px; margin: 0;'>
-                                            <strong>Sécurisé par Stripe</strong><br>
-                                            Vos informations de paiement sont protégées et chiffrées.
-                                        </p>
-                                    </div>
-                                </td>
+                                <td style='padding: 10px 0; color: #706F6C; font-size: 14px; border-bottom: 1px solid #F0EFEA;'>Montant à régler</td>
+                                <td style='padding: 10px 0; color: #1A1917; text-align: right; font-weight: 700; font-size: 16px;'>{$totalFormatted}</td>
                             </tr>
-
-                            <!-- Footer -->
                             <tr>
-                                <td style='background-color: #f9fafb; padding: 20px 30px; text-align: center; border-top: 1px solid #e5e7eb;'>
-                                    <p style='color: #9ca3af; font-size: 12px; margin: 0;'>
-                                        Cet email a été envoyé par {$this->siteName}<br>
-                                        Si vous n'avez pas demandé ce lien, vous pouvez ignorer cet email.
-                                    </p>
-                                </td>
+                                <td style='padding: 10px 0; color: #706F6C; font-size: 14px;'>Valable jusqu'au</td>
+                                <td style='padding: 10px 0; color: #1A1917; text-align: right; font-weight: 600;'>{$expiryDate}</td>
                             </tr>
                         </table>
-                    </td>
-                </tr>
-            </table>
+                    </div>
+
+                    <!-- Bouton -->
+                    <div style='text-align: center; margin: 32px 0;'>
+                        <a href='{$paymentUrl}' style='display: inline-block; padding: 16px 40px; background-color: #1A1917; color: #FFFFFF; text-decoration: none; font-weight: 600; font-size: 15px;'>
+                            Procéder au paiement
+                        </a>
+                    </div>
+
+                    <p style='font-size: 13px; color: #706F6C;'>
+                        Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :
+                    </p>
+                    <p style='font-size: 13px; color: #8B7355; word-break: break-all;'>
+                        {$paymentUrl}
+                    </p>
+
+                    <div style='margin-top: 24px; padding-top: 20px; border-top: 1px solid #E8E6E3;'>
+                        <p style='font-size: 13px; color: #706F6C; margin: 0;'>
+                            Paiement sécurisé par Stripe. Vos informations bancaires sont protégées et chiffrées.
+                        </p>
+                    </div>
+
+                    <p style='margin-top: 30px; font-size: 14px; color: #706F6C;'>
+                        Cordialement,<br>
+                        L'équipe ArchiMeuble
+                    </p>
+                </div>
+                <div class='footer'>
+                    <p>&copy; {$year} ArchiMeuble. Tous droits réservés.</p>
+                </div>
+            </div>
         </body>
         </html>
         ";
