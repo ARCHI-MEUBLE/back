@@ -1,5 +1,7 @@
 name: Daily Database Backup
 
+permissions: {}
+
 on:
   schedule:
     # Tous les jours à 3h du matin (heure de Paris = 2h UTC)
