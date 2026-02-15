@@ -1,0 +1,35 @@
+name: Daily Database Backup
+
+permissions: {}
+
+on:
+  schedule:
+    # Tous les jours à 3h du matin (heure de Paris = 2h UTC)
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Permet de lancer manuellement depuis GitHub
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Backup DEV database
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            "${{ secrets.DEV_BACKEND_URL }}/backend/api/system/db-maintenance/create?key=${{ secrets.BACKUP_API_KEY }}")
+          if [ "$response" = "200" ]; then
+            echo "DEV backup OK"
+          else
+            echo "DEV backup FAILED (HTTP $response)"
+            exit 1
+          fi
+
+      - name: Backup STAGING database
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            "${{ secrets.STAGING_BACKEND_URL }}/backend/api/system/db-maintenance/create?key=${{ secrets.BACKUP_API_KEY }}")
+          if [ "$response" = "200" ]; then
+            echo "STAGING backup OK"
+          else
+            echo "STAGING backup FAILED (HTTP $response)"
+            exit 1
+          fi
