@@ -42,11 +42,8 @@ echo "PostgreSQL is ready"
 # Initialiser le schéma de base
 echo ""
 echo "Initializing database schema..."
-if psql "$DATABASE_URL" -f /app/init_db.sql 2>/dev/null; then
-    echo "Database schema initialized"
-else
-    echo "Schema initialization skipped (tables may already exist)"
-fi
+psql "$DATABASE_URL" -f /app/init_db.sql 2>&1 || echo "WARNING: Some schema initialization errors (may be normal if tables exist)"
+echo "Database schema initialized"
 
 # Vérifier que toutes les tables existent avec le script Python
 echo ""
