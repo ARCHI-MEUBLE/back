@@ -1,6 +1,7 @@
 -- =============================================================================
 -- ArchiMeuble - Initialisation PostgreSQL COMPLETE (47 tables)
 -- Ce fichier cree le schema de base de donnees complet
+-- Les definitions correspondent EXACTEMENT a celles de Database.php
 -- Ordre: tables sans FK d'abord, puis tables avec FK dans l'ordre des dependances
 -- =============================================================================
 
@@ -160,20 +161,22 @@ CREATE TABLE IF NOT EXISTS pricing (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Definition identique a Database.php
 CREATE TABLE IF NOT EXISTS pricing_config (
     id SERIAL PRIMARY KEY,
     category TEXT NOT NULL,
     item_type TEXT NOT NULL,
     param_name TEXT NOT NULL,
-    param_value DECIMAL(10,4) DEFAULT 0,
-    unit TEXT DEFAULT 'eur',
+    param_value DECIMAL(10,4) NOT NULL,
+    unit TEXT NOT NULL,
     description TEXT,
-    is_active BOOLEAN DEFAULT TRUE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(category, item_type, param_name)
 );
 
+-- Definition identique a Database.php
 CREATE TABLE IF NOT EXISTS catalogue_items (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -237,6 +240,7 @@ CREATE TABLE IF NOT EXISTS facade_settings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Definition identique a Database.php
 CREATE TABLE IF NOT EXISTS calendly_appointments (
     id SERIAL PRIMARY KEY,
     calendly_event_id TEXT UNIQUE NOT NULL,
@@ -256,50 +260,50 @@ CREATE TABLE IF NOT EXISTS calendly_appointments (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Definition identique a Database.php
 CREATE TABLE IF NOT EXISTS password_resets (
     id SERIAL PRIMARY KEY,
     email TEXT NOT NULL,
-    token TEXT NOT NULL UNIQUE,
+    token TEXT NOT NULL,
     expires_at TIMESTAMP NOT NULL,
-    used BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Definition identique a Database.php
 CREATE TABLE IF NOT EXISTS categories (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) UNIQUE,
+    name TEXT NOT NULL UNIQUE,
+    slug TEXT NOT NULL UNIQUE,
     description TEXT,
-    image_url VARCHAR(500),
-    parent_id INTEGER,
-    position INTEGER DEFAULT 0,
+    image_url TEXT,
+    display_order INTEGER DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Definition identique a Database.php
 CREATE TABLE IF NOT EXISTS realisations (
     id SERIAL PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
+    titre TEXT NOT NULL,
     description TEXT,
-    category VARCHAR(100),
-    main_image_url VARCHAR(500),
-    is_active BOOLEAN DEFAULT TRUE,
-    position INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    image_url TEXT,
+    date_projet TEXT,
+    categorie TEXT,
+    lieu TEXT,
+    dimensions TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Definition identique a Database.php
 CREATE TABLE IF NOT EXISTS quote_requests (
     id SERIAL PRIMARY KEY,
-    customer_id INTEGER,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     email TEXT NOT NULL,
-    phone TEXT,
-    message TEXT,
-    status TEXT DEFAULT 'pending',
-    admin_notes TEXT,
+    phone TEXT NOT NULL,
+    description TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -388,14 +392,14 @@ CREATE TABLE IF NOT EXISTS orders (
     FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE RESTRICT
 );
 
+-- Definition identique a Database.php
 CREATE TABLE IF NOT EXISTS email_verifications (
     id SERIAL PRIMARY KEY,
-    customer_id INTEGER NOT NULL,
+    email TEXT NOT NULL,
     code TEXT NOT NULL,
     expires_at TIMESTAMP NOT NULL,
-    verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+    used BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS sample_colors (
@@ -413,6 +417,7 @@ CREATE TABLE IF NOT EXISTS sample_colors (
     FOREIGN KEY (type_id) REFERENCES sample_types(id) ON DELETE CASCADE
 );
 
+-- Definition identique a Database.php
 CREATE TABLE IF NOT EXISTS catalogue_item_variations (
     id SERIAL PRIMARY KEY,
     catalogue_item_id INTEGER NOT NULL,
@@ -437,22 +442,25 @@ CREATE TABLE IF NOT EXISTS saved_facades (
     FOREIGN KEY (facade_id) REFERENCES facades(id) ON DELETE CASCADE
 );
 
+-- Definition identique a Database.php
 CREATE TABLE IF NOT EXISTS realisation_images (
     id SERIAL PRIMARY KEY,
     realisation_id INTEGER NOT NULL,
-    image_url VARCHAR(500) NOT NULL,
-    caption TEXT,
-    position INTEGER DEFAULT 0,
+    image_url TEXT NOT NULL,
+    ordre INTEGER DEFAULT 0,
+    legende TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (realisation_id) REFERENCES realisations(id) ON DELETE CASCADE
 );
 
+-- Definition identique a Database.php
 CREATE TABLE IF NOT EXISTS quote_request_files (
     id SERIAL PRIMARY KEY,
     quote_request_id INTEGER NOT NULL,
-    file_url TEXT NOT NULL,
-    file_name TEXT,
-    file_type TEXT,
+    file_name TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    file_type TEXT NOT NULL,
+    file_size INTEGER NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (quote_request_id) REFERENCES quote_requests(id) ON DELETE CASCADE
 );
@@ -486,6 +494,7 @@ CREATE TABLE IF NOT EXISTS cart_items (
     UNIQUE(customer_id, configuration_id)
 );
 
+-- Definition identique a Database.php
 CREATE TABLE IF NOT EXISTS cart_catalogue_items (
     id SERIAL PRIMARY KEY,
     customer_id INTEGER NOT NULL,
@@ -498,26 +507,28 @@ CREATE TABLE IF NOT EXISTS cart_catalogue_items (
     FOREIGN KEY (catalogue_item_id) REFERENCES catalogue_items(id) ON DELETE CASCADE
 );
 
+-- Definition identique a Database.php
 CREATE TABLE IF NOT EXISTS cart_sample_items (
     id SERIAL PRIMARY KEY,
     customer_id INTEGER NOT NULL,
-    sample_type_id INTEGER NOT NULL,
-    sample_color_id INTEGER,
-    quantity INTEGER DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
-    FOREIGN KEY (sample_type_id) REFERENCES sample_types(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS facade_cart_items (
-    id SERIAL PRIMARY KEY,
-    customer_id INTEGER NOT NULL,
-    saved_facade_id INTEGER NOT NULL,
-    quantity INTEGER DEFAULT 1,
+    sample_color_id INTEGER NOT NULL,
+    quantity INTEGER NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
-    FOREIGN KEY (saved_facade_id) REFERENCES saved_facades(id) ON DELETE CASCADE
+    FOREIGN KEY (sample_color_id) REFERENCES sample_colors(id) ON DELETE CASCADE,
+    UNIQUE(customer_id, sample_color_id)
+);
+
+-- Definition identique a Database.php
+CREATE TABLE IF NOT EXISTS facade_cart_items (
+    id SERIAL PRIMARY KEY,
+    customer_id INTEGER NOT NULL,
+    config_data TEXT NOT NULL,
+    quantity INTEGER DEFAULT 1,
+    unit_price DECIMAL(10,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS order_items (
@@ -537,6 +548,7 @@ CREATE TABLE IF NOT EXISTS order_items (
     FOREIGN KEY (configuration_id) REFERENCES saved_configurations(id) ON DELETE RESTRICT
 );
 
+-- Definition identique a Database.php
 CREATE TABLE IF NOT EXISTS order_catalogue_items (
     id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL,
@@ -553,26 +565,28 @@ CREATE TABLE IF NOT EXISTS order_catalogue_items (
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
 
+-- Definition identique a Database.php
 CREATE TABLE IF NOT EXISTS order_sample_items (
     id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL,
-    sample_type_id INTEGER,
-    sample_color_id INTEGER,
-    sample_name TEXT NOT NULL,
-    color_name TEXT,
-    quantity INTEGER DEFAULT 1,
-    unit_price DECIMAL(10,2) DEFAULT 0,
+    sample_color_id INTEGER NOT NULL,
+    sample_name VARCHAR(255) NOT NULL,
+    sample_type_name VARCHAR(255),
+    material VARCHAR(255),
+    image_url TEXT,
+    hex VARCHAR(20),
+    quantity INTEGER NOT NULL DEFAULT 1,
+    price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (sample_color_id) REFERENCES sample_colors(id) ON DELETE SET NULL
 );
 
+-- Definition identique a Database.php
 CREATE TABLE IF NOT EXISTS order_facade_items (
     id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL,
-    facade_id INTEGER,
-    configuration_data TEXT,
-    material_name TEXT,
-    dimensions TEXT,
+    config_data TEXT NOT NULL,
     quantity INTEGER DEFAULT 1,
     unit_price DECIMAL(10,2) NOT NULL,
     total_price DECIMAL(10,2) NOT NULL,
@@ -594,32 +608,37 @@ CREATE TABLE IF NOT EXISTS notifications (
     FOREIGN KEY (related_order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
 
+-- Definition identique a Database.php
 CREATE TABLE IF NOT EXISTS payment_links (
     id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL,
     token TEXT NOT NULL UNIQUE,
     status TEXT DEFAULT 'active',
     expires_at TIMESTAMP NOT NULL,
-    payment_type TEXT DEFAULT 'full',
-    amount DECIMAL(10,2),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     accessed_at TIMESTAMP,
     paid_at TIMESTAMP,
     created_by_admin TEXT,
+    payment_type TEXT DEFAULT 'full',
+    amount DECIMAL(10,2),
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
 
+-- Definition identique a Database.php
 CREATE TABLE IF NOT EXISTS payment_installments (
     id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL,
+    customer_id INTEGER NOT NULL,
     installment_number INTEGER NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
-    due_date TIMESTAMP,
-    status TEXT DEFAULT 'pending',
+    due_date DATE NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending',
     stripe_payment_intent_id TEXT,
     paid_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id),
+    FOREIGN KEY (customer_id) REFERENCES customers(id)
 );
 
 CREATE TABLE IF NOT EXISTS stripe_payment_intents (
@@ -664,6 +683,21 @@ CREATE INDEX IF NOT EXISTS idx_payment_links_expires ON payment_links(expires_at
 CREATE INDEX IF NOT EXISTS idx_stripe_pi_payment_intent ON stripe_payment_intents(payment_intent_id);
 CREATE INDEX IF NOT EXISTS idx_stripe_pi_order ON stripe_payment_intents(order_id);
 CREATE INDEX IF NOT EXISTS idx_customers_stripe ON customers(stripe_customer_id);
+CREATE INDEX IF NOT EXISTS idx_realisation_images_realisation_id ON realisation_images(realisation_id);
+CREATE INDEX IF NOT EXISTS idx_installments_order ON payment_installments(order_id);
+CREATE INDEX IF NOT EXISTS idx_installments_customer ON payment_installments(customer_id);
+CREATE INDEX IF NOT EXISTS idx_installments_due_date ON payment_installments(due_date);
+CREATE INDEX IF NOT EXISTS idx_installments_status ON payment_installments(status);
+CREATE INDEX IF NOT EXISTS idx_email_verifications_email ON email_verifications(email);
+CREATE INDEX IF NOT EXISTS idx_email_verifications_expires ON email_verifications(expires_at);
+CREATE INDEX IF NOT EXISTS idx_cart_sample_items_customer ON cart_sample_items(customer_id);
+CREATE INDEX IF NOT EXISTS idx_cart_sample_items_color ON cart_sample_items(sample_color_id);
+CREATE INDEX IF NOT EXISTS idx_order_sample_items_order ON order_sample_items(order_id);
+CREATE INDEX IF NOT EXISTS idx_quote_requests_status ON quote_requests(status);
+CREATE INDEX IF NOT EXISTS idx_quote_requests_created ON quote_requests(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_pricing_config_category ON pricing_config(category);
+CREATE INDEX IF NOT EXISTS idx_pricing_config_active ON pricing_config(is_active);
+CREATE INDEX IF NOT EXISTS idx_pricing_config_lookup ON pricing_config(category, item_type, param_name);
 
 -- =============================================================================
 -- DONNEES PAR DEFAUT
