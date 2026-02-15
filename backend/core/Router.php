@@ -138,25 +138,25 @@ class Router {
             return;
         }
 
-        // Sinon, fallback sur le fichier racine (ex: admin -> backend/api/admin.php)
+        // Sinon, essayer les chemins intermédiaires (ex: system/db-maintenance/create -> system/db-maintenance.php avec PATH_INFO=/create)
         $parts = explode('/', $endpoint);
-        $mainEndpoint = $parts[0];
+        for ($i = count($parts) - 1; $i >= 1; $i--) {
+            $tryEndpoint = implode(DIRECTORY_SEPARATOR, array_slice($parts, 0, $i));
+            $tryFile = $this->baseDir . DIRECTORY_SEPARATOR . 'backend' . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . $tryEndpoint . '.php';
+            $tryFile = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $tryFile);
 
-        $apiFile = $this->baseDir . DIRECTORY_SEPARATOR . 'backend' . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . $mainEndpoint . '.php';
-        $apiFile = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $apiFile);
-
-        if (file_exists($apiFile)) {
-            require $apiFile;
-            return;
+            if (file_exists($tryFile)) {
+                $_SERVER['PATH_INFO'] = '/' . implode('/', array_slice($parts, $i));
+                require $tryFile;
+                return;
+            }
         }
 
         // Debug si rien trouvé
         $this->sendJSON([
             'success' => false,
             'error' => 'Endpoint non trouvé',
-            'requested' => $endpoint,
-            'tried_exact' => $exactFile,
-            'tried_root' => $apiFile
+            'requested' => $endpoint
         ], 404);
     }
 
@@ -180,31 +180,24 @@ class Router {
             return;
         }
 
-        // Sinon, gérer les sous-routes avec fichier principal (ex: admin-auth/login -> admin-auth.php)
-        // Extraire la première partie (ex: admin-auth, admin, customers, facade-materials)
+        // Sinon, essayer les chemins intermédiaires (ex: system/db-maintenance/create -> system/db-maintenance.php avec PATH_INFO=/create)
         $parts = explode('/', $endpoint);
-        $mainEndpoint = $parts[0];
-        
-        // Le reste du path devient PATH_INFO pour l'API
-        $pathInfo = '';
-        if (count($parts) > 1) {
-            $pathInfo = '/' . implode('/', array_slice($parts, 1));
+        for ($i = count($parts) - 1; $i >= 1; $i--) {
+            $tryEndpoint = implode('/', array_slice($parts, 0, $i));
+            $tryFile = $this->baseDir . '/backend/api/' . $tryEndpoint . '.php';
+
+            if (file_exists($tryFile)) {
+                $_SERVER['PATH_INFO'] = '/' . implode('/', array_slice($parts, $i));
+                require $tryFile;
+                return;
+            }
         }
 
-        // Construire le chemin du fichier API principal
-        $apiFile = $this->baseDir . '/backend/api/' . $mainEndpoint . '.php';
-
-        if (file_exists($apiFile)) {
-            // Définir PATH_INFO pour que l'API puisse extraire l'ID
-            $_SERVER['PATH_INFO'] = $pathInfo;
-            require $apiFile;
-        } else {
-            $this->sendJSON([
-                'success' => false,
-                'error' => 'Endpoint non trouvé',
-                'requested' => $endpoint
-            ], 404);
-        }
+        $this->sendJSON([
+            'success' => false,
+            'error' => 'Endpoint non trouvé',
+            'requested' => $endpoint
+        ], 404);
     }
 
     /**

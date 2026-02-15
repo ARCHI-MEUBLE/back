@@ -11,7 +11,7 @@ RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.l
     sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list 2>/dev/null; \
     true
 
-# Ajouter le dépôt officiel PostgreSQL pour avoir le client v16
+# Ajouter le dépôt officiel PostgreSQL pour avoir le client v17
 RUN apt-get update && apt-get install -y gnupg2 lsb-release && \
     echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list && \
     curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg && \
@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y gnupg2 lsb-release && \
 
 # Installation des dépendances système
 RUN apt-get install -y \
-    postgresql-client-16 \
+    postgresql-client-17 \
     libpq-dev \
     python3 \
     python3-pip \
