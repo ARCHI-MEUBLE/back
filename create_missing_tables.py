@@ -486,16 +486,58 @@ try:
     print("Vérification des paramètres de prix manquants...")
     if table_exists(cursor, 'pricing_config'):
         params_to_add = [
-            ('wardrobe', 'rod', 'price_per_linear_meter', 20, 'eur_linear_m', 'Prix de la barre de penderie par mètre linéaire'),
-            ('handles', 'horizontal_bar', 'price_per_unit', 15, 'eur', "Prix d'une poignée barre horizontale"),
-            ('handles', 'vertical_bar', 'price_per_unit', 15, 'eur', "Prix d'une poignée barre verticale"),
-            ('handles', 'knob', 'price_per_unit', 10, 'eur', "Prix d'un bouton de porte"),
-            ('handles', 'recessed', 'price_per_unit', 20, 'eur', "Prix d'une poignée encastrée"),
-            ('bases', 'wood', 'price_per_m3', 800, 'eur_m3', 'Prix du bois pour socle au m³'),
+            # Materiaux
+            ('materials', 'agglomere', 'supplement', 0, 'eur', 'Supplement pour agglomere'),
+            ('materials', 'agglomere', 'price_per_m2', 50, 'eur_m2', "Prix au m2 de l'agglomere"),
+            ('materials', 'mdf_melamine', 'supplement', 70, 'eur', 'Supplement pour MDF melamine'),
+            ('materials', 'mdf_melamine', 'price_per_m2', 80, 'eur_m2', 'Prix au m2 du MDF melamine'),
+            ('materials', 'plaque_bois', 'supplement', 140, 'eur', 'Supplement pour plaque bois'),
+            ('materials', 'plaque_bois', 'price_per_m2', 150, 'eur_m2', 'Prix au m2 du plaque bois'),
+            # Tiroirs
+            ('drawers', 'standard', 'base_price', 35, 'eur', "Prix de base d'un tiroir standard"),
+            ('drawers', 'standard', 'coefficient', 0.0001, 'coefficient', 'Coefficient (x largeur x profondeur en mm2)'),
+            ('drawers', 'push', 'base_price', 45, 'eur', "Prix de base d'un tiroir push"),
+            ('drawers', 'push', 'coefficient', 0.0001, 'coefficient', 'Coefficient (x largeur x profondeur en mm2)'),
+            # Etageres
+            ('shelves', 'glass', 'price_per_m2', 250, 'eur_m2', 'Prix du verre au m2'),
+            ('shelves', 'standard', 'price_per_m2', 100, 'eur_m2', "Prix au m2 d'une etagere standard"),
+            # Eclairage LED
+            ('lighting', 'led', 'price_per_linear_meter', 15, 'eur_linear_m', 'Prix de la LED par metre lineaire'),
+            # Passe-cable
+            ('cables', 'pass_cable', 'fixed_price', 10, 'eur', 'Prix fixe pour un passe-cable'),
+            # Socles
+            ('bases', 'none', 'fixed_price', 0, 'eur', 'Pas de socle'),
+            ('bases', 'wood', 'coefficient', 0.0001, 'coefficient', 'Coefficient (x largeur x profondeur en mm2)'),
+            ('bases', 'wood', 'price_per_m3', 800, 'eur_m3', 'Prix du bois pour socle au m3'),
             ('bases', 'wood', 'height', 80, 'mm', 'Hauteur fixe du socle bois'),
+            ('bases', 'metal', 'price_per_foot', 20, 'eur', "Prix d'un pied metallique"),
+            ('bases', 'metal', 'foot_interval', 2000, 'mm', 'Intervalle : 2 pieds tous les 2000mm (2m)'),
             ('bases', 'metal', 'base_foot_count', 2, 'units', 'Nombre minimum de pieds (base)'),
+            # Charnieres
+            ('hinges', 'standard', 'price_per_unit', 5, 'eur', "Prix d'une charniere standard"),
+            # Portes
+            ('doors', 'simple', 'coefficient', 0.00004, 'coefficient', 'Coefficient porte simple'),
+            ('doors', 'simple', 'hinge_count', 2, 'units', 'Nombre de charnieres pour une porte simple'),
+            ('doors', 'double', 'coefficient', 0.00008, 'coefficient', 'Coefficient double porte'),
+            ('doors', 'double', 'hinge_count', 4, 'units', 'Nombre de charnieres pour une double porte'),
+            ('doors', 'glass', 'coefficient', 0.00009, 'coefficient', 'Coefficient porte vitree'),
+            ('doors', 'glass', 'hinge_count', 2, 'units', 'Nombre de charnieres pour une porte vitree'),
+            ('doors', 'push', 'coefficient', 0.00005, 'coefficient', 'Coefficient porte push'),
+            ('doors', 'push', 'hinge_count', 2, 'units', 'Nombre de charnieres pour une porte push'),
+            # Colonnes
+            ('columns', 'standard', 'price_per_m2', 120, 'eur_m2', "Prix au m2 d'une colonne"),
+            # Caisson
+            ('casing', 'full', 'coefficient', 1.2, 'coefficient', 'Coefficient pour le caisson complet'),
+            # Penderie
+            ('wardrobe', 'rod', 'price_per_linear_meter', 20, 'eur_linear_m', 'Prix de la barre de penderie par metre lineaire'),
+            # Poignees
+            ('handles', 'horizontal_bar', 'price_per_unit', 15, 'eur', "Prix d'une poignee barre horizontale"),
+            ('handles', 'vertical_bar', 'price_per_unit', 15, 'eur', "Prix d'une poignee barre verticale"),
+            ('handles', 'knob', 'price_per_unit', 10, 'eur', "Prix d'un bouton de porte"),
+            ('handles', 'recessed', 'price_per_unit', 20, 'eur', "Prix d'une poignee encastree"),
+            # Affichage prix
             ('display', 'price', 'display_mode', 0, 'units', "Mode d'affichage (0=Direct, 1=Intervalle)"),
-            ('display', 'price', 'deviation_range', 100, 'eur', "Écart pour l'affichage en intervalle"),
+            ('display', 'price', 'deviation_range', 100, 'eur', "Ecart pour l'affichage en intervalle"),
         ]
 
         for category, item_type, param_name, param_value, unit, description in params_to_add:
