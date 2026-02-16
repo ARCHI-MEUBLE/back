@@ -61,6 +61,18 @@ try {
         $colors = ['all' => trim($data['color'])];
     }
 
+    // Panneaux supprimés (pour exclure du DXF)
+    $deletedPanels = null;
+    if (isset($data['deletedPanels']) && is_array($data['deletedPanels'])) {
+        $deletedPanels = $data['deletedPanels'];
+    }
+
+    // Structure des zones (pour segmentation des panneaux)
+    $zones = null;
+    if (isset($data['zones']) && is_array($data['zones'])) {
+        $zones = $data['zones'];
+    }
+
     // VALIDATION 1 : Regex pour valider le format du prompt
     // Format attendu : M[1-5](largeur,profondeur,hauteur[,modules])MODULES(params)
     // Exemple : M1(1700,500,730)EFH3(F,T,F) ou M1(1400,500,800)EbFSH3(VL[30,70],P,T)
@@ -102,12 +114,15 @@ try {
     // Générer un nom de fichier unique
     $filename = 'meuble_' . uniqid() . '.glb';
 
-    // Utiliser OUTPUT_DIR si défini, sinon fallback sur /app/models (Docker) ou chemin local
+    // Utiliser OUTPUT_DIR si défini, sinon fallback sur /data/models (Docker) ou chemin local
     $outputDir = getenv('OUTPUT_DIR');
 
     if (!$outputDir || empty($outputDir)) {
-        // En production (Docker/Railway), utiliser /app/models
-        if (file_exists('/app')) {
+        // En production (Docker/Railway), utiliser /data/models (volume persistant) ou /app/models
+        if (file_exists('/data')) {
+            $outputDir = '/data/models';
+        } elseif (file_exists('/app/models')) {
+            // Docker sans volume persistant (Railway)
             $outputDir = '/app/models';
         } else {
             // En local, utiliser le chemin relatif vers front
@@ -158,14 +173,30 @@ try {
         $colorsFlag = '--colors ' . escapeshellarg($colorsJson);
     }
 
+    // Ajouter --deleted-panels si fourni (format JSON)
+    $deletedPanelsFlag = '';
+    if ($deletedPanels && !empty($deletedPanels)) {
+        $deletedPanelsJson = json_encode($deletedPanels, JSON_UNESCAPED_SLASHES);
+        $deletedPanelsFlag = '--deleted-panels ' . escapeshellarg($deletedPanelsJson);
+    }
+
+    // Ajouter --zones si fourni (format JSON pour segmentation des panneaux)
+    $zonesFlag = '';
+    if ($zones && !empty($zones)) {
+        $zonesJson = json_encode($zones, JSON_UNESCAPED_SLASHES);
+        $zonesFlag = '--zones ' . escapeshellarg($zonesJson);
+    }
+
     $command = sprintf(
-        '"%s" "%s" %s %s %s %s 2>&1',
+        '"%s" "%s" %s %s %s %s %s %s 2>&1',
         $pythonExe,
         $pythonScript,
         escapeshellarg($prompt),
         escapeshellarg($outputPath),
         $closedFlag,
-        $colorsFlag
+        $colorsFlag,
+        $deletedPanelsFlag,
+        $zonesFlag
     );
 
     // Log de la commande pour debug
@@ -225,16 +256,18 @@ try {
         exit();
     }
 
-    // Vérifier si le fichier DXF a été créé (même nom que GLB mais avec extension .dxf)
-    $dxfFilename = str_replace('.glb', '.dxf', $filename);
+    // Vérifier si le fichier DXF a été créé
+    $dxfFilename = pathinfo($filename, PATHINFO_FILENAME) . '.dxf';
     $dxfPath = $outputDir . $dxfFilename;
     $dxfUrl = null;
 
     if (file_exists($dxfPath)) {
         $dxfUrl = '/models/' . $dxfFilename;
-        error_log("Fichier DXF généré: $dxfPath");
+        error_log("Fichier DXF trouvé: $dxfPath");
     } else {
-        error_log("Fichier DXF non trouvé: $dxfPath");
+        error_log("Fichier DXF NON TROUVE après exécution Python: $dxfPath");
+        // Essayer de voir si Python a loggé une erreur spécifique
+        error_log("Dernières lignes de sortie Python: " . substr($outputText, -500));
     }
 
     // Succès : retourner l'URL du fichier GLB et DXF

@@ -26,6 +26,10 @@ $method = $_SERVER['REQUEST_METHOD'];
  * Vérifie si l'utilisateur est admin
  */
 function isAdmin() {
+    if (session_status() === PHP_SESSION_NONE) {
+        require_once __DIR__ . '/../core/Session.php';
+        Session::getInstance();
+    }
     // Utiliser $_SESSION natif comme dans les autres endpoints admin
     $isAdmin = isset($_SESSION['admin_email']) && !empty($_SESSION['admin_email']);
 
@@ -55,42 +59,18 @@ function convertImagePath($imagePath) {
     }
 
     // Détecter l'environnement
-    $host = $_SERVER['HTTP_HOST'];
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
     $isLocal = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
 
     if ($isLocal) {
-        // EN LOCAL: Les images sont dans le frontend Next.js
-        // Détecter le port du frontend depuis Origin ou Referer
-        $frontendUrl = getenv('FRONTEND_URL');
-        if (!$frontendUrl) {
-            // Essayer de détecter depuis les headers
-            $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-            $referer = $_SERVER['HTTP_REFERER'] ?? '';
-
-            if ($origin && (strpos($origin, 'localhost') !== false || strpos($origin, '127.0.0.1') !== false)) {
-                $frontendUrl = $origin;
-            } elseif ($referer && (strpos($referer, 'localhost') !== false || strpos($referer, '127.0.0.1') !== false)) {
-                // Extraire l'URL de base du referer
-                $parsed = parse_url($referer);
-                $frontendUrl = $parsed['scheme'] . '://' . $parsed['host'];
-                if (isset($parsed['port'])) {
-                    $frontendUrl .= ':' . $parsed['port'];
-                }
-            } else {
-                // Fallback
-                $frontendUrl = 'http://localhost:3000';
-            }
-        }
-        error_log("Converting image path (LOCAL): $imagePath -> $frontendUrl$imagePath");
-        return $frontendUrl . $imagePath;
+        // En local, on retourne un chemin relatif pour que Next.js le gère via son proxy
+        // Cela évite les problèmes de CORS et facilite le chargement par Three.js
+        return $imagePath;
     }
 
     // EN PRODUCTION: Les images sont sur Railway backend
-    // car le frontend proxie l'upload vers le backend
     $protocol = 'https';
     $baseUrl = $protocol . '://' . $host;
-    error_log("Converting image path (PRODUCTION): $imagePath -> $baseUrl$imagePath");
-
     return $baseUrl . $imagePath;
 }
 
@@ -106,6 +86,9 @@ function convertModelImagePaths($models) {
         if (isset($model['image_url'])) {
             $model['image_url'] = convertImagePath($model['image_url']);
         }
+        if (isset($model['hover_image_url'])) {
+            $model['hover_image_url'] = convertImagePath($model['hover_image_url']);
+        }
     }
 
     return $models;
@@ -119,9 +102,12 @@ if ($method === 'GET') {
     if (isset($_GET['id'])) {
         $modelData = $model->getById($_GET['id']);
         if ($modelData) {
-            // Convertir le chemin de l'image en URL complète
+            // Convertir les chemins des images en URLs complètes
             if (isset($modelData['image_url'])) {
                 $modelData['image_url'] = convertImagePath($modelData['image_url']);
+            }
+            if (isset($modelData['hover_image_url'])) {
+                $modelData['hover_image_url'] = convertImagePath($modelData['hover_image_url']);
             }
             http_response_code(200);
             echo json_encode($modelData);
@@ -166,6 +152,7 @@ if ($method === 'POST') {
 
     // Support des deux formats : camelCase et snake_case
     $imageUrl = $input['imageUrl'] ?? $input['image_url'] ?? $input['imagePath'] ?? $input['image_path'] ?? null;
+    $hoverImageUrl = $input['hoverImageUrl'] ?? $input['hover_image_url'] ?? $input['hoverImagePath'] ?? $input['hover_image_path'] ?? null;
     $price = $input['price'] ?? $input['basePrice'] ?? $input['base_price'] ?? null;
 
     try {
@@ -174,14 +161,20 @@ if ($method === 'POST') {
             $input['description'] ?? null,
             $input['prompt'],
             $price,
-            $imageUrl
+            $imageUrl,
+            $input['category'] ?? null,
+            isset($input['config_data']) ? (is_string($input['config_data']) ? $input['config_data'] : json_encode($input['config_data'])) : null,
+            $hoverImageUrl
         );
 
         if ($modelId) {
             $createdModel = $model->getById($modelId);
-            // Convertir le chemin de l'image en URL complète
+            // Convertir les chemins des images en URLs complètes
             if (isset($createdModel['image_url'])) {
                 $createdModel['image_url'] = convertImagePath($createdModel['image_url']);
+            }
+            if (isset($createdModel['hover_image_url'])) {
+                $createdModel['hover_image_url'] = convertImagePath($createdModel['hover_image_url']);
             }
             http_response_code(201);
             echo json_encode([
@@ -223,8 +216,9 @@ if ($method === 'PUT') {
     }
 
     $input = json_decode(file_get_contents('php://input'), true);
+    $id = $_GET['id'] ?? $input['id'] ?? null;
 
-    if (!isset($input['id'])) {
+    if (!$id) {
         http_response_code(400);
         echo json_encode(['error' => 'ID du modèle requis']);
         exit;
@@ -238,7 +232,7 @@ if ($method === 'PUT') {
     }
 
     $updateData = [];
-    $allowedFields = ['name', 'description', 'prompt', 'price', 'image_url'];
+    $allowedFields = ['name', 'description', 'prompt', 'price', 'image_url', 'category', 'config_data', 'hover_image_url'];
 
     // Convertir camelCase en snake_case si nécessaire
     if (isset($input['imageUrl'])) {
@@ -246,6 +240,12 @@ if ($method === 'PUT') {
     }
     if (isset($input['imagePath'])) {
         $input['image_url'] = $input['imagePath'];
+    }
+    if (isset($input['hoverImageUrl'])) {
+        $input['hover_image_url'] = $input['hoverImageUrl'];
+    }
+    if (isset($input['hoverImagePath'])) {
+        $input['hover_image_url'] = $input['hoverImagePath'];
     }
     if (isset($input['basePrice'])) {
         $input['price'] = $input['basePrice'];
@@ -257,26 +257,43 @@ if ($method === 'PUT') {
         }
     }
 
+    // Gérer spécifiquement config_data qui peut être un objet
+    if (isset($input['config_data']) && !is_string($input['config_data'])) {
+        $updateData['config_data'] = json_encode($input['config_data']);
+    }
+
     if (empty($updateData)) {
         http_response_code(400);
         echo json_encode(['error' => 'Aucune donnée à mettre à jour']);
         exit;
     }
 
-    if ($model->update($input['id'], $updateData)) {
-        $updatedModel = $model->getById($input['id']);
-        // Convertir le chemin de l'image en URL complète
-        if (isset($updatedModel['image_url'])) {
-            $updatedModel['image_url'] = convertImagePath($updatedModel['image_url']);
+    try {
+        if ($model->update($id, $updateData)) {
+            $updatedModel = $model->getById($id);
+            // Convertir les chemins des images en URLs complètes
+            if (isset($updatedModel['image_url'])) {
+                $updatedModel['image_url'] = convertImagePath($updatedModel['image_url']);
+            }
+            if (isset($updatedModel['hover_image_url'])) {
+                $updatedModel['hover_image_url'] = convertImagePath($updatedModel['hover_image_url']);
+            }
+            http_response_code(200);
+            echo json_encode([
+                'success' => true,
+                'model' => $updatedModel
+            ]);
+        } else {
+            http_response_code(500);
+            echo json_encode(['error' => 'Erreur lors de la mise à jour du modèle']);
         }
-        http_response_code(200);
-        echo json_encode([
-            'success' => true,
-            'model' => $updatedModel
-        ]);
-    } else {
+    } catch (Exception $e) {
         http_response_code(500);
-        echo json_encode(['error' => 'Erreur lors de la mise à jour du modèle']);
+        echo json_encode([
+            'error' => 'Exception lors de la mise à jour du modèle',
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
     }
     exit;
 }
@@ -291,15 +308,24 @@ if ($method === 'DELETE') {
         exit;
     }
 
-    $input = json_decode(file_get_contents('php://input'), true);
+    // Accepter l'ID soit dans la query string, soit dans le body
+    $id = null;
+    if (isset($_GET['id'])) {
+        $id = $_GET['id'];
+    } else {
+        $input = json_decode(file_get_contents('php://input'), true);
+        if (isset($input['id'])) {
+            $id = $input['id'];
+        }
+    }
 
-    if (!isset($input['id'])) {
+    if (!$id) {
         http_response_code(400);
         echo json_encode(['error' => 'ID du modèle requis']);
         exit;
     }
 
-    if ($model->delete($input['id'])) {
+    if ($model->delete($id)) {
         http_response_code(200);
         echo json_encode(['success' => true]);
     } else {

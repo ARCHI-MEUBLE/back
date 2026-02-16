@@ -24,7 +24,13 @@ DELETE FROM admins WHERE email <> 'admin@archimeuble.com';
 -- Supprimer les notifications
 DELETE FROM admin_notifications;
 
--- Réinitialiser les séquences auto-increment
--- DELETE FROM sqlite_sequence WHERE name IN ('orders', 'order_items', 'configurations', 'customers', 'cart_items', 'notifications', 'admin_notifications');
+-- Réinitialiser les séquences auto-increment (PostgreSQL)
+-- SELECT setval(pg_get_serial_sequence('orders', 'id'), 1, false);
+-- SELECT setval(pg_get_serial_sequence('order_items', 'id'), 1, false);
+-- SELECT setval(pg_get_serial_sequence('configurations', 'id'), 1, false);
+-- SELECT setval(pg_get_serial_sequence('customers', 'id'), 1, false);
+-- SELECT setval(pg_get_serial_sequence('cart_items', 'id'), 1, false);
+-- SELECT setval(pg_get_serial_sequence('notifications', 'id'), 1, false);
+-- SELECT setval(pg_get_serial_sequence('admin_notifications', 'id'), 1, false);
 
 VACUUM;

@@ -5,19 +5,12 @@
  * Date : 2025-10-20
  */
 
-// Chemin vers la base de données
-$dbPath = __DIR__ . '/../database.db';
+require_once __DIR__ . '/../core/Database.php';
 
 try {
-    // Supprimer l'ancienne base si elle existe (pour réinitialisation)
-    if (file_exists($dbPath)) {
-        unlink($dbPath);
-        echo "Ancienne base de données supprimée.\n";
-    }
-
-    // Créer la connexion PDO SQLite
-    $pdo = new PDO('sqlite:' . $dbPath);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // Connexion via la classe Database (PostgreSQL)
+    $dbInstance = Database::getInstance();
+    $pdo = $dbInstance->getPDO();
     echo "Connexion à la base de données établie.\n";
 
     // Créer la table users
@@ -27,7 +20,7 @@ try {
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             name TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ";
     $pdo->exec($createUsersTable);
@@ -38,7 +31,7 @@ try {
         CREATE TABLE IF NOT EXISTS admins (
             email TEXT PRIMARY KEY,
             password_hash TEXT NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ";
     $pdo->exec($createAdminsTable);
@@ -47,13 +40,13 @@ try {
     // Créer la table templates
     $createTemplatesTable = "
         CREATE TABLE IF NOT EXISTS templates (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             name TEXT NOT NULL,
             description TEXT,
             prompt TEXT NOT NULL,
             base_price REAL NOT NULL,
             image_url TEXT NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ";
     $pdo->exec($createTemplatesTable);
@@ -62,13 +55,13 @@ try {
     // Créer la table configurations
     $createConfigurationsTable = "
         CREATE TABLE IF NOT EXISTS configurations (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             user_id TEXT,
             template_id INTEGER,
             config_string TEXT NOT NULL,
             price REAL NOT NULL,
             glb_url TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id),
             FOREIGN KEY (template_id) REFERENCES templates(id)
         )
@@ -105,7 +98,6 @@ try {
     }
 
     echo "\n✅ Initialisation de la base de données terminée avec succès!\n";
-    echo "Base de données créée à : $dbPath\n";
 
 } catch (PDOException $e) {
     echo "❌ Erreur lors de l'initialisation de la base de données : " . $e->getMessage() . "\n";

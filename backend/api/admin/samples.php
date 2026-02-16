@@ -21,16 +21,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// L'authentification est gérée par Next.js API route
-// Pas besoin de vérifier $_SESSION ici
+// Vérifier l'authentification admin
+$session = Session::getInstance();
+if (!$session->has('admin_email') || $session->get('is_admin') !== true) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Non authentifié']);
+    exit;
+}
 
 require_once __DIR__ . '/../../models/Sample.php';
+
+/**
+ * Convertit un chemin relatif d'image en URL complète
+ */
+function convertImagePath($imagePath) {
+    if (!$imagePath) {
+        return null;
+    }
+
+    // Si c'est déjà une URL complète, la retourner telle quelle
+    if (strpos($imagePath, 'http://') === 0 || strpos($imagePath, 'https://') === 0) {
+        return $imagePath;
+    }
+
+    // S'assurer que le chemin commence par /
+    if (strpos($imagePath, '/') !== 0) {
+        $imagePath = '/' . $imagePath;
+    }
+
+    // Détecter l'environnement
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $isLocal = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
+
+    if ($isLocal) {
+        // En local, on retourne un chemin relatif pour que Next.js le gère via son proxy
+        return $imagePath;
+    }
+
+    // EN PRODUCTION: Les images sont sur Railway backend
+    $protocol = 'https';
+    $baseUrl = $protocol . '://' . $host;
+
+    return $baseUrl . $imagePath;
+}
 
 try {
     $sample = new Sample();
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $all = $sample->getAllGroupedForAdmin();
+
+        // Convertir les chemins d'images en URLs complètes
+        foreach ($all as &$type) {
+            if (isset($type['colors']) && is_array($type['colors'])) {
+                foreach ($type['colors'] as &$color) {
+                    if (isset($color['image_url'])) {
+                        $color['image_url'] = convertImagePath($color['image_url']);
+                    }
+                }
+            }
+        }
+
         http_response_code(200);
         echo json_encode(['success' => true, 'data' => $all], JSON_UNESCAPED_UNICODE);
         exit;
@@ -47,7 +98,12 @@ try {
                     echo json_encode(['error' => 'name et material requis']);
                     exit;
                 }
-                $id = $sample->createType($input['name'], $input['material'], $input['description'] ?? null, $input['position'] ?? 0);
+                $id = $sample->createType(
+                    $input['name'], 
+                    $input['material'], 
+                    $input['description'] ?? null, 
+                    $input['position'] ?? 0
+                );
                 if (!$id) throw new Exception('Échec création type');
                 http_response_code(201);
                 echo json_encode(['success' => true, 'id' => $id]);
@@ -73,7 +129,15 @@ try {
                     echo json_encode(['error' => 'type_id et name requis']);
                     exit;
                 }
-                $cid = $sample->createColor((int)$input['type_id'], $input['name'], $input['hex'] ?? null, $input['image_url'] ?? null, $input['position'] ?? 0);
+                $cid = $sample->createColor(
+                    (int)$input['type_id'], 
+                    $input['name'], 
+                    $input['hex'] ?? null, 
+                    $input['image_url'] ?? null, 
+                    $input['position'] ?? 0,
+                    $input['price_per_m2'] ?? 0,
+                    $input['unit_price'] ?? 0
+                );
                 if (!$cid) throw new Exception('Échec création couleur');
                 http_response_code(201);
                 echo json_encode(['success' => true, 'id' => $cid]);

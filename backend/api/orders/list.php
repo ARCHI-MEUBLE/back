@@ -35,7 +35,7 @@ try {
         // Récupérer une commande spécifique
         $orderData = $order->getById($_GET['id']);
 
-        if (!$orderData || $orderData['customer_id'] != $customerId) {
+        if (!$orderData || (int)$orderData['customer_id'] !== (int)$customerId) {
             http_response_code(404);
             echo json_encode(['error' => 'Commande non trouvée']);
             exit;
@@ -48,6 +48,14 @@ try {
         // Récupérer les échantillons de la commande
         $samples = $order->getOrderSamples($_GET['id']);
         $orderData['samples'] = $samples;
+
+        // Récupérer les articles du catalogue
+        $catalogueItems = $order->getOrderCatalogueItems($_GET['id']);
+        $orderData['catalogue_items'] = $catalogueItems;
+
+        // Récupérer les façades de la commande
+        $facadeItems = $order->getOrderFacadeItems($_GET['id']);
+        $orderData['facade_items'] = $facadeItems;
 
         // Formater pour le frontend
         $orderData = $order->formatForFrontend($orderData);

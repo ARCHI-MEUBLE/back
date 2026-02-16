@@ -4,17 +4,12 @@
  * Usage: railway run php backend/database/migrations/apply_to_railway.php
  */
 
-$dbPath = getenv('DB_PATH') ?: '/data/archimeuble.db';
 $migrationPath = __DIR__ . '/create_sample_orders.sql';
 
-echo "🚀 Application de la migration échantillons sur Railway...\n";
-echo "📂 Base de données: $dbPath\n";
-echo "📄 Fichier migration: $migrationPath\n\n";
+require_once __DIR__ . '/../../core/Database.php';
 
-// Vérifier que la base existe
-if (!file_exists($dbPath)) {
-    die("❌ Erreur: Base de données non trouvée à $dbPath\n");
-}
+echo "🚀 Application de la migration échantillons sur Railway...\n";
+echo "📄 Fichier migration: $migrationPath\n\n";
 
 // Vérifier que le fichier migration existe
 if (!file_exists($migrationPath)) {
@@ -29,8 +24,8 @@ if ($sql === false) {
 
 try {
     // Connexion à la base
-    $db = new PDO("sqlite:$dbPath");
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $dbInstance = Database::getInstance();
+    $db = $dbInstance->getPDO();
 
     echo "🔄 Connexion à la base établie\n";
 
@@ -41,7 +36,7 @@ try {
 
     // Vérifier les tables créées
     echo "📊 Vérification des tables créées:\n";
-    $stmt = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE '%sample%' ORDER BY name");
+    $stmt = $db->query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name LIKE '%sample%' ORDER BY table_name");
     $tables = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
     foreach ($tables as $table) {

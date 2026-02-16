@@ -138,25 +138,25 @@ class Router {
             return;
         }
 
-        // Sinon, fallback sur le fichier racine (ex: admin -> backend/api/admin.php)
+        // Sinon, essayer les chemins intermédiaires (ex: system/db-maintenance/create -> system/db-maintenance.php avec PATH_INFO=/create)
         $parts = explode('/', $endpoint);
-        $mainEndpoint = $parts[0];
+        for ($i = count($parts) - 1; $i >= 1; $i--) {
+            $tryEndpoint = implode(DIRECTORY_SEPARATOR, array_slice($parts, 0, $i));
+            $tryFile = $this->baseDir . DIRECTORY_SEPARATOR . 'backend' . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . $tryEndpoint . '.php';
+            $tryFile = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $tryFile);
 
-        $apiFile = $this->baseDir . DIRECTORY_SEPARATOR . 'backend' . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . $mainEndpoint . '.php';
-        $apiFile = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $apiFile);
-
-        if (file_exists($apiFile)) {
-            require $apiFile;
-            return;
+            if (file_exists($tryFile)) {
+                $_SERVER['PATH_INFO'] = '/' . implode('/', array_slice($parts, $i));
+                require $tryFile;
+                return;
+            }
         }
 
         // Debug si rien trouvé
         $this->sendJSON([
             'success' => false,
             'error' => 'Endpoint non trouvé',
-            'requested' => $endpoint,
-            'tried_exact' => $exactFile,
-            'tried_root' => $apiFile
+            'requested' => $endpoint
         ], 404);
     }
 
@@ -169,8 +169,8 @@ class Router {
         $endpoint = str_replace('backend/api/', '', $path);
         $endpoint = explode('?', $endpoint)[0]; // Enlever les query params
 
-        // Enlever l'extension .php si présente
-        $endpoint = preg_replace('/\.php$/', '', $endpoint);
+        // Enlever l'extension .php si présente (même si suivie d'un /)
+        $endpoint = preg_replace('/\.php(\/|$)/', '$1', $endpoint);
 
         // Essayer d'abord le chemin exact (pour les fichiers dans des sous-dossiers)
         $exactFile = $this->baseDir . '/backend/api/' . $endpoint . '.php';
@@ -180,23 +180,24 @@ class Router {
             return;
         }
 
-        // Sinon, gérer les sous-routes avec fichier principal (ex: admin-auth/login -> admin-auth.php)
-        // Extraire la première partie (ex: admin-auth, admin, customers)
+        // Sinon, essayer les chemins intermédiaires (ex: system/db-maintenance/create -> system/db-maintenance.php avec PATH_INFO=/create)
         $parts = explode('/', $endpoint);
-        $mainEndpoint = $parts[0];
+        for ($i = count($parts) - 1; $i >= 1; $i--) {
+            $tryEndpoint = implode('/', array_slice($parts, 0, $i));
+            $tryFile = $this->baseDir . '/backend/api/' . $tryEndpoint . '.php';
 
-        // Construire le chemin du fichier API principal
-        $apiFile = $this->baseDir . '/backend/api/' . $mainEndpoint . '.php';
-
-        if (file_exists($apiFile)) {
-            require $apiFile;
-        } else {
-            $this->sendJSON([
-                'success' => false,
-                'error' => 'Endpoint non trouvé',
-                'requested' => $endpoint
-            ], 404);
+            if (file_exists($tryFile)) {
+                $_SERVER['PATH_INFO'] = '/' . implode('/', array_slice($parts, $i));
+                require $tryFile;
+                return;
+            }
         }
+
+        $this->sendJSON([
+            'success' => false,
+            'error' => 'Endpoint non trouvé',
+            'requested' => $endpoint
+        ], 404);
     }
 
     /**
@@ -205,7 +206,7 @@ class Router {
      * @return bool
      */
     private function isStaticFile($path) {
-        $extensions = ['css', 'js', 'jpg', 'jpeg', 'png', 'gif', 'svg', 'glb', 'gltf', 'ico', 'woff', 'woff2', 'ttf', 'eot'];
+        $extensions = ['css', 'js', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'glb', 'gltf', 'ico', 'woff', 'woff2', 'ttf', 'eot', 'dxf'];
         $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
         return in_array($ext, $extensions);
     }
@@ -215,11 +216,69 @@ class Router {
      * @param string $path
      */
     private function serveStaticFile($path) {
-        // Les fichiers uploads sont dans le volume persistant /data
-        if (strpos($path, 'uploads/') === 0) {
-            $filePath = '/data/' . $path;
+        // Normaliser le path (retirer le préfixe backend/ si présent)
+        $cleanPath = $path;
+        if (strpos($path, 'backend/uploads/') === 0) {
+            $cleanPath = substr($path, 8); // Retire "backend/"
+        }
+
+        // Chemins possibles à essayer (production puis local)
+        $possiblePaths = [];
+
+        if (strpos($cleanPath, 'uploads/') === 0) {
+            // Production: /data/uploads/...
+            $possiblePaths[] = '/data/' . $cleanPath;
+            // Local dev: baseDir/backend/uploads/...
+            $possiblePaths[] = $this->baseDir . '/backend/' . $cleanPath;
+        } elseif (strpos($cleanPath, 'models/') === 0) {
+            // Production: /data/models/...
+            $possiblePaths[] = '/data/' . $cleanPath;
+            // Local: baseDir/models/...
+            $possiblePaths[] = $this->baseDir . '/' . $cleanPath;
+        } elseif (strpos($cleanPath, 'back/textures/') === 0) {
+            // Textures: back/textures/... -> textures/...
+            $texturePath = substr($cleanPath, strlen('back/'));
+            $possiblePaths[] = $this->baseDir . '/' . $texturePath;
+        } elseif (strpos($path, 'back/textures/') === 0) {
+            // Cas où le path original a back/textures/
+            $texturePath = substr($path, strlen('back/'));
+            $possiblePaths[] = $this->baseDir . '/' . $texturePath;
         } else {
-            $filePath = $this->baseDir . '/' . $path;
+            $possiblePaths[] = $this->baseDir . '/' . $path;
+        }
+
+        // Trouver le premier chemin qui existe
+        $filePath = null;
+        foreach ($possiblePaths as $tryPath) {
+            if (file_exists($tryPath) && is_file($tryPath)) {
+                $filePath = $tryPath;
+                break;
+            }
+        }
+
+        // Si aucun fichier trouvé, utiliser le premier chemin pour le message d'erreur
+        if ($filePath === null) {
+            $filePath = $possiblePaths[0];
+        }
+
+        error_log("STATIC FILE: Requested path: $path");
+        error_log("STATIC FILE: Resolved to: $filePath");
+        error_log("STATIC FILE: File exists: " . (file_exists($filePath) ? 'YES' : 'NO'));
+
+        if (file_exists($filePath)) {
+            error_log("STATIC FILE: Is file: " . (is_file($filePath) ? 'YES' : 'NO'));
+            if (is_file($filePath)) {
+                error_log("STATIC FILE: File size: " . filesize($filePath) . " bytes");
+            }
+        } else {
+            // Si le fichier n'existe pas, lister le contenu du dossier parent pour debug
+            $parentDir = dirname($filePath);
+            if (is_dir($parentDir)) {
+                $files = scandir($parentDir);
+                error_log("STATIC FILE: Parent dir contents: " . implode(", ", $files));
+            } else {
+                error_log("STATIC FILE: Parent dir does not exist: $parentDir");
+            }
         }
 
         if (file_exists($filePath) && is_file($filePath)) {
@@ -228,7 +287,7 @@ class Router {
             // Headers CORS dynamiques pour tous les fichiers statiques
             $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
             $allowedOrigins = [
-                'http://localhost:3000',
+                'http://127.0.0.1:3000',
                 'http://localhost:3001',
                 'http://127.0.0.1:3000',
                 'http://127.0.0.1:3001',
@@ -291,6 +350,7 @@ class Router {
             'jpg' => 'image/jpeg',
             'jpeg' => 'image/jpeg',
             'png' => 'image/png',
+            'webp' => 'image/webp',
             'gif' => 'image/gif',
             'svg' => 'image/svg+xml',
             'glb' => 'model/gltf-binary',
@@ -299,7 +359,8 @@ class Router {
             'woff' => 'font/woff',
             'woff2' => 'font/woff2',
             'ttf' => 'font/ttf',
-            'eot' => 'application/vnd.ms-fontobject'
+            'eot' => 'application/vnd.ms-fontobject',
+            'dxf' => 'application/dxf'
         ];
 
         return isset($mimeTypes[$ext]) ? $mimeTypes[$ext] : 'application/octet-stream';
@@ -317,7 +378,7 @@ class Router {
         // Gérer CORS correctement avec credentials
         $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
         $allowedOrigins = [
-            'http://localhost:3000',
+            'http://127.0.0.1:3000',
             'http://localhost:3001',
             'http://127.0.0.1:3000',
             'http://127.0.0.1:3001',
@@ -336,7 +397,7 @@ class Router {
         if ($isAllowed) {
             header('Access-Control-Allow-Origin: ' . $origin);
         } else {
-            header('Access-Control-Allow-Origin: http://localhost:3000');
+            header('Access-Control-Allow-Origin: http://127.0.0.1:3000');
         }
 
         header('Access-Control-Allow-Credentials: true');

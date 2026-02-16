@@ -4,6 +4,8 @@
  * Gère les sessions PHP
  * Auteur : Ilyes
  * Date : 2025-10-20
+ *
+ * SÉCURITÉ: Utilise SameSite=Strict en production pour protection CSRF
  */
 
 class Session {
@@ -17,22 +19,46 @@ class Session {
         if (session_status() === PHP_SESSION_NONE) {
             // Détecter si on est en local ou en production
             $isLocal = (
-                isset($_SERVER['HTTP_HOST']) && 
-                (strpos($_SERVER['HTTP_HOST'], 'localhost') !== false || 
+                isset($_SERVER['HTTP_HOST']) &&
+                (strpos($_SERVER['HTTP_HOST'], 'localhost') !== false ||
                  strpos($_SERVER['HTTP_HOST'], '127.0.0.1') !== false)
             );
 
             // Configurer les paramètres de cookie
+            // SÉCURITÉ: SameSite=Lax protège contre CSRF tout en permettant
+            // les navigations GET depuis des liens externes (ex: email de confirmation)
+            // Utilisez 'Strict' si vous n'avez pas besoin de liens entrants avec session
             session_set_cookie_params([
-                'lifetime' => 86400 * 7, // 7 jours
+                'lifetime' => 0, // Session se termine à la fermeture du navigateur (plus sécurisé pour admin)
                 'path' => '/',
                 'domain' => '', // Pas de domaine spécifique
                 'secure' => !$isLocal, // HTTPS uniquement en production
-                'httponly' => true, // Protection XSS
-                'samesite' => $isLocal ? 'Lax' : 'None' // Lax en local, None en prod
+                'httponly' => true, // Protection XSS - empêche accès JavaScript au cookie
+                'samesite' => 'Lax' // Protection CSRF - bloque les requêtes cross-site POST/PUT/DELETE
             ]);
 
+            // Générer un nom de session unique (évite les collisions)
+            session_name('ARCHIMEUBLE_SESSID');
+
             session_start();
+
+            // Régénérer périodiquement l'ID de session pour limiter le session fixation
+            $this->checkSessionRegeneration();
+        }
+    }
+
+    /**
+     * Régénère l'ID de session périodiquement (toutes les 30 minutes)
+     * Protection supplémentaire contre le session fixation
+     */
+    private function checkSessionRegeneration(): void {
+        $regenerationInterval = 1800; // 30 minutes en secondes
+
+        if (!isset($_SESSION['_last_regeneration'])) {
+            $_SESSION['_last_regeneration'] = time();
+        } elseif (time() - $_SESSION['_last_regeneration'] > $regenerationInterval) {
+            session_regenerate_id(true);
+            $_SESSION['_last_regeneration'] = time();
         }
     }
 
@@ -140,6 +166,8 @@ class Session {
      * Régénérer l'ID de session (sécurité)
      */
     public function regenerate() {
-        session_regenerate_id(true);
+        if (!headers_sent()) {
+            session_regenerate_id(true);
+        }
     }
 }

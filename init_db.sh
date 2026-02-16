@@ -48,6 +48,8 @@ CREATE TABLE IF NOT EXISTS models (
     description TEXT,
     price REAL DEFAULT 0.0,
     image_url TEXT,
+    category TEXT,
+    config_data TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -249,18 +251,24 @@ CREATE TABLE IF NOT EXISTS admin_notifications (
 -- Table des rendez-vous Calendly
 CREATE TABLE IF NOT EXISTS calendly_appointments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    event_id TEXT UNIQUE NOT NULL,
-    customer_email TEXT NOT NULL,
-    customer_name TEXT,
+    calendly_event_id TEXT UNIQUE NOT NULL,
+    client_name TEXT NOT NULL,
+    client_email TEXT NOT NULL,
     event_type TEXT,
     start_time DATETIME NOT NULL,
     end_time DATETIME NOT NULL,
+    timezone TEXT DEFAULT 'Europe/Paris',
+    config_url TEXT,
+    additional_notes TEXT,
+    meeting_url TEXT,
+    phone_number TEXT,
     status TEXT DEFAULT 'scheduled',
+    confirmation_sent INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_calendly_appointments_email ON calendly_appointments(customer_email);
+CREATE INDEX IF NOT EXISTS idx_calendly_appointments_email ON calendly_appointments(client_email);
 CREATE INDEX IF NOT EXISTS idx_calendly_appointments_start_time ON calendly_appointments(start_time);
 
 -- Table des échantillons de matériaux
@@ -272,6 +280,8 @@ CREATE TABLE IF NOT EXISTS sample_types (
     description TEXT,
     active INTEGER DEFAULT 1,
     position INTEGER DEFAULT 0,
+    price_per_m2 REAL DEFAULT 0,
+    unit_price REAL DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -284,6 +294,8 @@ CREATE TABLE IF NOT EXISTS sample_colors (
     image_url TEXT,
     active INTEGER DEFAULT 1,
     position INTEGER DEFAULT 0,
+    price_per_m2 REAL DEFAULT 0,
+    unit_price REAL DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (type_id) REFERENCES sample_types(id) ON DELETE CASCADE
@@ -373,4 +385,27 @@ echo "Identifiants admin par défaut:"
 echo "  Username: admin"
 echo "  Password: admin123"
 echo "  Email: admin@archimeuble.com"
- 
+
+# Migration: Ajouter les colonnes manquantes à la table models
+echo "Migration de la table models..."
+
+# Vérifier et ajouter category si elle n'existe pas
+if ! sqlite3 "$DB_PATH" "PRAGMA table_info(models)" | grep -q "category"; then
+    echo "  Ajout de la colonne category..."
+    sqlite3 "$DB_PATH" "ALTER TABLE models ADD COLUMN category TEXT"
+    echo "  ✓ Colonne category ajoutée"
+else
+    echo "  ✓ Colonne category existe déjà"
+fi
+
+# Vérifier et ajouter config_data si elle n'existe pas
+if ! sqlite3 "$DB_PATH" "PRAGMA table_info(models)" | grep -q "config_data"; then
+    echo "  Ajout de la colonne config_data..."
+    sqlite3 "$DB_PATH" "ALTER TABLE models ADD COLUMN config_data TEXT"
+    echo "  ✓ Colonne config_data ajoutée"
+else
+    echo "  ✓ Colonne config_data existe déjà"
+fi
+
+echo "✓ Migration de la table models terminée"
+

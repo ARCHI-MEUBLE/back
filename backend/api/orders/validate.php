@@ -47,8 +47,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        // Vérifier que c'est bien une commande d'échantillons (total = 0)
-        if ($order['total'] > 0) {
+        // Vérifier que c'est bien une commande gratuite (total = 0)
+        $orderTotal = $order['total_amount'] ?? $order['total'] ?? 0;
+        if ($orderTotal > 0) {
             http_response_code(400);
             echo json_encode(['error' => 'Cette commande nécessite un paiement']);
             exit;

@@ -1,4 +1,25 @@
 services:
+  # Service PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: archimeuble-postgres
+    environment:
+      POSTGRES_DB: archimeuble
+      POSTGRES_USER: archimeuble
+      POSTGRES_PASSWORD: archimeuble_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - archimeuble-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U archimeuble -d archimeuble"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   # Service principal : Backend PHP + Python
   backend:
     build:
@@ -7,16 +28,17 @@ services:
     container_name: archimeuble-backend
     ports:
       - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
     volumes:
       # Monter le code source du backend (hot reload en développement)
       - .:/app
       # Monter le dossier models du frontend
       - ../front/public/models:/app/models
-      # Persister la base de données ← NOUVEAU
-      - ./database:/app/database
     environment:
       - TZ=Europe/Paris
-      - DB_PATH=/app/database/archimeuble.db
+      - DATABASE_URL=postgresql://archimeuble:archimeuble_dev@postgres:5432/archimeuble
       - PYTHON_PATH=/opt/venv/bin/python3
       - FRONTEND_URL=http://localhost:3000
       - OUTPUT_DIR=/app/models
@@ -41,26 +63,33 @@ services:
       - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER}
       # Cron Secret Token
       - CRON_SECRET=${CRON_SECRET}
+      # Stripe Payment Configuration
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      # Resend Email API
+      - RESEND_API_KEY=${RESEND_API_KEY}
     working_dir: /app
-    # Force running the init script with bash to avoid CRLF/shebang issues on Windows
-    # Convertir les fins de ligne CRLF en LF (important sur Windows), installer les dépendances, initialiser la BDD, puis lancer le serveur
-    command: /bin/bash -lc "sed -i 's/\r$//' /app/install_dependencies.sh && chmod +x /app/install_dependencies.sh && bash /app/install_dependencies.sh && bash /usr/local/bin/init_db.sh && php -S 0.0.0.0:8000 router.php"
+    command: /bin/bash -c "export PATH=/opt/venv/bin:$$PATH && bash /app/install_dependencies.sh && bash /app/start.sh"
     networks:
       - archimeuble-network
     restart: unless-stopped
 
-  # Service d'initialisation de la base de données (optionnel, à lancer une fois)
-  db-init:
-    image: nouchka/sqlite3:latest
-    container_name: archimeuble-db-init
-    volumes:
-      - ./database:/db  # ← CORRIGÉ (était ../database)
-    command: sh -c "cd /db && if [ ! -f archimeuble.db ]; then sqlite3 archimeuble.db < init_db.sql && echo '✓ Database initialized'; else echo '✓ Database already exists'; fi"
+  # Interface web pour voir la base de données (localhost:8080)
+  adminer:
+    image: adminer:latest
+    container_name: archimeuble-adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
     networks:
       - archimeuble-network
-    profiles:
-      - init  # Ce service ne démarre qu'avec: docker compose --profile init up
+    restart: unless-stopped
 
 networks:
   archimeuble-network:
     driver: bridge
+
+volumes:
+  pgdata:

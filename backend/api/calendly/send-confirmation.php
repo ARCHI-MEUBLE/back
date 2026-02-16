@@ -199,6 +199,8 @@ $isPhoneAppointment = (stripos($eventType, 'téléphone') !== false || stripos($
 
 $calendlyEventId = $inviteeUri;
 
+require_once __DIR__ . '/../../core/Database.php';
+
 // Formatage de la date et heure
 try {
     $startDateTime = new DateTime($startTime);
@@ -214,11 +216,8 @@ try {
     exit();
 }
 
-// Détection de l'environnement (Docker vs local)
-$isDocker = file_exists('/app');
-$dbPath = $isDocker ? '/app/database/archimeuble.db' : __DIR__ . '/../../database/archimeuble.db';
-
 // Configuration du fichier de log
+$isDocker = file_exists('/app');
 $logFile = $isDocker ? '/app/logs/calendly.log' : __DIR__ . '/../../logs/calendly.log';
 $logDir = dirname($logFile);
 
@@ -231,30 +230,26 @@ $timestamp = date('Y-m-d H:i:s');
 
 // Enregistrement du rendez-vous dans la base de données
 try {
-    $db = new PDO('sqlite:' . $dbPath);
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    // Auto-migration: Ajouter les colonnes meeting_url et phone_number si elles n'existent pas
-    $tableInfo = $db->query("PRAGMA table_info(calendly_appointments)")->fetchAll(PDO::FETCH_ASSOC);
-    $columns = array_column($tableInfo, 'name');
-
-    if (!in_array('meeting_url', $columns)) {
-        $db->exec("ALTER TABLE calendly_appointments ADD COLUMN meeting_url TEXT");
-        $logEntry = sprintf("[%s] Auto-migration: Added meeting_url column\n", $timestamp);
-        file_put_contents($logFile, $logEntry, FILE_APPEND);
-    }
-
-    if (!in_array('phone_number', $columns)) {
-        $db->exec("ALTER TABLE calendly_appointments ADD COLUMN phone_number TEXT");
-        $logEntry = sprintf("[%s] Auto-migration: Added phone_number column\n", $timestamp);
-        file_put_contents($logFile, $logEntry, FILE_APPEND);
-    }
+    $db = Database::getInstance()->getPDO();
 
     // Insertion du rendez-vous
     $stmt = $db->prepare("
-        INSERT OR REPLACE INTO calendly_appointments
+        INSERT INTO calendly_appointments
         (calendly_event_id, client_name, client_email, event_type, start_time, end_time, timezone, config_url, additional_notes, meeting_url, phone_number, status, confirmation_sent)
-        VALUES (:event_id, :name, :email, :event_type, :start_time, :end_time, :timezone, :config_url, :notes, :meeting_url, :phone_number, 'scheduled', 1)
+        VALUES (:event_id, :name, :email, :event_type, :start_time, :end_time, :timezone, :config_url, :notes, :meeting_url, :phone_number, 'scheduled', TRUE)
+        ON CONFLICT (calendly_event_id) DO UPDATE SET
+            client_name = EXCLUDED.client_name,
+            client_email = EXCLUDED.client_email,
+            event_type = EXCLUDED.event_type,
+            start_time = EXCLUDED.start_time,
+            end_time = EXCLUDED.end_time,
+            timezone = EXCLUDED.timezone,
+            config_url = EXCLUDED.config_url,
+            additional_notes = EXCLUDED.additional_notes,
+            meeting_url = EXCLUDED.meeting_url,
+            phone_number = EXCLUDED.phone_number,
+            status = EXCLUDED.status,
+            confirmation_sent = EXCLUDED.confirmation_sent
     ");
 
     $stmt->execute([

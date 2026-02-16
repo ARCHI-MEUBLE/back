@@ -4,12 +4,26 @@
  * Gère les opérations sur la table admins
  * Auteur : Collins
  * Date : 2025-10-21
+ *
+ * SÉCURITÉ: Liste blanche des colonnes pour prévenir l'injection SQL
  */
 
 require_once __DIR__ . '/../core/Database.php';
 
 class Admin {
     private $db;
+
+    /**
+     * SÉCURITÉ: Liste blanche des colonnes autorisées pour update()
+     * Seules ces colonnes peuvent être modifiées via la méthode update()
+     */
+    private const ALLOWED_UPDATE_COLUMNS = [
+        'username',
+        'email',
+        'updated_at',
+        // NE PAS INCLURE: 'password', 'password_hash', 'id', 'created_at'
+        // Le mot de passe doit être modifié via updatePassword()
+    ];
 
     public function __construct() {
         $this->db = Database::getInstance();
@@ -21,13 +35,10 @@ class Admin {
     private function columnExists($table, $column) {
         try {
             $pdo = $this->db->getPDO();
-            $stmt = $pdo->query("PRAGMA table_info($table)");
-            $cols = $stmt->fetchAll();
-            foreach ($cols as $col) {
-                if (isset($col['name']) && $col['name'] === $column) return true;
-                // Certaines versions retournent indexés
-                if (isset($col[1]) && $col[1] === $column) return true;
-            }
+            $stmt = $pdo->prepare("SELECT column_name FROM information_schema.columns WHERE table_name = :table AND table_schema = 'public'");
+            $stmt->execute(['table' => $table]);
+            $columns = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
+            return in_array($column, $columns);
         } catch (\Throwable $e) {
             // ignore
         }
@@ -78,6 +89,8 @@ class Admin {
 
     /**
      * Met à jour un admin
+     * SÉCURITÉ: Seules les colonnes de la liste blanche peuvent être modifiées
+     *
      * @param int $id
      * @param array $data
      * @return bool
@@ -87,8 +100,21 @@ class Admin {
         $params = ['id' => $id];
 
         foreach ($data as $key => $value) {
+            // SÉCURITÉ: Vérifier que la colonne est dans la liste blanche
+            if (!in_array($key, self::ALLOWED_UPDATE_COLUMNS, true)) {
+                // Log la tentative suspecte
+                error_log("[SECURITY] Tentative de modification de colonne non autorisée: '$key' pour admin ID: $id");
+                // Ignorer silencieusement la colonne non autorisée
+                continue;
+            }
+
             $fields[] = "$key = :$key";
             $params[$key] = $value;
+        }
+
+        // Si aucun champ valide, ne rien faire
+        if (empty($fields)) {
+            return false;
         }
 
         $query = "UPDATE admins SET " . implode(', ', $fields) . " WHERE id = :id";
