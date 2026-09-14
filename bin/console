@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Config\Env;
 use App\Config\Settings;
+use App\Console\CronInstallmentsCommand;
 use App\Console\MigrateCommand;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
@@ -14,8 +15,9 @@ $settings = Settings::fromEnv(Env::load($root . '/.env'), $root);
 
 $exitCode = match ($command) {
     'migrate', 'migrate:status' => (new MigrateCommand($settings))->run($command),
+    'cron:installments' => (new CronInstallmentsCommand($settings))->run(),
     default => (static function () use ($command): int {
-        fwrite(STDERR, sprintf("Unknown command %s. Available: migrate, migrate:status\n", $command));
+        fwrite(STDERR, sprintf("Unknown command %s. Available: migrate, migrate:status, cron:installments\n", $command));
         return 1;
     })(),
 };

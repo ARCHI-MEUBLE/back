@@ -14,6 +14,7 @@ use App\Domain\Order\OrderRepository;
 use App\Domain\Payment\AdminGeneratePaymentLinkRoutes;
 use App\Domain\Payment\AdminPaymentLinksRoutes;
 use App\Domain\Payment\ExportPaymentsRoutes;
+use App\Domain\Payment\InstallmentRepository;
 use App\Domain\Payment\OrderInvoiceRoutes;
 use App\Domain\Payment\OrderPaymentConfirmedRoutes;
 use App\Domain\Payment\OrderPaymentIntentRoutes;
@@ -34,7 +35,6 @@ use App\Domain\Payment\StripeCreatePaymentIntentRoutes;
 use App\Domain\Payment\StripeWebhookRoutes;
 use App\Domain\Payment\SyncPaymentStatusRoutes;
 use App\Http\RouteCollection;
-use App\Infrastructure\Installment\LegacyInstallmentGateway;
 use App\Infrastructure\Invoice\LegacyInvoiceGateway;
 use App\Infrastructure\Mail\LegacyEmailGateway;
 use App\Infrastructure\Stripe\StripeGateway;
@@ -75,7 +75,7 @@ final class PaymentRouteRegistry
             $links,
         );
         (new PaymentLinkVerifyRoutes($db, $stripe, $confirmation))->register($routes);
-        $succeeded = new PaymentSucceededHandler($confirmation, new LegacyInstallmentGateway($settings->rootDir));
+        $succeeded = new PaymentSucceededHandler($confirmation, new InstallmentRepository($db));
         $failed = new PaymentFailedHandler($db, $orders, $customers, $adminNotifications, $mail);
         (new StripeWebhookRoutes($stripe, $db, $logger, $succeeded, $failed))->register($routes);
     }
