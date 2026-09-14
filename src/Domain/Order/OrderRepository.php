@@ -18,6 +18,11 @@ final class OrderRepository
         return $this->db->queryOne('SELECT * FROM orders WHERE id = ?', [$id]);
     }
 
+    public function findByStripeIntentId(string $intentId): ?array
+    {
+        return $this->db->queryOne('SELECT id, customer_id, payment_status FROM orders WHERE stripe_payment_intent_id = ?', [$intentId]);
+    }
+
     public function itemsFor(int $orderId): array
     {
         return $this->db->query('SELECT * FROM order_items WHERE order_id = ? ORDER BY id', [$orderId]);

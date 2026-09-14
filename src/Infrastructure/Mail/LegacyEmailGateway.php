@@ -53,6 +53,11 @@ final class LegacyEmailGateway
         $this->client()->sendPaymentFailedEmail($order, $customer);
     }
 
+    public function sendPaymentLink(string $email, string $name, string $orderNumber, string $url, string $expiresAt, float $amount): void
+    {
+        $this->client()->sendPaymentLinkEmail($email, $name, $orderNumber, $url, $expiresAt, $amount);
+    }
+
     private function client(): \EmailService
     {
         require_once $this->rootDir . '/backend/services/EmailService.php';

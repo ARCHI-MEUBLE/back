@@ -14,7 +14,6 @@ parameters:
         - backend/services/EmailService.php
         - backend/services/InvoiceService.php
         - backend/services/InstallmentService.php
-        - backend/models/PaymentLink.php
     reportUnmatchedIgnoredErrors: false
     tmpDir: .phpstan.cache
     ignoreErrors:
