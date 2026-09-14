@@ -63,7 +63,7 @@ final class StaticFileHandlerTest extends TestCase
 
     private function handler(): StaticFileHandler
     {
-        return new StaticFileHandler(new PathSettings($this->dir, $this->dir . '/models', $this->dir . '/uploads', $this->dir . '/textures', $this->dir . '/email', $this->dir . '/legacy'));
+        return new StaticFileHandler(new PathSettings($this->dir, $this->dir . '/models', $this->dir . '/uploads', $this->dir . '/textures', $this->dir . '/email', $this->dir . '/legacy', $this->dir . '/backups'));
     }
 
     private function request(string $path): Request

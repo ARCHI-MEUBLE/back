@@ -11,8 +11,8 @@ parameters:
     treatPhpDocTypesAsCertain: false
     scanFiles:
         - backend/core/Session.php
-        - backend/services/InvoiceService.php
-        - backend/api/calendly/EmailService.php
+        - legacy/InvoiceService.php
+        - legacy/calendly/EmailService.php
     reportUnmatchedIgnoredErrors: false
     tmpDir: .phpstan.cache
     ignoreErrors:
