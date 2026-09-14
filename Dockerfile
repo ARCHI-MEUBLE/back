@@ -31,8 +31,11 @@ RUN apt-get install -y \
     cron \
     fontconfig \
     libfreetype6 \
+    libfreetype6-dev \
     libjpeg62-turbo \
+    libjpeg62-turbo-dev \
     libpng16-16 \
+    libpng-dev \
     libx11-6 \
     libxcb1 \
     libxext6 \
@@ -44,7 +47,8 @@ RUN apt-get install -y \
     libgl1-mesa-dri \
     xvfb \
     tzdata \
-    && docker-php-ext-install pdo pdo_pgsql \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo pdo_pgsql gd \
     && rm -rf /var/lib/apt/lists/*
 
 # Installer Composer (gestionnaire de dépendances PHP)
