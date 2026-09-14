@@ -19,6 +19,7 @@ final class Settings
         public readonly StripeSettings $stripe,
         public readonly ?string $calendlyApiToken,
         public readonly ?string $cronSecret,
+        public readonly MailSettings $mail,
     ) {}
 
     public static function fromEnv(Env $env, string $rootDir): self
@@ -38,6 +39,7 @@ final class Settings
             StripeSettings::fromEnv($env),
             $env->string('CALENDLY_API_TOKEN'),
             $env->string('CRON_SECRET'),
+            MailSettings::fromEnv($env),
         );
     }
 

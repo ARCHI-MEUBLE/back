@@ -10,14 +10,14 @@ use App\Domain\Shared\ForbiddenException;
 use App\Domain\Shared\NotFoundException;
 use App\Domain\Shared\UnauthorizedException;
 use App\Http\Session;
-use App\Infrastructure\Mail\LegacyEmailGateway;
+use App\Infrastructure\Mail\EmailGateway;
 
 final class ConfigurationSaveService
 {
     public function __construct(
         private readonly ConfigurationRepository $configurations,
         private readonly CustomerRepository $customers,
-        private readonly LegacyEmailGateway $mail,
+        private readonly EmailGateway $mail,
     ) {}
 
     public function save(array $data, Session $session): ConfigurationSaveResult

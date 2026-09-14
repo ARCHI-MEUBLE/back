@@ -21,7 +21,7 @@ use App\Domain\Order\OrderRepository;
 use App\Domain\Order\OrderSendConfirmationRoutes;
 use App\Domain\Order\OrderValidateRoutes;
 use App\Http\RouteCollection;
-use App\Infrastructure\Mail\LegacyEmailGateway;
+use App\Infrastructure\Mail\EmailGatewayFactory;
 
 final class OrderRouteRegistry
 {
@@ -29,7 +29,7 @@ final class OrderRouteRegistry
     {
         $orders = new OrderRepository($db);
         $customers = new CustomerRepository($db);
-        $mail = new LegacyEmailGateway($settings->rootDir);
+        $mail = EmailGatewayFactory::create($settings, $db);
         $creation = new OrderCreationService($db, new OrderCreationRepository($db, new CartRepository($db)), $customers);
         (new OrderCreateRoutes($creation, new AdminNotificationRepository($db)))->register($routes);
         (new OrderListRoutes($orders))->register($routes);

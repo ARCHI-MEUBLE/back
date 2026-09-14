@@ -13,7 +13,7 @@ use App\Http\Request;
 use App\Http\Response;
 use App\Http\RouteCollection;
 use App\Http\Session;
-use App\Infrastructure\Mail\LegacyEmailGateway;
+use App\Infrastructure\Mail\EmailGateway;
 use Throwable;
 
 final class AdminGeneratePaymentLinkRoutes
@@ -22,7 +22,7 @@ final class AdminGeneratePaymentLinkRoutes
         private readonly PaymentLinkRepository $links,
         private readonly Connection $db,
         private readonly NotificationRepository $notifications,
-        private readonly LegacyEmailGateway $mail,
+        private readonly EmailGateway $mail,
         private readonly string $frontendUrl,
     ) {}
 

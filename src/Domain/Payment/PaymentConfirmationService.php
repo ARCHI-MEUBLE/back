@@ -10,7 +10,7 @@ use App\Domain\Customer\CustomerRepository;
 use App\Domain\Notification\AdminNotificationRepository;
 use App\Domain\Order\OrderRepository;
 use App\Infrastructure\Invoice\LegacyInvoiceGateway;
-use App\Infrastructure\Mail\LegacyEmailGateway;
+use App\Infrastructure\Mail\EmailGateway;
 use Throwable;
 
 final class PaymentConfirmationService
@@ -21,7 +21,7 @@ final class PaymentConfirmationService
         private readonly CustomerRepository $customers,
         private readonly CartRepository $cart,
         private readonly AdminNotificationRepository $adminNotifications,
-        private readonly LegacyEmailGateway $mail,
+        private readonly EmailGateway $mail,
         private readonly LegacyInvoiceGateway $invoices,
         private readonly PaymentLinkRepository $paymentLinks,
     ) {}

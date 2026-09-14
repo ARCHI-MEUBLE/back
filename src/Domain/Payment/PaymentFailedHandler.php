@@ -8,7 +8,7 @@ use App\Db\Connection;
 use App\Domain\Customer\CustomerRepository;
 use App\Domain\Notification\AdminNotificationRepository;
 use App\Domain\Order\OrderRepository;
-use App\Infrastructure\Mail\LegacyEmailGateway;
+use App\Infrastructure\Mail\EmailGateway;
 use App\Infrastructure\Stripe\StripeObjectReader;
 
 final class PaymentFailedHandler
@@ -18,7 +18,7 @@ final class PaymentFailedHandler
         private readonly OrderRepository $orders,
         private readonly CustomerRepository $customers,
         private readonly AdminNotificationRepository $adminNotifications,
-        private readonly LegacyEmailGateway $mail,
+        private readonly EmailGateway $mail,
     ) {}
 
     public function handle(object $paymentIntent): void

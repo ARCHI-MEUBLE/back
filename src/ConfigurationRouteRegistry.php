@@ -17,7 +17,7 @@ use App\Domain\Configuration\CustomerConfigurationRoutes;
 use App\Domain\Configuration\GenerateRoutes;
 use App\Domain\Customer\CustomerRepository;
 use App\Http\RouteCollection;
-use App\Infrastructure\Mail\LegacyEmailGateway;
+use App\Infrastructure\Mail\EmailGatewayFactory;
 use App\Infrastructure\Python\ProcOpenRunner;
 use App\Lib\Logger;
 
@@ -31,7 +31,7 @@ final class ConfigurationRouteRegistry
         (new AdminConfigurationRoutes($configurations))->register($routes);
         (new AdminConfigurationStatusRoutes($configurations))->register($routes);
         (new ConfigurationDxfRoutes($db, $settings->rootDir))->register($routes);
-        $mail = new LegacyEmailGateway($settings->rootDir);
+        $mail = EmailGatewayFactory::create($settings, $db);
         $saveService = new ConfigurationSaveService($configurations, new CustomerRepository($db), $mail);
         (new ConfigurationSaveRoutes($saveService))->register($routes);
         (new GenerateRoutes(

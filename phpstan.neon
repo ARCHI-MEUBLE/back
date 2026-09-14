@@ -11,7 +11,6 @@ parameters:
     treatPhpDocTypesAsCertain: false
     scanFiles:
         - backend/core/Session.php
-        - backend/services/EmailService.php
         - backend/services/InvoiceService.php
         - backend/api/calendly/EmailService.php
     reportUnmatchedIgnoredErrors: false

@@ -9,14 +9,14 @@ use App\Domain\Shared\DomainException;
 use App\Domain\Shared\NotFoundException;
 use App\Domain\Shared\UnauthorizedException;
 use App\Http\Session;
-use App\Infrastructure\Mail\LegacyEmailGateway;
+use App\Infrastructure\Mail\EmailGateway;
 
 final class CustomerAuthService
 {
     public function __construct(
         private readonly CustomerRepository $customers,
         private readonly CustomerVerificationRepository $verifications,
-        private readonly LegacyEmailGateway $mail,
+        private readonly EmailGateway $mail,
         private readonly string $frontendUrl,
     ) {}
 

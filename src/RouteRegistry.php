@@ -32,7 +32,7 @@ use App\Domain\Model\TemplateRoutes;
 use App\Domain\System\AdminCreationRoutes;
 use App\Domain\System\SystemRoutes;
 use App\Http\RouteCollection;
-use App\Infrastructure\Mail\LegacyEmailGateway;
+use App\Infrastructure\Mail\EmailGatewayFactory;
 use App\Infrastructure\RateLimit\RateLimiter;
 use App\Lib\SystemClock;
 
@@ -51,7 +51,7 @@ final class RouteRegistry
         (new LegacyUsersAdminRoutes(new LegacyUsersAdminService($legacyUsers, $admins)))->register($routes);
         $customers = new CustomerRepository($db);
         $verifications = new CustomerVerificationRepository($db);
-        $mail = new LegacyEmailGateway($settings->rootDir);
+        $mail = EmailGatewayFactory::create($settings, $db);
         (new CustomerAuthRoutes(new CustomerAuthService($customers, $verifications, $mail, $settings->frontendUrl)))->register($routes);
         (new CustomerProfileRoutes(new CustomerProfileService($customers)))->register($routes);
         (new CategoryRoutes(new CategoryService(new CategoryRepository($db))))->register($routes);

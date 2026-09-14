@@ -13,7 +13,7 @@ use App\Http\Guard\AdminGuard;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\RouteCollection;
-use App\Infrastructure\Mail\LegacyEmailGateway;
+use App\Infrastructure\Mail\EmailGateway;
 
 final class AdminOrderRoutes
 {
@@ -24,7 +24,7 @@ final class AdminOrderRoutes
         private readonly CustomerRepository $customers,
         private readonly Connection $db,
         private readonly NotificationRepository $notifications,
-        private readonly LegacyEmailGateway $mail,
+        private readonly EmailGateway $mail,
     ) {}
 
     public function register(RouteCollection $routes): void

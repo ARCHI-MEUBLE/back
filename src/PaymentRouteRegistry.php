@@ -36,7 +36,7 @@ use App\Domain\Payment\StripeWebhookRoutes;
 use App\Domain\Payment\SyncPaymentStatusRoutes;
 use App\Http\RouteCollection;
 use App\Infrastructure\Invoice\LegacyInvoiceGateway;
-use App\Infrastructure\Mail\LegacyEmailGateway;
+use App\Infrastructure\Mail\EmailGatewayFactory;
 use App\Infrastructure\Stripe\StripeGateway;
 use App\Lib\Logger;
 
@@ -48,7 +48,7 @@ final class PaymentRouteRegistry
         $customers = new CustomerRepository($db);
         $orders = new OrderRepository($db);
         $adminNotifications = new AdminNotificationRepository($db);
-        $mail = new LegacyEmailGateway($settings->rootDir);
+        $mail = EmailGatewayFactory::create($settings, $db);
         $links = new PaymentLinkRepository($db);
         (new PaymentStrategyRoutes(new PaymentStrategyRepository($db)))->register($routes);
         (new PaymentAnalyticsRoutes(new PaymentAnalyticsRepository($db)))->register($routes);

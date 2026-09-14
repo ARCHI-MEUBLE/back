@@ -12,14 +12,14 @@ use App\Http\Request;
 use App\Http\Response;
 use App\Http\RouteCollection;
 use App\Http\Session;
-use App\Infrastructure\Mail\LegacyEmailGateway;
+use App\Infrastructure\Mail\EmailGateway;
 
 final class OrderSendConfirmationRoutes
 {
     public function __construct(
         private readonly OrderRepository $orders,
         private readonly Connection $db,
-        private readonly LegacyEmailGateway $mail,
+        private readonly EmailGateway $mail,
     ) {}
 
     public function register(RouteCollection $routes): void

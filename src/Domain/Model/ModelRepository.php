@@ -22,6 +22,11 @@ final class ModelRepository
         return $this->db->queryOne('SELECT * FROM models WHERE id = ?', [$id]);
     }
 
+    public function namesByPromptPrefix(): array
+    {
+        return $this->db->query('SELECT name, prompt FROM models ORDER BY id');
+    }
+
     public function create(array $data): int
     {
         return $this->db->insertReturningId(
