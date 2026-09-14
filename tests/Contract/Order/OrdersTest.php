@@ -6,6 +6,7 @@ namespace Tests\Contract\Order;
 
 use Tests\Support\ApiClient;
 use Tests\Support\ContractTestCase;
+use Tests\Support\DatabaseUrl;
 use Tests\Support\Orders;
 
 final class OrdersTest extends ContractTestCase
@@ -47,6 +48,8 @@ final class OrdersTest extends ContractTestCase
 
     private function adminSide(int $orderId): void
     {
+        $pdo = DatabaseUrl::connect(DatabaseUrl::fromEnv());
+        $pdo->exec('DELETE FROM orders WHERE id != ' . $orderId);
         $admin = $this->admin();
         $this->assertSnapshot('orders.admin.unauthorized', $this->client()->get('/backend/api/admin/orders.php'));
         $list = $admin->get('/backend/api/admin/orders.php');

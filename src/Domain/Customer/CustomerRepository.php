@@ -33,6 +33,11 @@ final class CustomerRepository
         return $this->db->queryOne('SELECT ' . self::FULL_COLUMNS . ' FROM customers WHERE id = ?', [$id]);
     }
 
+    public function findRawById(int $id): ?array
+    {
+        return $this->db->queryOne('SELECT * FROM customers WHERE id = ?', [$id]);
+    }
+
     public function findBasicById(int $id): ?array
     {
         return $this->db->queryOne('SELECT ' . self::BASIC_COLUMNS . ' FROM customers WHERE id = ?', [$id]);

@@ -23,6 +23,21 @@ final class LegacyEmailGateway
         $this->client()->sendNewConfigurationNotificationToAdmin($configuration, $customer);
     }
 
+    public function send(string $to, string $subject, string $html): bool
+    {
+        return (bool) $this->client()->send($to, $subject, $html);
+    }
+
+    public function sendOrderCancelled(string $email, string $name, string $orderNumber): void
+    {
+        $this->client()->sendOrderCancelledEmail($email, $name, $orderNumber);
+    }
+
+    public function sendOrderStatusUpdate(string $email, string $name, string $orderNumber, string $status, int $orderId): void
+    {
+        $this->client()->sendOrderStatusUpdateEmail($email, $name, $orderNumber, $status, $orderId);
+    }
+
     private function client(): \EmailService
     {
         require_once $this->rootDir . '/backend/services/EmailService.php';
