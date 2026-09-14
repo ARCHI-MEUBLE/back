@@ -42,13 +42,6 @@ services:
       - PYTHON_PATH=/opt/venv/bin/python3
       - FRONTEND_URL=http://localhost:3000
       - OUTPUT_DIR=/app/models
-      # Configuration SMTP pour l'envoi d'emails
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_PORT=${SMTP_PORT}
-      - SMTP_USERNAME=${SMTP_USERNAME}
-      - SMTP_PASSWORD=${SMTP_PASSWORD}
-      - SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL}
-      - SMTP_FROM_NAME=${SMTP_FROM_NAME}
       - ADMIN_EMAIL=${ADMIN_EMAIL}
       # Calendly API Token
       - CALENDLY_API_TOKEN=${CALENDLY_API_TOKEN}
@@ -57,10 +50,6 @@ services:
       - CALENDLY_VISIO_URL=${CALENDLY_VISIO_URL}
       # Crisp Chat Widget ID
       - CRISP_WEBSITE_ID=${CRISP_WEBSITE_ID}
-      # Twilio SMS Configuration
-      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
-      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
-      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER}
       # Cron Secret Token
       - CRON_SECRET=${CRON_SECRET}
       # Stripe Payment Configuration
@@ -69,6 +58,8 @@ services:
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
       # Resend Email API
       - RESEND_API_KEY=${RESEND_API_KEY}
+      # Backup / system endpoints
+      - BACKUP_API_KEY=${BACKUP_API_KEY}
     working_dir: /app
     command: /bin/bash -c "export PATH=/opt/venv/bin:$$PATH && composer install --no-interaction --no-progress && bash /app/start.sh"
     networks:
