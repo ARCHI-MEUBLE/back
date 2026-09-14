@@ -9,6 +9,7 @@ use App\Http\Guard\AdminSessionForbiddenGuard;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\RouteCollection;
+use App\Lib\ImageUrl;
 
 final class CategoryRoutes
 {
@@ -21,10 +22,10 @@ final class CategoryRoutes
 
         $script->get(null, function (Request $r): Response {
             if ($r->queryString('id') !== null) {
-                return Response::json(CategoryImageUrl::decorate($this->service->find((int) $r->queryString('id')), $r->host));
+                return Response::json(ImageUrl::decorate($this->service->find((int) $r->queryString('id')), $r->host));
             }
             $categories = array_map(
-                fn(array $c): array => CategoryImageUrl::decorate($c, $r->host),
+                fn(array $c): array => ImageUrl::decorate($c, $r->host),
                 $this->service->list($r->queryString('active') === 'true'),
             );
             return Response::json(['categories' => $categories]);
@@ -43,7 +44,7 @@ final class CategoryRoutes
                 (int) ($input['display_order'] ?? $input['displayOrder'] ?? 0),
                 self::boolOption($input, 'is_active') ?? self::boolOption($input, 'isActive') ?? true,
             );
-            return Response::json(['success' => true, 'category' => CategoryImageUrl::decorate($created, $r->host)], 201);
+            return Response::json(['success' => true, 'category' => ImageUrl::decorate($created, $r->host)], 201);
         }, $admin);
 
         $script->put(null, function (Request $r): Response {
@@ -64,7 +65,7 @@ final class CategoryRoutes
                 throw new DomainException('Aucune donnée à mettre à jour');
             }
             $updated = $this->service->update((int) $input['id'], $data);
-            return Response::json(['success' => true, 'category' => CategoryImageUrl::decorate($updated, $r->host)]);
+            return Response::json(['success' => true, 'category' => ImageUrl::decorate($updated, $r->host)]);
         }, $admin);
 
         $script->delete(null, function (Request $r): Response {

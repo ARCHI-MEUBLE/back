@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Category;
+namespace App\Lib;
 
-final class CategoryImageUrl
+final class ImageUrl
 {
     public static function absolute(?string $path, string $host): ?string
     {
@@ -21,11 +21,13 @@ final class CategoryImageUrl
         return 'https://' . $host . $path;
     }
 
-    public static function decorate(array $category, string $host): array
+    public static function decorate(array $row, string $host, array $keys = ['image_url']): array
     {
-        if (array_key_exists('image_url', $category)) {
-            $category['image_url'] = self::absolute($category['image_url'], $host);
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $row)) {
+                $row[$key] = self::absolute($row[$key], $host);
+            }
         }
-        return $category;
+        return $row;
     }
 }

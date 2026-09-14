@@ -26,6 +26,10 @@ use App\Domain\Customer\CustomerProfileRoutes;
 use App\Domain\Customer\CustomerProfileService;
 use App\Domain\Customer\CustomerRepository;
 use App\Domain\Customer\CustomerVerificationRepository;
+use App\Domain\Model\ModelRepository;
+use App\Domain\Model\ModelRoutes;
+use App\Domain\Model\ModelService;
+use App\Domain\Model\TemplateRoutes;
 use App\Domain\System\AdminCreationRoutes;
 use App\Domain\System\SystemRoutes;
 use App\Http\Kernel;
@@ -96,6 +100,8 @@ final class App
         (new CustomerAuthRoutes(new CustomerAuthService($customers, $verifications, $mail, $this->settings->frontendUrl)))->register($routes);
         (new CustomerProfileRoutes(new CustomerProfileService($customers)))->register($routes);
         (new CategoryRoutes(new CategoryService(new CategoryRepository($db))))->register($routes);
+        (new ModelRoutes(new ModelService(new ModelRepository($db))))->register($routes);
+        (new TemplateRoutes($db))->register($routes);
         return new Kernel(
             new Router($routes, $legacy),
             new StaticFileHandler($this->settings->paths),
