@@ -71,7 +71,7 @@ try {
 
     if (!isset($dxfPath)) {
         // Otherwise, use the generic DXF file or show error
-        $dxfPath = __DIR__ . '/../../../pieces/piece_general.dxf';
+        $dxfPath = __DIR__ . '/../python/pieces/piece_general.dxf';
 
         if (!file_exists($dxfPath)) {
             http_response_code(404);

@@ -40,37 +40,6 @@ class Router {
             return;
         }
 
-        // Route temporaire : Créer un admin (à supprimer après utilisation)
-        if ($path === 'create-admin-temp') {
-            require $this->baseDir . '/create_admin_temp.php';
-            return;
-        }
-
-        // Route temporaire : Supprimer les modèles par défaut
-        if ($path === 'delete-default-models') {
-            require $this->baseDir . '/delete_default_models.php';
-            return;
-        }
-
-        // Route de diagnostic
-        if ($path === 'debug-db') {
-            header('Content-Type: text/plain');
-            require $this->baseDir . '/debug_db_path.php';
-            return;
-        }
-
-        // Route de diagnostic admins
-        if ($path === 'check-admins') {
-            require $this->baseDir . '/check_admins.php';
-            return;
-        }
-
-        // Route pour corriger le mot de passe admin
-        if ($path === 'fix-admin-password') {
-            require $this->baseDir . '/fix_admin_password.php';
-            return;
-        }
-
         // Route : Configurateur
         if ($path === 'configurator' || $path === 'configurator.html') {
             $this->serveFrontendPage('configurator.html');
@@ -236,13 +205,9 @@ class Router {
             // Local: baseDir/models/...
             $possiblePaths[] = $this->baseDir . '/' . $cleanPath;
         } elseif (strpos($cleanPath, 'back/textures/') === 0) {
-            // Textures: back/textures/... -> textures/...
-            $texturePath = substr($cleanPath, strlen('back/'));
-            $possiblePaths[] = $this->baseDir . '/' . $texturePath;
-        } elseif (strpos($path, 'back/textures/') === 0) {
-            // Cas où le path original a back/textures/
-            $texturePath = substr($path, strlen('back/'));
-            $possiblePaths[] = $this->baseDir . '/' . $texturePath;
+            $possiblePaths[] = $this->baseDir . '/assets/' . substr($cleanPath, strlen('back/'));
+        } elseif (strpos($cleanPath, 'textures/') === 0) {
+            $possiblePaths[] = $this->baseDir . '/assets/' . $cleanPath;
         } else {
             $possiblePaths[] = $this->baseDir . '/' . $path;
         }

@@ -39,8 +39,7 @@ if (!in_array($file['type'], $allowed)) {
     exit();
 }
 
-// Répertoire de destination: back/textures
-$destDir = __DIR__ . '/../../textures/';
+$destDir = __DIR__ . '/../../assets/textures/';
 if (!is_dir($destDir)) {
     @mkdir($destDir, 0777, true);
 }

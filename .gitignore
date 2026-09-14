@@ -15,9 +15,9 @@ database/*.db-wal
 # Fichiers uploadés et générés (à la racine uniquement)
 /uploads/
 /models/
-/pieces/
-/textures/
 /output/
+/invoices/*
+!/invoices/.gitkeep
 
 # IMPORTANT: Ne pas ignorer backend/models/ qui contient le code PHP!
 

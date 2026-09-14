@@ -26,7 +26,7 @@ jobs:
         run: |
           echo "Checking PHP syntax for all PHP files..."
           error_found=0
-          for file in $(find . -name "*.php" -not -path "./vendor/*" -not -path "./SVGnest/*"); do
+          for file in $(find . -name "*.php" -not -path "./vendor/*"); do
             if ! php -l "$file" > /dev/null 2>&1; then
               echo "❌ Syntax error in: $file"
               php -l "$file"
@@ -47,17 +47,9 @@ jobs:
           fi
           echo "✅ Dockerfile found"
 
-      - name: Validate init_db.sh line endings
-        run: |
-          if file init_db.sh | grep -q CRLF; then
-            echo "❌ init_db.sh has Windows line endings (CRLF). Convert to Unix (LF)"
-            exit 1
-          fi
-          echo "✅ init_db.sh has correct Unix line endings"
-
       - name: Check required files
         run: |
-          required_files=("router.php" "backend/core/Database.php" "backend/core/Router.php" "init_db.sh")
+          required_files=("router.php" "backend/core/Database.php" "backend/core/Router.php" "init_db.sql")
           for file in "${required_files[@]}"; do
             if [ ! -f "$file" ]; then
               echo "❌ Required file missing: $file"
@@ -65,62 +57,6 @@ jobs:
             fi
           done
           echo "✅ All required files present"
-
-      - name: Test database initialization
-        run: |
-          echo "Testing database initialization..."
-
-          # Create test directories in /tmp instead of /data
-          mkdir -p /tmp/test_db/database
-          mkdir -p /tmp/test_db/uploads/models
-
-          # Extract SQL from init_db.sh and execute it
-          DB_PATH="/tmp/test_db/database/test.db"
-
-          # Create database with SQL schema
-          sqlite3 "$DB_PATH" <<'EOF'
-          CREATE TABLE IF NOT EXISTS users (
-              id TEXT PRIMARY KEY,
-              email TEXT NOT NULL UNIQUE,
-              password_hash TEXT NOT NULL,
-              name TEXT,
-              created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-          );
-
-          CREATE TABLE IF NOT EXISTS admins (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              username TEXT NOT NULL UNIQUE,
-              password TEXT NOT NULL,
-              email TEXT,
-              created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-          );
-
-          CREATE TABLE IF NOT EXISTS models (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              name TEXT NOT NULL,
-              prompt TEXT NOT NULL,
-              description TEXT,
-              price REAL DEFAULT 0.0,
-              image_url TEXT,
-              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-              updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-          );
-          EOF
-
-          # Verify database was created
-          if [ ! -f "$DB_PATH" ]; then
-            echo "❌ Database not created"
-            exit 1
-          fi
-
-          # Verify tables exist
-          tables=$(sqlite3 "$DB_PATH" ".tables")
-          if [[ $tables == *"admins"* && $tables == *"models"* && $tables == *"users"* ]]; then
-            echo "✅ Database initialized successfully with all tables"
-          else
-            echo "❌ Database tables missing: $tables"
-            exit 1
-          fi
 
   docker-build:
     name: Docker Build Test

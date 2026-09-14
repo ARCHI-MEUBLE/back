@@ -79,9 +79,7 @@ ARG CACHEBUST=7
 COPY . /app
 
 # Créer les dossiers nécessaires
-RUN mkdir -p /app/devis \
-    && mkdir -p /app/pieces \
-    && mkdir -p /app/uploads \
+RUN mkdir -p /app/uploads \
     && mkdir -p /app/models \
     && mkdir -p /app/database \
     && chmod -R 777 /app

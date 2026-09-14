@@ -23,9 +23,7 @@ http-client.env.json
 api-tests.http
 
 # Fichiers générés
-devis/
 uploads/
-pieces/
 database/*.db
 database/*.db-journal
 database/*.db-wal
