@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
-$roots = array_slice($argv, 1);
+$roots = array_slice(is_array($_SERVER['argv'] ?? null) ? $_SERVER['argv'] : [], 1);
 if ($roots === []) {
     $roots = array_values(array_filter(
         ['src', 'tests', 'tools', 'public', 'bin', 'templates'],

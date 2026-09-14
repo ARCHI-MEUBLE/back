@@ -79,7 +79,6 @@ final class AdminImageUploadRoutes
             throw new DomainException('Server error', 500);
         }
         $detectedMime = finfo_file($finfo, $tmpName);
-        finfo_close($finfo);
         $allowedMimes = array_unique(array_values(self::ALLOWED_EXTENSIONS));
         if (!in_array($detectedMime, $allowedMimes, true)) {
             throw new DomainException('Type de fichier non autorisé (MIME: ' . $detectedMime . ')');
