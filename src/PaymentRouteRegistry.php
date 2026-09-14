@@ -14,6 +14,7 @@ use App\Domain\Order\OrderRepository;
 use App\Domain\Payment\AdminGeneratePaymentLinkRoutes;
 use App\Domain\Payment\AdminPaymentLinksRoutes;
 use App\Domain\Payment\ExportPaymentsRoutes;
+use App\Domain\Payment\OrderInvoiceRoutes;
 use App\Domain\Payment\OrderPaymentConfirmedRoutes;
 use App\Domain\Payment\OrderPaymentIntentRoutes;
 use App\Domain\Payment\PaymentAnalyticsRepository;
@@ -60,6 +61,7 @@ final class PaymentRouteRegistry
         (new PaymentLinkPublicRoutes($links))->register($routes);
         (new PaymentLinkCreateIntentRoutes($links, $stripe, $db))->register($routes);
         (new PaymentLinkDownloadInvoiceRoutes($orders, $customers, new LegacyInvoiceGateway($settings->rootDir)))->register($routes);
+        (new OrderInvoiceRoutes($orders, $customers, new LegacyInvoiceGateway($settings->rootDir)))->register($routes);
         (new AdminGeneratePaymentLinkRoutes($links, $db, new NotificationRepository($db), $mail, $settings->frontendUrl))->register($routes);
         (new AdminPaymentLinksRoutes($links, $settings->frontendUrl))->register($routes);
         $confirmation = new PaymentConfirmationService(
