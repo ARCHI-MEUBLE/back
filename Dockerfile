@@ -78,6 +78,9 @@ ARG CACHEBUST=7
 # Copier tous les fichiers de l'application
 COPY . /app
 
+# Installer les dépendances PHP de production
+RUN composer install --no-dev --no-interaction --no-progress --prefer-dist --optimize-autoloader
+
 # Créer les dossiers nécessaires
 RUN mkdir -p /app/uploads \
     && mkdir -p /app/models \

@@ -84,7 +84,7 @@ try {
 
     // Charger la librairie Stripe
     error_log("CREATE-PI: Loading Stripe library...");
-    require_once __DIR__ . '/../../../vendor/stripe/init.php';
+    require_once __DIR__ . '/../../../vendor/autoload.php';
     error_log("CREATE-PI: Stripe library loaded");
 
     // Récupérer la clé secrète Stripe depuis .env

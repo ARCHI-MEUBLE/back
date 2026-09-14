@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Charger la librairie Stripe
-require_once __DIR__ . '/../../../vendor/stripe/init.php';
+require_once __DIR__ . '/../../../vendor/autoload.php';
 
 try {
     // Récupérer les clés depuis .env

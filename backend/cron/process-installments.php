@@ -14,7 +14,7 @@ require_once __DIR__ . '/../services/EmailService.php';
 require_once __DIR__ . '/../models/Order.php';
 require_once __DIR__ . '/../models/Customer.php';
 require_once __DIR__ . '/../core/Database.php';
-require_once __DIR__ . '/../../vendor/stripe/init.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 // Configuration logging
 $logFile = __DIR__ . '/../logs/installments_' . date('Y-m-d') . '.log';

@@ -27,7 +27,7 @@ if (!isset($_SESSION['customer_id'])) {
 }
 
 // Charger la librairie Stripe
-require_once __DIR__ . '/../../../vendor/stripe/init.php';
+require_once __DIR__ . '/../../../vendor/autoload.php';
 
 try {
     // Récupérer la clé secrète Stripe depuis .env

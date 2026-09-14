@@ -70,7 +70,7 @@ services:
       # Resend Email API
       - RESEND_API_KEY=${RESEND_API_KEY}
     working_dir: /app
-    command: /bin/bash -c "export PATH=/opt/venv/bin:$$PATH && bash /app/install_dependencies.sh && bash /app/start.sh"
+    command: /bin/bash -c "export PATH=/opt/venv/bin:$$PATH && composer install --no-interaction --no-progress && bash /app/start.sh"
     networks:
       - archimeuble-network
     restart: unless-stopped

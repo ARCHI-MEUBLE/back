@@ -1,0 +1,13 @@
+includes:
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+
+parameters:
+    level: 8
+    paths:
+        - tests
+        - tools
+    treatPhpDocTypesAsCertain: false
+    reportUnmatchedIgnoredErrors: false
+    tmpDir: .phpstan.cache
+    ignoreErrors:
+        - identifier: missingType.iterableValue

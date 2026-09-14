@@ -68,6 +68,14 @@ pnpm-lock.yaml
 *.key
 *.cert
 
-# Dépendances PHP - COMMITÉ DANS GIT pour simplifier le déploiement
-# /vendor/  ← Commenté pour inclure vendor/ dans Git
+/vendor/
 .backup-config.json
+
+# Outils PHP
+.phpunit.cache/
+.phpstan.cache/
+.php-cs-fixer.cache
+
+# Fichiers générés en local
+/storage/*
+!/storage/**/.gitkeep

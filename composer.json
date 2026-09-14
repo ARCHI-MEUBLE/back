@@ -1,16 +1,55 @@
 {
     "name": "archimeuble/backend",
-    "description": "ArchiMeuble Backend API",
+    "description": "ArchiMeuble backend API",
     "type": "project",
+    "license": "proprietary",
     "require": {
-        "php": ">=8.2",
-        "stripe/stripe-php": "^15.0"
+        "php": "^8.2",
+        "ext-curl": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "ext-pdo": "*",
+        "ext-pdo_pgsql": "*",
+        "setasign/fpdf": "^1.8.6",
+        "stripe/stripe-php": "^13.10"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.75",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^11.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/",
+            "Tools\\": "tools/"
+        }
     },
     "config": {
-        "vendor-dir": "vendor",
         "optimize-autoloader": true,
+        "sort-packages": true,
         "platform": {
             "php": "8.2"
         }
+    },
+    "scripts": {
+        "check": [
+            "@phpstan",
+            "@cs:check",
+            "@rules",
+            "@test"
+        ],
+        "phpstan": "phpstan analyse --memory-limit=1G",
+        "cs:check": "php-cs-fixer fix --dry-run --diff",
+        "cs:fix": "php-cs-fixer fix",
+        "rules": "php tools/check-file-rules.php",
+        "test": "phpunit --testsuite unit",
+        "test:contract": "phpunit --testsuite contract",
+        "test:all": "phpunit"
     }
 }

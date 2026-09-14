@@ -52,7 +52,7 @@ try {
     $orderId = intval($data['order_id']);
 
     // Charger la librairie Stripe
-    require_once __DIR__ . '/../../../vendor/stripe/init.php';
+    require_once __DIR__ . '/../../../vendor/autoload.php';
 
     // Récupérer la clé secrète Stripe depuis .env
     $stripeSecretKey = getenv('STRIPE_SECRET_KEY');

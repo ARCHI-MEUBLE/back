@@ -4,7 +4,7 @@
  * Génère des factures au format PDF pour les commandes payées
  */
 
-require_once __DIR__ . '/../../vendor/fpdf/fpdf.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 class InvoiceService {
     private $companyName = 'ArchiMeuble';

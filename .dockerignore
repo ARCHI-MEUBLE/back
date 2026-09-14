@@ -38,7 +38,8 @@ desktop.ini
 .idea/
 *.sublime-*
 
-# Cache PHP
-.phpunit.cache
-# vendor/ ← Inclus dans Git pour déploiement Railway
-# composer.lock ← Inclus dans Git
+# Dépendances et caches (installées dans l'image)
+vendor/
+.phpunit.cache/
+.phpstan.cache/
+.php-cs-fixer.cache
