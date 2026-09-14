@@ -14,6 +14,7 @@ parameters:
         - backend/services/EmailService.php
         - backend/services/InvoiceService.php
         - backend/services/InstallmentService.php
+        - backend/api/calendly/EmailService.php
     reportUnmatchedIgnoredErrors: false
     tmpDir: .phpstan.cache
     ignoreErrors:

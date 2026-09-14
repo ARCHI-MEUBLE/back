@@ -4,7 +4,7 @@
  * Gère les emails de confirmation et de rappel via Resend API
  */
 
-class EmailService {
+class CalendlyEmailService {
     private $adminEmail;
 
     public function __construct() {
