@@ -28,9 +28,14 @@ final class CategoryRepository
         return $this->db->queryOne('SELECT * FROM categories WHERE slug = ?', [$slug]);
     }
 
+    public function findByName(string $name): ?array
+    {
+        return $this->db->queryOne('SELECT * FROM categories WHERE name = ?', [$name]);
+    }
+
     public function create(string $name, string $slug, ?string $description, ?string $imageUrl, int $displayOrder, bool $isActive): ?int
     {
-        if ($this->findBySlug($slug) !== null) {
+        if ($this->findBySlug($slug) !== null || $this->findByName($name) !== null) {
             return null;
         }
         return $this->db->insertReturningId(
@@ -43,6 +48,12 @@ final class CategoryRepository
     {
         if (isset($data['slug'])) {
             $existing = $this->findBySlug((string) $data['slug']);
+            if ($existing !== null && (int) $existing['id'] !== $id) {
+                return false;
+            }
+        }
+        if (isset($data['name'])) {
+            $existing = $this->findByName((string) $data['name']);
             if ($existing !== null && (int) $existing['id'] !== $id) {
                 return false;
             }
