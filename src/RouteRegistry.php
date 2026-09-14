@@ -51,6 +51,12 @@ use App\Domain\Realisation\RealisationRepository;
 use App\Domain\Realisation\RealisationRoutes;
 use App\Domain\Review\ReviewRepository;
 use App\Domain\Review\ReviewRoutes;
+use App\Domain\Sample\AdminSampleRoutes;
+use App\Domain\Sample\SampleAnalyticsRoutes;
+use App\Domain\Sample\SampleColorRepository;
+use App\Domain\Sample\SampleRoutes;
+use App\Domain\Sample\SampleService;
+use App\Domain\Sample\SampleTypeRepository;
 use App\Domain\Showroom\ShowroomRepository;
 use App\Domain\Showroom\ShowroomRoutes;
 use App\Domain\System\AdminCreationRoutes;
@@ -98,5 +104,11 @@ final class RouteRegistry
         (new CatalogueRoutes($catalogueItems, $catalogueVariations))->register($routes);
         (new AdminCatalogueRoutes($catalogueItems))->register($routes);
         (new AdminCatalogueVariationRoutes($catalogueVariations))->register($routes);
+        $sampleTypes = new SampleTypeRepository($db);
+        $sampleColors = new SampleColorRepository($db);
+        $sampleService = new SampleService($sampleTypes, $sampleColors);
+        (new SampleRoutes($sampleService))->register($routes);
+        (new AdminSampleRoutes($sampleService, $sampleTypes, $sampleColors))->register($routes);
+        (new SampleAnalyticsRoutes($db))->register($routes);
     }
 }
