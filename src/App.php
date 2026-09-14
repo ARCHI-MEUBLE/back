@@ -30,6 +30,10 @@ use App\Domain\Model\ModelRepository;
 use App\Domain\Model\ModelRoutes;
 use App\Domain\Model\ModelService;
 use App\Domain\Model\TemplateRoutes;
+use App\Domain\Notification\AdminNotificationRepository;
+use App\Domain\Notification\AdminNotificationRoutes;
+use App\Domain\Notification\NotificationRepository;
+use App\Domain\Notification\NotificationRoutes;
 use App\Domain\Realisation\AdminRealisationImageRoutes;
 use App\Domain\Realisation\AdminRealisationRoutes;
 use App\Domain\Realisation\RealisationImageRepository;
@@ -118,6 +122,8 @@ final class App
         (new RealisationRoutes($realisations, $realisationImages))->register($routes);
         (new AdminRealisationRoutes($realisations))->register($routes);
         (new AdminRealisationImageRoutes($realisationImages))->register($routes);
+        (new NotificationRoutes(new NotificationRepository($db)))->register($routes);
+        (new AdminNotificationRoutes(new AdminNotificationRepository($db), $admins))->register($routes);
         return new Kernel(
             new Router($routes, $legacy),
             new StaticFileHandler($this->settings->paths),
