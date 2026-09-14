@@ -38,6 +38,21 @@ final class LegacyEmailGateway
         $this->client()->sendOrderStatusUpdateEmail($email, $name, $orderNumber, $status, $orderId);
     }
 
+    public function sendOrderConfirmation(array $order, array $customer, array $items, string $paymentType): void
+    {
+        $this->client()->sendOrderConfirmation($order, $customer, $items, $paymentType);
+    }
+
+    public function sendNewOrderNotificationToAdmin(array $order, array $customer, array $items): void
+    {
+        $this->client()->sendNewOrderNotificationToAdmin($order, $customer, $items);
+    }
+
+    public function sendPaymentFailed(array $order, array $customer): void
+    {
+        $this->client()->sendPaymentFailedEmail($order, $customer);
+    }
+
     private function client(): \EmailService
     {
         require_once $this->rootDir . '/backend/services/EmailService.php';

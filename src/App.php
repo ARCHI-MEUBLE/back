@@ -65,7 +65,7 @@ final class App
         ConfigurationRouteRegistry::register($routes, $this->settings, $db, $this->logger);
         CartRouteRegistry::register($routes, $db);
         OrderRouteRegistry::register($routes, $this->settings, $db);
-        PaymentRouteRegistry::register($routes, $this->settings, $db);
+        PaymentRouteRegistry::register($routes, $this->settings, $db, $this->logger);
         return new Kernel(
             new Router($routes, $legacy),
             new StaticFileHandler($this->settings->paths),

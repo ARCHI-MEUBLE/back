@@ -6,8 +6,11 @@ namespace App\Infrastructure\Stripe;
 
 use App\Config\StripeSettings;
 use App\Domain\Shared\DomainException;
+use Stripe\Customer;
+use Stripe\Event;
 use Stripe\PaymentIntent;
 use Stripe\Stripe;
+use Stripe\Webhook;
 
 final class StripeGateway
 {
@@ -23,6 +26,24 @@ final class StripeGateway
     {
         $this->ensureConfigured();
         return PaymentIntent::create($params);
+    }
+
+    public function createCustomer(array $params): Customer
+    {
+        $this->ensureConfigured();
+        return Customer::create($params);
+    }
+
+    public function hasUsableWebhookSecret(): bool
+    {
+        $secret = $this->settings->webhookSecret;
+        return $secret !== null && !in_array($secret, ['whsec_YOUR_WEBHOOK_SECRET_HERE', 'whsec_test_local_dev'], true);
+    }
+
+    public function constructWebhookEvent(string $payload, string $signature): Event
+    {
+        $this->ensureConfigured();
+        return Webhook::constructEvent($payload, $signature, (string) $this->settings->webhookSecret);
     }
 
     public function ensureConfigured(): void

@@ -102,4 +102,9 @@ final class CustomerRepository
     {
         return $this->db->execute('DELETE FROM customers WHERE id = ?', [$id]) > 0;
     }
+
+    public function updateStripeCustomerId(int $id, string $stripeCustomerId): void
+    {
+        $this->db->execute('UPDATE customers SET stripe_customer_id = ? WHERE id = ?', [$stripeCustomerId, $id]);
+    }
 }
