@@ -77,4 +77,4 @@ echo ""
 echo "Starting PHP server on port $PORT..."
 echo "Sessions stored in: /data/sessions"
 echo "========================================="
-exec php -d session.save_path=/data/sessions -S 0.0.0.0:$PORT router.php
+exec php -d session.save_path=/data/sessions -S 0.0.0.0:$PORT public/index.php
