@@ -15,6 +15,11 @@ final class EmailTemplateRepository
         return $this->db->query('SELECT * FROM email_templates ORDER BY template_name');
     }
 
+    public function findById(int $id): ?array
+    {
+        return $this->db->queryOne('SELECT * FROM email_templates WHERE id = ?', [$id]);
+    }
+
     public function update(int $id, array $data): void
     {
         $columns = [];
