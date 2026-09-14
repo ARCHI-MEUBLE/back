@@ -30,6 +30,15 @@ use App\Domain\Model\ModelRepository;
 use App\Domain\Model\ModelRoutes;
 use App\Domain\Model\ModelService;
 use App\Domain\Model\TemplateRoutes;
+use App\Domain\Realisation\AdminRealisationImageRoutes;
+use App\Domain\Realisation\AdminRealisationRoutes;
+use App\Domain\Realisation\RealisationImageRepository;
+use App\Domain\Realisation\RealisationRepository;
+use App\Domain\Realisation\RealisationRoutes;
+use App\Domain\Review\ReviewRepository;
+use App\Domain\Review\ReviewRoutes;
+use App\Domain\Showroom\ShowroomRepository;
+use App\Domain\Showroom\ShowroomRoutes;
 use App\Domain\System\AdminCreationRoutes;
 use App\Domain\System\SystemRoutes;
 use App\Http\Kernel;
@@ -102,6 +111,13 @@ final class App
         (new CategoryRoutes(new CategoryService(new CategoryRepository($db))))->register($routes);
         (new ModelRoutes(new ModelService(new ModelRepository($db))))->register($routes);
         (new TemplateRoutes($db))->register($routes);
+        (new ReviewRoutes(new ReviewRepository($db)))->register($routes);
+        (new ShowroomRoutes(new ShowroomRepository($this->settings->rootDir . '/backend/data/showrooms.json')))->register($routes);
+        $realisations = new RealisationRepository($db);
+        $realisationImages = new RealisationImageRepository($db);
+        (new RealisationRoutes($realisations, $realisationImages))->register($routes);
+        (new AdminRealisationRoutes($realisations))->register($routes);
+        (new AdminRealisationImageRoutes($realisationImages))->register($routes);
         return new Kernel(
             new Router($routes, $legacy),
             new StaticFileHandler($this->settings->paths),

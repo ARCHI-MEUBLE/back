@@ -10,10 +10,12 @@ use App\Http\Session;
 
 final class AdminSessionForbiddenGuard implements GuardInterface
 {
+    public function __construct(private readonly string $message = 'Accès non autorisé') {}
+
     public function check(Request $request, Session $session): void
     {
         if (!$session->isAdmin()) {
-            throw new ForbiddenException('Accès non autorisé');
+            throw new ForbiddenException($this->message);
         }
     }
 }
