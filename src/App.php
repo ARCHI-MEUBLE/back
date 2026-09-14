@@ -17,6 +17,9 @@ use App\Domain\Auth\LegacyAuthService;
 use App\Domain\Auth\LegacyUserRepository;
 use App\Domain\Auth\LegacyUsersAdminRoutes;
 use App\Domain\Auth\LegacyUsersAdminService;
+use App\Domain\Category\CategoryRepository;
+use App\Domain\Category\CategoryRoutes;
+use App\Domain\Category\CategoryService;
 use App\Domain\Customer\CustomerAuthRoutes;
 use App\Domain\Customer\CustomerAuthService;
 use App\Domain\Customer\CustomerProfileRoutes;
@@ -92,6 +95,7 @@ final class App
         $mail = new LegacyEmailGateway($this->settings->rootDir);
         (new CustomerAuthRoutes(new CustomerAuthService($customers, $verifications, $mail, $this->settings->frontendUrl)))->register($routes);
         (new CustomerProfileRoutes(new CustomerProfileService($customers)))->register($routes);
+        (new CategoryRoutes(new CategoryService(new CategoryRepository($db))))->register($routes);
         return new Kernel(
             new Router($routes, $legacy),
             new StaticFileHandler($this->settings->paths),

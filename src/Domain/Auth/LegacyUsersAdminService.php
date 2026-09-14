@@ -54,8 +54,6 @@ final class LegacyUsersAdminService
         if ($type !== 'user') {
             throw new ForbiddenException('Impossible de supprimer un admin');
         }
-        if (!$this->users->delete((string) $id)) {
-            throw new DomainException('Échec de la suppression', 500);
-        }
+        $this->users->delete((string) $id);
     }
 }
