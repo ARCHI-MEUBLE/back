@@ -61,7 +61,7 @@ final class ContentRouteRegistry
         $catalogueVariations = new CatalogueVariationRepository($db);
         (new CatalogueRoutes($catalogueItems, $catalogueVariations))->register($routes);
         (new AdminCatalogueRoutes($catalogueItems))->register($routes);
-        (new AdminCatalogueVariationRoutes($catalogueVariations))->register($routes);
+        (new AdminCatalogueVariationRoutes($catalogueVariations, $catalogueItems))->register($routes);
         $sampleTypes = new SampleTypeRepository($db);
         $sampleColors = new SampleColorRepository($db);
         $sampleService = new SampleService($sampleTypes, $sampleColors);

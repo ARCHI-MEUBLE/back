@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalogue;
 
+use App\Domain\Shared\NotFoundException;
 use App\Http\ErrorStyle;
 use App\Http\Guard\AdminGuard;
 use App\Http\Request;
@@ -12,7 +13,10 @@ use App\Http\RouteCollection;
 
 final class AdminCatalogueVariationRoutes
 {
-    public function __construct(private readonly CatalogueVariationRepository $variations) {}
+    public function __construct(
+        private readonly CatalogueVariationRepository $variations,
+        private readonly CatalogueRepository $items,
+    ) {}
 
     public function register(RouteCollection $routes): void
     {
@@ -45,6 +49,9 @@ final class AdminCatalogueVariationRoutes
         }
         $itemId = (int) $data['catalogue_item_id'];
         $colorName = (string) $data['color_name'];
+        if ($this->items->findById($itemId) === null) {
+            throw new NotFoundException('Article de catalogue non trouvé');
+        }
         if ($this->variations->existsForColor($itemId, $colorName)) {
             return Response::json(['success' => false, 'error' => 'Cette variation existe déjà pour cet article'], 400);
         }
