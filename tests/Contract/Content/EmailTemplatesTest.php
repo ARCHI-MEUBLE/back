@@ -36,7 +36,6 @@ final class EmailTemplatesTest extends ContractTestCase
 
     public function testTemplateAsset(): void
     {
-        $this->skipOnLegacy('email template gallery images must be served on /backend/api/calendly/assets/*');
         $response = $this->client()->get('/backend/api/calendly/assets/logo.png');
 
         self::assertSame(200, $response->status);

@@ -26,6 +26,8 @@ use App\Domain\Customer\CustomerProfileRoutes;
 use App\Domain\Customer\CustomerProfileService;
 use App\Domain\Customer\CustomerRepository;
 use App\Domain\Customer\CustomerVerificationRepository;
+use App\Domain\EmailTemplate\EmailTemplateRepository;
+use App\Domain\EmailTemplate\EmailTemplateRoutes;
 use App\Domain\Model\ModelRepository;
 use App\Domain\Model\ModelRoutes;
 use App\Domain\Model\ModelService;
@@ -124,6 +126,7 @@ final class App
         (new AdminRealisationImageRoutes($realisationImages))->register($routes);
         (new NotificationRoutes(new NotificationRepository($db)))->register($routes);
         (new AdminNotificationRoutes(new AdminNotificationRepository($db), $admins))->register($routes);
+        (new EmailTemplateRoutes(new EmailTemplateRepository($db)))->register($routes);
         return new Kernel(
             new Router($routes, $legacy),
             new StaticFileHandler($this->settings->paths),
