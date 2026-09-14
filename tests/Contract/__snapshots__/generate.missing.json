@@ -2,9 +2,6 @@
     "status": 400,
     "shape": {
         "object": {
-            "debug_received_data": {
-                "list": "empty"
-            },
             "error": "string",
             "success": "bool"
         }

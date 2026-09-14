@@ -15,6 +15,7 @@ final class Settings
         public readonly SessionSettings $session,
         public readonly PathSettings $paths,
         public readonly string $backupApiKey,
+        public readonly PythonSettings $python,
     ) {}
 
     public static function fromEnv(Env $env, string $rootDir): self
@@ -30,6 +31,7 @@ final class Settings
             SessionSettings::fromEnv($env),
             PathSettings::fromEnv($env, $rootDir),
             $env->string('BACKUP_API_KEY', '') ?? '',
+            PythonSettings::fromEnv($env, $rootDir),
         );
     }
 

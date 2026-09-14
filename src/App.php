@@ -62,6 +62,7 @@ final class App
         $admins = RouteRegistry::register($routes, $this->settings, $db);
         ContentRouteRegistry::register($routes, $this->settings, $db, $admins);
         CommerceRouteRegistry::register($routes, $this->settings, $db);
+        ConfigurationRouteRegistry::register($routes, $this->settings, $db, $this->logger);
         return new Kernel(
             new Router($routes, $legacy),
             new StaticFileHandler($this->settings->paths),

@@ -18,6 +18,11 @@ final class LegacyEmailGateway
         return (bool) $this->client()->sendVerificationEmail($email, $name, $code);
     }
 
+    public function sendNewConfigurationNotification(array $configuration, array $customer): void
+    {
+        $this->client()->sendNewConfigurationNotificationToAdmin($configuration, $customer);
+    }
+
     private function client(): \EmailService
     {
         require_once $this->rootDir . '/backend/services/EmailService.php';
