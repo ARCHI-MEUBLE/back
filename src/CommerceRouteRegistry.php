@@ -6,6 +6,9 @@ namespace App;
 
 use App\Config\Settings;
 use App\Db\Connection;
+use App\Domain\Asset\AdminImageUploadRoutes;
+use App\Domain\Asset\Base64ImageUploadRoutes;
+use App\Domain\Asset\TextureUploadRoutes;
 use App\Domain\Facade\FacadeDrillingTypeRepository;
 use App\Domain\Facade\FacadeDrillingTypeRoutes;
 use App\Domain\Facade\FacadeDxfGenerator;
@@ -36,5 +39,8 @@ final class CommerceRouteRegistry
             new AdminNotificationRepository($db),
             $settings->rootDir . '/backend/uploads/quote-requests',
         )))->register($routes);
+        (new Base64ImageUploadRoutes($settings->paths->uploadsDir . '/models'))->register($routes);
+        (new AdminImageUploadRoutes('/data', $settings->paths->legacyUploadsDir))->register($routes);
+        (new TextureUploadRoutes($settings->paths->texturesDir))->register($routes);
     }
 }

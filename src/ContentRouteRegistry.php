@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App;
 
+use App\Config\Env;
 use App\Config\Settings;
 use App\Db\Connection;
 use App\Domain\Admin\AdminRepository;
@@ -12,6 +13,7 @@ use App\Domain\Catalogue\AdminCatalogueVariationRoutes;
 use App\Domain\Catalogue\CatalogueRepository;
 use App\Domain\Catalogue\CatalogueRoutes;
 use App\Domain\Catalogue\CatalogueVariationRepository;
+use App\Domain\Config\PublicConfigRoutes;
 use App\Domain\EmailTemplate\EmailTemplateRepository;
 use App\Domain\EmailTemplate\EmailTemplateRoutes;
 use App\Domain\Notification\AdminNotificationRepository;
@@ -66,5 +68,6 @@ final class ContentRouteRegistry
         (new SampleRoutes($sampleService))->register($routes);
         (new AdminSampleRoutes($sampleService, $sampleTypes, $sampleColors))->register($routes);
         (new SampleAnalyticsRoutes($db))->register($routes);
+        (new PublicConfigRoutes(Env::load($settings->rootDir . '/.env')))->register($routes);
     }
 }

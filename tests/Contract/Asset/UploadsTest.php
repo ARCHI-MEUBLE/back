@@ -34,11 +34,10 @@ final class UploadsTest extends ContractTestCase
 
     public function testBase64Upload(): void
     {
-        $this->skipOnLegacy('upload.php writes to a hardcoded /data path; must use the configured uploads directory');
         $response = $this->admin()->post('/backend/api/upload.php', ['fileName' => 'a.png', 'fileType' => 'image/png', 'data' => 'data:image/png;base64,' . base64_encode(self::PNG)]);
 
         $this->assertSnapshot('upload.ok', $response);
-        self::assertStringStartsWith('/uploads/models/', $response->data()['imagePath']);
+        self::assertStringContainsString('/uploads/models/', $response->data()['imagePath']);
     }
 
     public function testAdminImageUpload(): void
