@@ -76,13 +76,6 @@ abstract class ContractTestCase extends TestCase
         self::assertSame($expected, json_decode($encoded, true, 512, JSON_THROW_ON_ERROR), 'Contract changed for ' . $name . ': ' . $response->body);
     }
 
-    protected function skipOnLegacy(string $reason): void
-    {
-        if (self::entry() === 'router.php') {
-            self::markTestIncomplete('Legacy behaviour differs, target contract: ' . $reason);
-        }
-    }
-
     protected function assertJsonResponse(ApiResponse $response): void
     {
         self::assertStringStartsWith('application/json', $response->contentType(), $response->body);
@@ -111,7 +104,7 @@ abstract class ContractTestCase extends TestCase
     private static function entry(): string
     {
         $entry = getenv('CONTRACT_ENTRY');
-        return is_string($entry) && $entry !== '' ? $entry : 'router.php';
+        return is_string($entry) && $entry !== '' ? $entry : 'public/index.php';
     }
 
     private static function port(): int

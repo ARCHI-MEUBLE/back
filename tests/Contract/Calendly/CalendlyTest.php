@@ -22,7 +22,6 @@ final class CalendlyTest extends ContractTestCase
 
     public function testAppointmentsRequireAdmin(): void
     {
-        $this->skipOnLegacy('appointment endpoints must reject anonymous callers with 401');
         $this->assertSnapshot('calendly.appointments.unauthorized', $this->client()->get('/backend/api/calendly/appointments.php'));
         $this->assertSnapshot('calendly.appointments.unauthorized', $this->client()->get('/backend/api/calendly/appointments-stats.php'));
         $this->assertSnapshot('calendly.appointments.unauthorized', $this->client()->put('/backend/api/calendly/appointment-actions.php?id=1&action=cancel'));

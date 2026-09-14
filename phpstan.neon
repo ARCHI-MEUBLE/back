@@ -10,7 +10,6 @@ parameters:
         - tools
     treatPhpDocTypesAsCertain: false
     scanFiles:
-        - backend/core/Session.php
         - legacy/InvoiceService.php
         - legacy/calendly/EmailService.php
     reportUnmatchedIgnoredErrors: false
