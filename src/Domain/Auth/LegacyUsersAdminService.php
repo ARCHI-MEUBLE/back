@@ -7,6 +7,7 @@ namespace App\Domain\Auth;
 use App\Domain\Admin\AdminRepository;
 use App\Domain\Shared\DomainException;
 use App\Domain\Shared\ForbiddenException;
+use App\Domain\Shared\NotFoundException;
 
 final class LegacyUsersAdminService
 {
@@ -45,7 +46,7 @@ final class LegacyUsersAdminService
             ? $this->users->applyWhitelistedUpdate((string) $id, ['password_hash' => $hash])
             : $this->admins->applyWhitelistedUpdate((int) $id, ['password' => $hash]);
         if ($affected === 0) {
-            throw new DomainException('Échec de la modification', 500);
+            throw new NotFoundException('Utilisateur non trouvé');
         }
     }
 
