@@ -20,6 +20,7 @@ abstract class ContractTestCase extends TestCase
         }
         $root = self::root();
         DbSeeder::reset($root, DatabaseUrl::fromEnv());
+        self::resetBackupState($root);
         self::$server = ServerProcess::start($root, self::entry(), self::port(), self::serverEnv($root));
         $server = self::$server;
         register_shutdown_function(static fn() => $server->stop());
@@ -95,6 +96,16 @@ abstract class ContractTestCase extends TestCase
     protected static function root(): string
     {
         return dirname(__DIR__, 2);
+    }
+
+    private static function resetBackupState(string $root): void
+    {
+        foreach (['backup-rate-limit.json', 'backup-access.log'] as $file) {
+            $path = $root . '/storage/' . $file;
+            if (is_file($path)) {
+                unlink($path);
+            }
+        }
     }
 
     private static function entry(): string

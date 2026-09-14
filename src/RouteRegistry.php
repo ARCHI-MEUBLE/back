@@ -30,7 +30,11 @@ use App\Domain\Model\ModelRoutes;
 use App\Domain\Model\ModelService;
 use App\Domain\Model\TemplateRoutes;
 use App\Domain\System\AdminCreationRoutes;
+use App\Domain\System\BackupAccessGuard;
+use App\Domain\System\BackupService;
+use App\Domain\System\DbMaintenanceRoutes;
 use App\Domain\System\SystemRoutes;
+use App\Domain\System\TestEchoRoutes;
 use App\Http\RouteCollection;
 use App\Infrastructure\Mail\EmailGatewayFactory;
 use App\Infrastructure\RateLimit\RateLimiter;
@@ -44,7 +48,13 @@ final class RouteRegistry
         $legacyUsers = new LegacyUserRepository($db);
         $rateLimiter = new RateLimiter($db);
         (new SystemRoutes(new SystemClock()))->register($routes);
+        (new TestEchoRoutes())->register($routes);
         (new AdminCreationRoutes($admins, $settings->backupApiKey))->register($routes);
+        $backupsDataDir = dirname($settings->paths->backupsDir);
+        (new DbMaintenanceRoutes(
+            new BackupService($settings->paths->backupsDir, $settings->databaseUrl),
+            new BackupAccessGuard($settings->backupApiKey, $backupsDataDir . '/backup-access.log', $backupsDataDir . '/backup-rate-limit.json'),
+        ))->register($routes);
         (new AdminAuthRoutes(new AdminAuthService($admins, $rateLimiter)))->register($routes);
         (new AdminAccountsRoutes(new AdminAccountsService($db, $admins)))->register($routes);
         (new LegacyAuthRoutes(new LegacyAuthService($legacyUsers)))->register($routes);
