@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Contract\Facade;
 
 use Tests\Support\ContractTestCase;
+use Tests\Support\DatabaseUrl;
 
 final class FacadesTest extends ContractTestCase
 {
@@ -57,5 +58,41 @@ final class FacadesTest extends ContractTestCase
         $this->assertSnapshot('facades.dxf.unauthorized', $this->client()->get('/backend/api/facades/dxf.php?facade_id=1'));
         $this->assertSnapshot('facades.dxf.missing', $this->admin()->get('/backend/api/facades/dxf.php?facade_id=999999'));
         $this->assertSnapshot('facades.dxf.no-id', $this->admin()->get('/backend/api/facades/dxf.php'));
+    }
+
+    public function testFacadeDxfGeneratesRealDrawing(): void
+    {
+        $pdo = DatabaseUrl::connect(DatabaseUrl::fromEnv());
+        $existingOrder = $pdo->query('SELECT id FROM orders LIMIT 1');
+        $orderId = $existingOrder === false ? 0 : (int) $existingOrder->fetchColumn();
+        if ($orderId === 0) {
+            $pdo->exec("INSERT INTO customers (id, email, password_hash, first_name, last_name) VALUES (999, 'dxf@test.archimeuble.com', 'x', 'D', 'X') ON CONFLICT (id) DO NOTHING");
+            $pdo->exec("INSERT INTO orders (id, customer_id, order_number, total_amount, shipping_address) VALUES (999, 999, 'ORD-DXF-TEST', 10, 'x') ON CONFLICT (id) DO NOTHING");
+            $orderId = 999;
+        }
+        $config = json_encode(['width' => 600, 'height' => 800, 'depth' => 19, 'drillings' => [['x' => 50, 'y' => 50, 'diameter' => 26]], 'material' => ['name' => 'Chêne']]);
+        $stmt = $pdo->prepare('INSERT INTO order_facade_items (order_id, config_data, quantity, unit_price, total_price) VALUES (?, ?, 1, 10, 10) RETURNING id');
+        $stmt->execute([$orderId, $config]);
+        $facadeItemId = (int) $stmt->fetchColumn();
+
+        $response = $this->admin()->get('/backend/api/facades/dxf.php?facade_id=' . $facadeItemId);
+
+        self::assertSame(200, $response->status, $response->body);
+        self::assertSame('application/dxf', $response->contentType());
+        self::assertStringContainsString('facade_' . $facadeItemId . '.dxf', (string) $response->header('Content-Disposition'));
+        self::assertStringStartsWith('  0
+SECTION
+', $response->body);
+        self::assertStringEndsWith('  0
+EOF
+', $response->body);
+        self::assertStringContainsString('CIRCLE', $response->body);
+    }
+
+    public function testWritesRequireAdmin(): void
+    {
+        $this->assertSnapshot('facade-materials.write.unauthorized', $this->client()->post('/backend/api/facade-materials.php', ['name' => 'x', 'color_hex' => '#000']));
+        $this->assertSnapshot('facade-drilling-types.write.unauthorized', $this->client()->post('/backend/api/facade-drilling-types.php', ['name' => 'x']));
+        $this->assertSnapshot('facades.write.unauthorized', $this->client()->post('/backend/api/facades.php', ['name' => 'x', 'width' => 1, 'height' => 1, 'depth' => 1]));
     }
 }

@@ -59,7 +59,9 @@ final class App
     {
         $db = Connection::fromUrl($this->settings->databaseUrl);
         $routes = new RouteCollection();
-        RouteRegistry::register($routes, $this->settings, $db);
+        $admins = RouteRegistry::register($routes, $this->settings, $db);
+        ContentRouteRegistry::register($routes, $this->settings, $db, $admins);
+        CommerceRouteRegistry::register($routes, $this->settings, $db);
         return new Kernel(
             new Router($routes, $legacy),
             new StaticFileHandler($this->settings->paths),

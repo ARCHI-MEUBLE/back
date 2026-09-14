@@ -12,7 +12,6 @@ final class UploadsTest extends ContractTestCase
 
     public function testQuoteRequest(): void
     {
-        $this->skipOnLegacy('quote-request/index.php crashes on an undefined $db (demande-devis page is broken today)');
         $file = $this->pngFile();
         $response = $this->client()->multipart('/backend/api/quote-request/index.php', [
             'first_name' => 'Jean',

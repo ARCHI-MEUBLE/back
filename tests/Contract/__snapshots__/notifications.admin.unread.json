@@ -10,7 +10,7 @@
                         "id": "number",
                         "is_read": "bool",
                         "message": "string",
-                        "related_id": "number",
+                        "related_id": "null",
                         "type": "string"
                     }
                 }
