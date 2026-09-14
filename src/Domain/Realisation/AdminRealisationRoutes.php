@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Realisation;
 
 use App\Domain\Shared\DomainException;
+use App\Domain\Shared\NotFoundException;
 use App\Http\ErrorStyle;
 use App\Http\Guard\AdminGuard;
 use App\Http\Request;
@@ -38,8 +39,11 @@ final class AdminRealisationRoutes
                 }
                 $id = (int) $input['id'];
                 unset($input['id']);
+                if ($this->realisations->findById($id) === null) {
+                    throw new NotFoundException('Réalisation non trouvée');
+                }
                 if (!$this->realisations->update($id, $input)) {
-                    throw new DomainException('Erreur lors de la mise à jour', 500);
+                    throw new DomainException('Aucun champ à mettre à jour');
                 }
                 return Response::json(['success' => true, 'message' => 'Réalisation mise à jour']);
             })
