@@ -1,5 +1,5 @@
 {
-    "status": 500,
+    "status": 400,
     "shape": {
         "object": {
             "error": "string"
