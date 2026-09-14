@@ -8,7 +8,6 @@ use App\Config\Env;
 use App\Config\Settings;
 use App\Db\Connection;
 use App\Http\Kernel;
-use App\Http\LegacyScriptHandler;
 use App\Http\Middleware\CorsMiddleware;
 use App\Http\Middleware\ErrorHandlerMiddleware;
 use App\Http\Middleware\RequestLogMiddleware;
@@ -42,20 +41,15 @@ final class App
     public function run(): void
     {
         $request = Request::fromGlobals();
-        $legacy = new LegacyScriptHandler($this->settings->rootDir);
-        $kernel = $this->kernel($legacy);
-        $response = $kernel->handle($request);
+        $response = $this->kernel()->handle($request);
         if ($response !== null) {
             $response->send();
             return;
         }
-        if ($legacy->handle($request->path)) {
-            return;
-        }
-        Response::json(['success' => false, 'error' => 'Endpoint non trouvé', 'requested' => $legacy->endpoint($request->path)], 404)->send();
+        Response::json(['success' => false, 'error' => 'Endpoint non trouvé', 'requested' => Router::endpoint($request->path) ?? $request->path], 404)->send();
     }
 
-    public function kernel(?LegacyScriptHandler $legacy = null): Kernel
+    public function kernel(): Kernel
     {
         $db = Connection::fromUrl($this->settings->databaseUrl);
         $routes = new RouteCollection();
@@ -68,7 +62,7 @@ final class App
         PaymentRouteRegistry::register($routes, $this->settings, $db, $this->logger);
         CalendlyRouteRegistry::register($routes, $this->settings, $db);
         return new Kernel(
-            new Router($routes, $legacy),
+            new Router($routes),
             new StaticFileHandler($this->settings->paths),
             [
                 new RequestLogMiddleware($this->logger, new SystemClock()),

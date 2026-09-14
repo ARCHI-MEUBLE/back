@@ -15,6 +15,6 @@ final class PythonSettings
     public static function fromEnv(Env $env, string $rootDir): self
     {
         $binary = $env->string('PYTHON_PATH') ?? $env->string('PYTHON_BIN') ?? 'python3';
-        return new self($binary, $rootDir . '/backend/python/procedure_real.py', $env->int('PYTHON_TIMEOUT_SECONDS', 120));
+        return new self($binary, $rootDir . '/python/procedure_real.py', $env->int('PYTHON_TIMEOUT_SECONDS', 120));
     }
 }

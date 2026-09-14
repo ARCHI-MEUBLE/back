@@ -8,7 +8,6 @@ final class Router
 {
     public function __construct(
         private readonly RouteCollection $routes,
-        private readonly ?LegacyScriptHandler $legacy = null,
     ) {}
 
     public static function endpoint(string $path): ?string
@@ -40,9 +39,6 @@ final class Router
             }
         }
         if ($best === null) {
-            return null;
-        }
-        if ($this->legacy !== null && $this->legacy->specificity($endpoint) > strlen($best)) {
             return null;
         }
         $rest = substr($endpoint, strlen($best));

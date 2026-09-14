@@ -47,7 +47,7 @@ final class ConfigurationDxfRoutes
                 return $found;
             }
         }
-        $fallback = $this->rootDir . '/backend/python/pieces/piece_general.dxf';
+        $fallback = $this->rootDir . '/python/pieces/piece_general.dxf';
         if (!is_file($fallback)) {
             throw new NotFoundException('DXF file not found. Please regenerate the configuration.');
         }
