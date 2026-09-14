@@ -47,8 +47,9 @@ final class DbSeeder
             'France',
         ]);
         $pdo->exec("SELECT setval('customers_id_seq', 1)");
-        $insertAdmin = $pdo->prepare('INSERT INTO admins (username, password, email) VALUES (?, ?, ?)');
-        $insertAdmin->execute(['admin-test', password_hash(self::ADMIN_PASSWORD, PASSWORD_BCRYPT), self::ADMIN_EMAIL]);
+        $insertAdmin = $pdo->prepare('INSERT INTO admins (username, password, password_hash, email) VALUES (?, ?, ?, ?)');
+        $hash = password_hash(self::ADMIN_PASSWORD, PASSWORD_BCRYPT);
+        $insertAdmin->execute(['admin-test', $hash, $hash, self::ADMIN_EMAIL]);
         $insertUser = $pdo->prepare('INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)');
         $insertUser->execute(['u-1', self::USER_EMAIL, password_hash(self::USER_PASSWORD, PASSWORD_BCRYPT), 'Legacy User']);
     }

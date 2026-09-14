@@ -14,6 +14,7 @@ final class Settings
         public readonly CorsSettings $cors,
         public readonly SessionSettings $session,
         public readonly PathSettings $paths,
+        public readonly string $backupApiKey,
     ) {}
 
     public static function fromEnv(Env $env, string $rootDir): self
@@ -28,6 +29,7 @@ final class Settings
             CorsSettings::fromEnv($env, $frontendUrl),
             SessionSettings::fromEnv($env),
             PathSettings::fromEnv($env, $rootDir),
+            $env->string('BACKUP_API_KEY', '') ?? '',
         );
     }
 

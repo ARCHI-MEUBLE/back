@@ -6,6 +6,18 @@ namespace App;
 
 use App\Config\Env;
 use App\Config\Settings;
+use App\Db\Connection;
+use App\Domain\Admin\AdminAccountsRoutes;
+use App\Domain\Admin\AdminAccountsService;
+use App\Domain\Admin\AdminAuthRoutes;
+use App\Domain\Admin\AdminAuthService;
+use App\Domain\Admin\AdminRepository;
+use App\Domain\Auth\LegacyAuthRoutes;
+use App\Domain\Auth\LegacyAuthService;
+use App\Domain\Auth\LegacyUserRepository;
+use App\Domain\Auth\LegacyUsersAdminRoutes;
+use App\Domain\Auth\LegacyUsersAdminService;
+use App\Domain\System\AdminCreationRoutes;
 use App\Domain\System\SystemRoutes;
 use App\Http\Kernel;
 use App\Http\LegacyScriptHandler;
@@ -43,7 +55,7 @@ final class App
     {
         $request = Request::fromGlobals();
         $legacy = new LegacyScriptHandler($this->settings->rootDir);
-        $kernel = $this->kernel();
+        $kernel = $this->kernel($legacy);
         $response = $kernel->handle($request);
         if ($response !== null) {
             $response->send();
@@ -55,12 +67,21 @@ final class App
         Response::json(['success' => false, 'error' => 'Endpoint non trouvé', 'requested' => $legacy->endpoint($request->path)], 404)->send();
     }
 
-    public function kernel(): Kernel
+    public function kernel(?LegacyScriptHandler $legacy = null): Kernel
     {
+        $db = Connection::fromUrl($this->settings->databaseUrl);
+        $admins = new AdminRepository($db);
+        $legacyUsers = new LegacyUserRepository($db);
+        $rateLimiter = new \App\Infrastructure\RateLimit\RateLimiter($db);
         $routes = new RouteCollection();
         (new SystemRoutes(new SystemClock()))->register($routes);
+        (new AdminCreationRoutes($admins, $this->settings->backupApiKey))->register($routes);
+        (new AdminAuthRoutes(new AdminAuthService($admins, $rateLimiter)))->register($routes);
+        (new AdminAccountsRoutes(new AdminAccountsService($db, $admins)))->register($routes);
+        (new LegacyAuthRoutes(new LegacyAuthService($legacyUsers)))->register($routes);
+        (new LegacyUsersAdminRoutes(new LegacyUsersAdminService($legacyUsers, $admins)))->register($routes);
         return new Kernel(
-            new Router($routes),
+            new Router($routes, $legacy),
             new StaticFileHandler($this->settings->paths),
             [
                 new RequestLogMiddleware($this->logger, new SystemClock()),

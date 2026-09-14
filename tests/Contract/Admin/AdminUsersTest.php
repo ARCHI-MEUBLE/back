@@ -19,11 +19,11 @@ final class AdminUsersTest extends ContractTestCase
         $statement->execute([$email]);
         $id = (int) $statement->fetchColumn();
         $admin = $this->admin();
-        $this->assertSnapshot('admin.users.password', $admin->put('/backend/api/admin-users.php', ['id' => $id, 'type' => 'customer', 'newPassword' => 'Reset#2026']));
+        $this->assertSnapshot('admin.users.password', $admin->put('/backend/api/admin-users.php', ['id' => $id, 'type' => 'user', 'newPassword' => 'Reset#2026']));
         $this->assertSnapshot('admin.users.password.login-after', $this->client()->post('/backend/api/customers/login.php', ['email' => $email, 'password' => 'Reset#2026']));
         $this->assertSnapshot('admin.users.password.invalid', $admin->put('/backend/api/admin-users.php', ['id' => $id]));
-        $this->assertSnapshot('admin.users.delete', $admin->delete('/backend/api/admin-users.php', ['id' => $id, 'type' => 'customer']));
-        $this->assertSnapshot('admin.users.delete.missing', $admin->delete('/backend/api/admin-users.php', ['id' => $id, 'type' => 'customer']));
+        $this->assertSnapshot('admin.users.delete', $admin->delete('/backend/api/admin-users.php', ['id' => $id, 'type' => 'user']));
+        $this->assertSnapshot('admin.users.delete.missing', $admin->delete('/backend/api/admin-users.php', ['id' => $id, 'type' => 'user']));
     }
 
     public function testUsersApiForm(): void
