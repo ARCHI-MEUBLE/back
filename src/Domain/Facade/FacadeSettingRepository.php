@@ -15,6 +15,11 @@ final class FacadeSettingRepository
         return $this->db->query('SELECT * FROM facade_settings ORDER BY setting_key');
     }
 
+    public function findByKey(string $key): ?array
+    {
+        return $this->db->queryOne('SELECT * FROM facade_settings WHERE setting_key = ?', [$key]);
+    }
+
     public function updateValue(string $key, string $value): void
     {
         $this->db->execute('UPDATE facade_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE setting_key = ?', [$value, $key]);
