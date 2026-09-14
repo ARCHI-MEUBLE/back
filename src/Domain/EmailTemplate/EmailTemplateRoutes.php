@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\EmailTemplate;
 
 use App\Domain\Shared\DomainException;
+use App\Domain\Shared\NotFoundException;
 use App\Http\Guard\AdminGuard;
 use App\Http\Request;
 use App\Http\Response;
@@ -28,6 +29,9 @@ final class EmailTemplateRoutes
                 $data = $r->json();
                 if (!isset($data['id'])) {
                     throw new DomainException('ID du template manquant');
+                }
+                if ($this->templates->findById((int) $data['id']) === null) {
+                    throw new NotFoundException('Template non trouvé');
                 }
                 $this->templates->update((int) $data['id'], $data);
                 return Response::json(['success' => true, 'message' => 'Template mis à jour avec succès']);
