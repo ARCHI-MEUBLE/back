@@ -46,6 +46,9 @@ final class FacadeDrillingTypeRoutes
         }, $admin);
 
         $script->put('/{id}', function (Request $r): Response {
+            if ($this->types->findById((int) $r->param('id')) === null) {
+                throw new NotFoundException('Type de perçage non trouvé');
+            }
             $data = $r->json();
             $columns = [];
             foreach (['name', 'description', 'icon_svg', 'price', 'is_active'] as $field) {
@@ -64,6 +67,9 @@ final class FacadeDrillingTypeRoutes
             $id = $r->param('id') ?? $r->queryString('id');
             if ($id === null) {
                 throw new DomainException('ID manquant');
+            }
+            if ($this->types->findById((int) $id) === null) {
+                throw new NotFoundException('Type de perçage non trouvé');
             }
             $this->types->delete((int) $id);
             return Response::json(['success' => true, 'message' => 'Type de perçage supprimé']);

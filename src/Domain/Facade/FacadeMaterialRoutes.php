@@ -44,6 +44,9 @@ final class FacadeMaterialRoutes
         }, $admin);
 
         $script->put('/{id}', function (Request $r): Response {
+            if ($this->materials->findById((int) $r->param('id')) === null) {
+                throw new NotFoundException('Matériau non trouvé');
+            }
             $data = $r->json();
             [$colorHex, $textureUrl] = FacadeMaterialInput::colorAndTexture($data);
             $columns = ['color_hex' => $colorHex, 'texture_url' => $textureUrl];
@@ -66,6 +69,9 @@ final class FacadeMaterialRoutes
             $id = $r->param('id') ?? $r->queryString('id');
             if ($id === null) {
                 throw new DomainException('ID manquant');
+            }
+            if ($this->materials->findById((int) $id) === null) {
+                throw new NotFoundException('Matériau non trouvé');
             }
             $this->materials->delete((int) $id);
             return Response::json(['success' => true, 'message' => 'Matériau supprimé']);
