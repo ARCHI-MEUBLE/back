@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
+use App\Db\Connection;
+use App\Db\Migrator;
 use PDO;
 use RuntimeException;
 
@@ -21,23 +23,11 @@ final class DbSeeder
         $pdo = DatabaseUrl::connect($databaseUrl);
         $pdo->exec('DROP SCHEMA public CASCADE');
         $pdo->exec('CREATE SCHEMA public');
-        foreach (self::schemaFiles($root) as $file) {
-            $pdo->exec(self::read($file));
-        }
-        $pdo->exec('ALTER TABLE cart_items DROP CONSTRAINT IF EXISTS cart_items_configuration_id_fkey');
-        $pdo->exec('ALTER TABLE order_items DROP CONSTRAINT IF EXISTS order_items_configuration_id_fkey');
+        (new Migrator(new Connection($pdo), $root . '/src/Db/migrations'))->migrate();
         self::seedAccounts($pdo);
         $pdo->exec(self::read($root . '/tests/Fixtures/seed.sql'));
     }
 
-    private static function schemaFiles(string $root): array
-    {
-        $schema = getenv('CONTRACT_SCHEMA');
-        if (is_string($schema) && $schema !== '') {
-            return array_map(static fn(string $file): string => $root . '/' . trim($file), explode(',', $schema));
-        }
-        return [$root . '/backend/config/email_templates.sql', $root . '/init_db.sql'];
-    }
 
     private static function seedAccounts(PDO $pdo): void
     {

@@ -39,19 +39,12 @@ while ! psql "$DATABASE_URL" -c "SELECT 1" > /dev/null 2>&1; do
 done
 echo "PostgreSQL is ready"
 
-# Initialiser le schéma de base
+# Appliquer les migrations versionnées (src/Db/migrations)
 echo ""
-echo "Initializing database schema..."
-psql "$DATABASE_URL" -f /app/init_db.sql 2>&1 || echo "WARNING: Some schema initialization errors (may be normal if tables exist)"
-echo "Database schema initialized"
-
-# Vérifier que toutes les tables existent avec le script Python
-echo ""
-echo "Ensuring all tables exist with Python..."
-if python3 /app/create_missing_tables.py; then
-    echo "Tables verified successfully"
-else
-    echo "Table verification script failed (non-fatal, continuing...)"
+echo "Applying database migrations..."
+if ! php /app/bin/console migrate; then
+    echo "ERROR: database migrations failed, aborting startup"
+    exit 1
 fi
 
 # Installer le cron de backup automatique

@@ -1,9 +1,37 @@
--- =============================================================================
--- ArchiMeuble - Initialisation PostgreSQL COMPLETE (47 tables)
--- Ce fichier cree le schema de base de donnees complet
--- Les definitions correspondent EXACTEMENT a celles de Database.php
--- Ordre: tables sans FK d'abord, puis tables avec FK dans l'ordre des dependances
--- =============================================================================
+-- 0001 baseline: consolidated schema of the ArchiMeuble backend (47 tables)
+-- Every statement is idempotent so it can run on an existing production database.
+
+CREATE TABLE IF NOT EXISTS email_templates (
+    id SERIAL PRIMARY KEY,
+    template_name TEXT UNIQUE NOT NULL,
+    subject TEXT NOT NULL,
+    header_text TEXT,
+    footer_text TEXT,
+    show_logo BOOLEAN DEFAULT TRUE,
+    show_gallery BOOLEAN DEFAULT TRUE,
+    gallery_images TEXT,
+    custom_css TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+ALTER TABLE email_templates ADD COLUMN IF NOT EXISTS template_name TEXT;
+ALTER TABLE email_templates ADD COLUMN IF NOT EXISTS header_text TEXT;
+ALTER TABLE email_templates ADD COLUMN IF NOT EXISTS footer_text TEXT;
+ALTER TABLE email_templates ADD COLUMN IF NOT EXISTS show_logo BOOLEAN DEFAULT TRUE;
+ALTER TABLE email_templates ADD COLUMN IF NOT EXISTS show_gallery BOOLEAN DEFAULT TRUE;
+ALTER TABLE email_templates ADD COLUMN IF NOT EXISTS gallery_images TEXT;
+ALTER TABLE email_templates ADD COLUMN IF NOT EXISTS custom_css TEXT;
+ALTER TABLE email_templates ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+DO $$ BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'email_templates' AND column_name = 'name') THEN
+        ALTER TABLE email_templates ALTER COLUMN name DROP NOT NULL;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'email_templates' AND column_name = 'body') THEN
+        ALTER TABLE email_templates ALTER COLUMN body DROP NOT NULL;
+    END IF;
+END $$;
+CREATE UNIQUE INDEX IF NOT EXISTS email_templates_template_name_key ON email_templates (template_name);
 
 -- Supprimer les cles etrangeres invalides si elles existent
 DO $$ BEGIN
@@ -866,3 +894,21 @@ ON CONFLICT DO NOTHING;
 SELECT setval('sample_types_id_seq', (SELECT COALESCE(MAX(id), 0) FROM sample_types));
 SELECT setval('sample_colors_id_seq', (SELECT COALESCE(MAX(id), 0) FROM sample_colors));
 SELECT setval('admins_id_seq', (SELECT COALESCE(MAX(id), 0) FROM admins));
+
+-- Columns added at runtime by legacy code (create_missing_tables.py, send_reminders.php)
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS category TEXT;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS related_id INTEGER;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS related_type TEXT;
+ALTER TABLE calendly_appointments ADD COLUMN IF NOT EXISTS reminder_24h_sent BOOLEAN DEFAULT FALSE;
+ALTER TABLE calendly_appointments ADD COLUMN IF NOT EXISTS reminder_1h_sent BOOLEAN DEFAULT FALSE;
+
+-- The application stores configurations in "configurations"; these constraints pointed at the unused "saved_configurations"
+ALTER TABLE cart_items DROP CONSTRAINT IF EXISTS cart_items_configuration_id_fkey;
+ALTER TABLE order_items DROP CONSTRAINT IF EXISTS order_items_configuration_id_fkey;
+
+INSERT INTO email_templates (template_name, subject, header_text, footer_text, gallery_images) VALUES
+('confirmation', 'Confirmation de votre rendez-vous ArchiMeuble', '✓ Rendez-vous confirmé', 'ArchiMeuble - Meubles sur mesure', '["biblio.jpg", "buffet.jpg", "dressing.jpg"]'),
+('reminder_24h', 'Rappel : Votre rendez-vous ArchiMeuble demain', '⏰ Rendez-vous demain !', 'ArchiMeuble - Meubles sur mesure', '["biblio.jpg", "buffet.jpg", "dressing.jpg"]'),
+('reminder_1h', 'Votre rendez-vous ArchiMeuble dans 1h', '⏰ Rendez-vous dans 1h !', 'ArchiMeuble - Meubles sur mesure', '[]'),
+('admin_notification', 'Nouveau RDV Calendly - ArchiMeuble', 'Nouveau Rendez-vous ArchiMeuble', '', '[]')
+ON CONFLICT DO NOTHING;

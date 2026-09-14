@@ -21,6 +21,8 @@
                         "id": "number",
                         "meeting_url": "null",
                         "phone_number": "null",
+                        "reminder_1h_sent": "bool",
+                        "reminder_24h_sent": "bool",
                         "start_time": "string",
                         "status": "string",
                         "timezone": "string",

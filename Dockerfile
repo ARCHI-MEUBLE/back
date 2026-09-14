@@ -84,18 +84,14 @@ RUN composer install --no-dev --no-interaction --no-progress --prefer-dist --opt
 # Créer les dossiers nécessaires
 RUN mkdir -p /app/uploads \
     && mkdir -p /app/models \
-    && mkdir -p /app/database \
     && chmod -R 777 /app
 
 # S'assurer que les scripts sont exécutables et avec des fins de ligne Unix
 RUN cp /app/backup-database.sh /usr/local/bin/backup-database.sh \
     && sed -i 's/\r$//' /usr/local/bin/backup-database.sh \
     && sed -i 's/\r$//' /app/start.sh \
-    && sed -i 's/\r$//' /app/init_db.sql \
-    && sed -i 's/\r$//' /app/create_missing_tables.py \
     && chmod +x /usr/local/bin/backup-database.sh \
-    && chmod +x /app/start.sh \
-    && chmod +x /app/create_missing_tables.py
+    && chmod +x /app/start.sh
 
 # Exposer le port 8080 pour le serveur PHP (Railway utilise 8080)
 EXPOSE 8080

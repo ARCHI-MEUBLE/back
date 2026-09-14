@@ -1,0 +1,23 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Config\Env;
+use App\Config\Settings;
+use App\Console\MigrateCommand;
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+$root = dirname(__DIR__);
+$command = $argv[1] ?? 'help';
+$settings = Settings::fromEnv(Env::load($root . '/.env'), $root);
+
+$exitCode = match ($command) {
+    'migrate', 'migrate:status' => (new MigrateCommand($settings))->run($command),
+    default => (static function () use ($command): int {
+        fwrite(STDERR, sprintf("Unknown command %s. Available: migrate, migrate:status\n", $command));
+        return 1;
+    })(),
+};
+
+exit($exitCode);

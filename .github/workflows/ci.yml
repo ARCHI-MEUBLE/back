@@ -39,7 +39,7 @@ jobs:
       - name: Lint legacy PHP
         run: |
           set -e
-          for file in $(find backend router.php -name "*.php"); do php -l "$file" > /dev/null; done
+          for file in $(find backend -name "*.php"); do php -l "$file" > /dev/null; done
 
       - name: Check
         run: composer check

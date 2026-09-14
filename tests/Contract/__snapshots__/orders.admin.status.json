@@ -1,8 +1,12 @@
 {
-    "status": 500,
+    "status": 200,
     "shape": {
         "object": {
-            "error": "string"
+            "message": "string",
+            "new_status": "string",
+            "old_status": "string",
+            "order_id": "number",
+            "success": "bool"
         }
     }
 }
