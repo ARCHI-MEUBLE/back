@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Category;
 
+use App\Domain\Shared\ConflictException;
 use App\Domain\Shared\DomainException;
 use App\Domain\Shared\NotFoundException;
 
@@ -29,7 +30,7 @@ final class CategoryService
     {
         $id = $this->categories->create($name, $slug ?? CategorySlug::fromName($name), $description, $imageUrl, $displayOrder, $isActive);
         if ($id === null) {
-            throw new DomainException('Erreur lors de la création de la catégorie', 500);
+            throw new ConflictException('Une catégorie avec ce nom ou cet identifiant existe déjà');
         }
         return (array) $this->categories->findById($id);
     }
@@ -39,8 +40,11 @@ final class CategoryService
         if ($data === []) {
             throw new DomainException('Aucune donnée à mettre à jour');
         }
+        if ($this->categories->findById($id) === null) {
+            throw new NotFoundException('Catégorie non trouvée');
+        }
         if (!$this->categories->update($id, $data)) {
-            throw new DomainException('Erreur lors de la mise à jour de la catégorie', 500);
+            throw new ConflictException('Une catégorie avec ce nom ou cet identifiant existe déjà');
         }
         return (array) $this->categories->findById($id);
     }
@@ -52,8 +56,11 @@ final class CategoryService
 
     public function delete(int $id): void
     {
+        if ($this->categories->findById($id) === null) {
+            throw new NotFoundException('Catégorie non trouvée');
+        }
         if (!$this->categories->delete($id)) {
-            throw new DomainException('Erreur lors de la suppression de la catégorie', 500);
+            throw new ConflictException('Impossible de supprimer : cette catégorie est utilisée par un ou plusieurs modèles');
         }
     }
 }

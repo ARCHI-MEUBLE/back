@@ -6,6 +6,7 @@ namespace App\Domain\Payment;
 
 use App\Db\Connection;
 use App\Domain\Shared\DomainException;
+use App\Domain\Shared\NotFoundException;
 
 final class PaymentStrategyRepository
 {
@@ -16,20 +17,20 @@ final class PaymentStrategyRepository
     public function update(int $orderId, string $strategy, float $depositPercentage): void
     {
         if (!in_array($strategy, self::STRATEGIES, true)) {
-            throw new DomainException('Stratégie de paiement invalide', 500);
+            throw new DomainException('Stratégie de paiement invalide');
         }
         $order = $this->db->queryOne('SELECT * FROM orders WHERE id = ?', [$orderId]);
         if ($order === null) {
-            throw new DomainException('Commande introuvable', 500);
+            throw new NotFoundException('Commande introuvable');
         }
         if (($order['deposit_payment_status'] ?? '') === 'paid' || ($order['payment_status'] ?? '') === 'paid') {
-            throw new DomainException('Impossible de modifier la stratégie après un paiement', 500);
+            throw new DomainException('Impossible de modifier la stratégie après un paiement');
         }
         $depositAmount = 0.0;
         $remainingAmount = (float) ($order['total_amount'] ?? $order['total'] ?? 0);
         if ($strategy === 'deposit') {
             if ($depositPercentage <= 0 || $depositPercentage >= 100) {
-                throw new DomainException("Le pourcentage d'acompte doit être entre 1 et 99", 500);
+                throw new DomainException("Le pourcentage d'acompte doit être entre 1 et 99");
             }
             [$depositAmount, $remainingAmount] = $this->depositSplit($orderId, $depositPercentage, $remainingAmount);
         }
