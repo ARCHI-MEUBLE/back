@@ -8,8 +8,22 @@ on:
 
 jobs:
   check:
-    name: Static analysis, style, rules and unit tests
+    name: Static analysis, style, rules, unit and contract tests
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: archimeuble
+          POSTGRES_PASSWORD: archimeuble_dev
+          POSTGRES_DB: archimeuble_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U archimeuble -d archimeuble_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
 
@@ -29,6 +43,9 @@ jobs:
 
       - name: Check
         run: composer check
+
+      - name: Contract tests
+        run: composer test:contract
 
   docker:
     name: Docker image builds

@@ -1,0 +1,11 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "message": "string",
+            "output": "string",
+            "success": "bool",
+            "timestamp": "string"
+        }
+    }
+}

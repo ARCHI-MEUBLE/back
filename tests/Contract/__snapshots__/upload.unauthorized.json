@@ -1,0 +1,15 @@
+{
+    "status": 401,
+    "shape": {
+        "object": {
+            "debug": {
+                "object": {
+                    "has_admin_email": "bool",
+                    "has_is_admin": "bool",
+                    "session_id": "string"
+                }
+            },
+            "error": "string"
+        }
+    }
+}

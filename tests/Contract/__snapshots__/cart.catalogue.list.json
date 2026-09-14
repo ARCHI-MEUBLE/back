@@ -1,0 +1,24 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "items": {
+                "list": {
+                    "object": {
+                        "catalogue_item_id": "number",
+                        "id": "number",
+                        "item_image": "string",
+                        "name": "string",
+                        "quantity": "number",
+                        "unit": "string",
+                        "unit_price": "string",
+                        "variation_id": "number",
+                        "variation_image": "string",
+                        "variation_name": "string"
+                    }
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

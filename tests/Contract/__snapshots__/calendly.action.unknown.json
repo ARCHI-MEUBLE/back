@@ -1,0 +1,8 @@
+{
+    "status": 400,
+    "shape": {
+        "object": {
+            "error": "string"
+        }
+    }
+}

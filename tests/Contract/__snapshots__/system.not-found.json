@@ -1,0 +1,10 @@
+{
+    "status": 404,
+    "shape": {
+        "object": {
+            "error": "string",
+            "requested": "string",
+            "success": "bool"
+        }
+    }
+}

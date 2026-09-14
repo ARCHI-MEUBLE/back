@@ -1,0 +1,104 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "materials": {
+                "object": {
+                    "Agglomere": {
+                        "list": {
+                            "object": {
+                                "active": "bool",
+                                "colors": {
+                                    "list": {
+                                        "object": {
+                                            "active": "bool",
+                                            "created_at": "string",
+                                            "hex": "string",
+                                            "id": "number",
+                                            "image_url": "null",
+                                            "name": "string",
+                                            "position": "number",
+                                            "price_per_m2": "string",
+                                            "type_id": "number",
+                                            "unit_price": "string",
+                                            "updated_at": "string"
+                                        }
+                                    }
+                                },
+                                "description": {
+                                    "union": [
+                                        "null",
+                                        "string"
+                                    ]
+                                },
+                                "id": "number",
+                                "material": "string",
+                                "name": "string",
+                                "position": "number"
+                            }
+                        }
+                    },
+                    "MDF + revetement (melamine)": {
+                        "list": {
+                            "object": {
+                                "active": "bool",
+                                "colors": {
+                                    "list": {
+                                        "object": {
+                                            "active": "bool",
+                                            "created_at": "string",
+                                            "hex": "string",
+                                            "id": "number",
+                                            "image_url": "null",
+                                            "name": "string",
+                                            "position": "number",
+                                            "price_per_m2": "string",
+                                            "type_id": "number",
+                                            "unit_price": "string",
+                                            "updated_at": "string"
+                                        }
+                                    }
+                                },
+                                "description": "null",
+                                "id": "number",
+                                "material": "string",
+                                "name": "string",
+                                "position": "number"
+                            }
+                        }
+                    },
+                    "Plaque bois": {
+                        "list": {
+                            "object": {
+                                "active": "bool",
+                                "colors": {
+                                    "list": {
+                                        "object": {
+                                            "active": "bool",
+                                            "created_at": "string",
+                                            "hex": "string",
+                                            "id": "number",
+                                            "image_url": "null",
+                                            "name": "string",
+                                            "position": "number",
+                                            "price_per_m2": "string",
+                                            "type_id": "number",
+                                            "unit_price": "string",
+                                            "updated_at": "string"
+                                        }
+                                    }
+                                },
+                                "description": "null",
+                                "id": "number",
+                                "material": "string",
+                                "name": "string",
+                                "position": "number"
+                            }
+                        }
+                    }
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

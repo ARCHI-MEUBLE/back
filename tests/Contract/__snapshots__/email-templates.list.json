@@ -1,0 +1,29 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "success": "bool",
+            "templates": {
+                "list": {
+                    "object": {
+                        "created_at": "string",
+                        "custom_css": "null",
+                        "footer_text": "string",
+                        "gallery_images": "string",
+                        "gallery_images_array": {
+                            "list": "string"
+                        },
+                        "header_text": "string",
+                        "id": "number",
+                        "is_active": "bool",
+                        "show_gallery": "bool",
+                        "show_logo": "bool",
+                        "subject": "string",
+                        "template_name": "string",
+                        "updated_at": "string"
+                    }
+                }
+            }
+        }
+    }
+}

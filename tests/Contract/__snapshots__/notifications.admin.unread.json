@@ -1,0 +1,21 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "notifications": {
+                "list": {
+                    "object": {
+                        "admin_id": "number",
+                        "created_at": "string",
+                        "id": "number",
+                        "is_read": "bool",
+                        "message": "string",
+                        "related_id": "number",
+                        "type": "string"
+                    }
+                }
+            },
+            "unread_count": "number"
+        }
+    }
+}

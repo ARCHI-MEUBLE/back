@@ -1,0 +1,30 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "average_order_value": "number",
+            "failed_payments": "number",
+            "payment_methods_distribution": {
+                "list": {
+                    "object": {
+                        "count": "number",
+                        "method": "string",
+                        "percentage": "number"
+                    }
+                }
+            },
+            "pending_payments": "number",
+            "revenue_by_month": {
+                "list": {
+                    "object": {
+                        "month": "string",
+                        "revenue": "number"
+                    }
+                }
+            },
+            "successful_payments": "number",
+            "total_orders": "number",
+            "total_revenue": "number"
+        }
+    }
+}

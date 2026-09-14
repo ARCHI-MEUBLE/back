@@ -1,0 +1,37 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "appointments": {
+                "list": {
+                    "object": {
+                        "additional_notes": "null",
+                        "calendly_event_id": "string",
+                        "client_email": "string",
+                        "client_name": "string",
+                        "config_url": "null",
+                        "confirmation_sent": "bool",
+                        "created_at": "string",
+                        "end_time": "string",
+                        "event_type": "string",
+                        "formatted_date": "string",
+                        "formatted_end": "string",
+                        "formatted_start": "string",
+                        "formatted_time": "string",
+                        "id": "number",
+                        "meeting_url": "null",
+                        "phone_number": "null",
+                        "start_time": "string",
+                        "status": "string",
+                        "timezone": "string",
+                        "updated_at": "string"
+                    }
+                }
+            },
+            "limit": "number",
+            "offset": "number",
+            "success": "bool",
+            "total": "number"
+        }
+    }
+}
