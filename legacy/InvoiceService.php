@@ -4,7 +4,7 @@
  * Génère des factures au format PDF pour les commandes payées
  */
 
-require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 class InvoiceService {
     private $companyName = 'ArchiMeuble';
@@ -25,7 +25,7 @@ class InvoiceService {
         $prompt = $item['prompt'] ?? '';
         // Chercher le nom du modèle dans la table models
         try {
-            require_once __DIR__ . '/../core/Database.php';
+            require_once __DIR__ . '/Database.php';
             $db = Database::getInstance();
             $models = $db->query("SELECT name, prompt FROM models ORDER BY id");
             foreach ($models as $model) {
@@ -65,7 +65,7 @@ class InvoiceService {
         $filename = "facture_{$invoiceNumber}{$suffix}.pdf";
 
         // Utiliser /data/invoices pour Railway (volume persistant)
-        $invoicesDir = file_exists('/data') ? '/data/invoices' : __DIR__ . '/../../invoices';
+        $invoicesDir = file_exists('/data') ? '/data/invoices' : __DIR__ . '/../invoices';
         $filepath = $invoicesDir . '/' . $filename;
 
         // Créer le dossier invoices s'il n'existe pas

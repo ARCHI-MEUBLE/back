@@ -15,7 +15,7 @@ final class LegacyInvoiceGateway
 
     private function client(): \InvoiceService
     {
-        require_once $this->rootDir . '/backend/services/InvoiceService.php';
+        require_once $this->rootDir . '/legacy/InvoiceService.php';
         return new \InvoiceService();
     }
 }

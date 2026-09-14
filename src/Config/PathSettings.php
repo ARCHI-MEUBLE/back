@@ -13,6 +13,7 @@ final class PathSettings
         public readonly string $texturesDir,
         public readonly string $emailAssetsDir,
         public readonly string $legacyUploadsDir,
+        public readonly string $backupsDir,
     ) {}
 
     public static function fromEnv(Env $env, string $rootDir): self
@@ -20,13 +21,15 @@ final class PathSettings
         $dataDir = is_dir('/data') ? '/data' : null;
         $models = $env->string('MODELS_DIR') ?? $env->string('OUTPUT_DIR') ?? ($dataDir === null ? $rootDir . '/storage/models' : $dataDir . '/models');
         $uploads = $env->string('UPLOADS_DIR') ?? ($dataDir === null ? $rootDir . '/storage/uploads' : $dataDir . '/uploads');
+        $backups = $dataDir === null ? $rootDir . '/storage/backups' : $dataDir . '/backups';
         return new self(
             $rootDir,
             rtrim($models, '/'),
             rtrim($uploads, '/'),
             rtrim($env->string('TEXTURES_DIR') ?? $rootDir . '/assets/textures', '/'),
-            $rootDir . '/backend/api/calendly/assets',
+            $rootDir . '/legacy/calendly/assets',
             $rootDir . '/backend/uploads',
+            rtrim($backups, '/'),
         );
     }
 }

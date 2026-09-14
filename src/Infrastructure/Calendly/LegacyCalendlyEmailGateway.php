@@ -25,7 +25,7 @@ final class LegacyCalendlyEmailGateway
 
     private function client(): \CalendlyEmailService
     {
-        require_once $this->rootDir . '/backend/api/calendly/EmailService.php';
+        require_once $this->rootDir . '/legacy/calendly/EmailService.php';
         return new \CalendlyEmailService();
     }
 }
