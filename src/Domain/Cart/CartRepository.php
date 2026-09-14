@@ -6,6 +6,7 @@ namespace App\Domain\Cart;
 
 use App\Db\Connection;
 use App\Domain\Shared\DomainException;
+use App\Domain\Shared\NotFoundException;
 
 final class CartRepository
 {
@@ -62,10 +63,10 @@ final class CartRepository
     {
         $config = $this->db->queryOne('SELECT status FROM configurations WHERE id = ?', [$configurationId]);
         if ($config === null) {
-            throw new DomainException('Configuration introuvable', 500);
+            throw new NotFoundException('Configuration introuvable');
         }
         if ($config['status'] !== 'validee') {
-            throw new DomainException("Cette configuration doit être validée par un menuisier avant d'être ajoutée au panier.", 500);
+            throw new DomainException("Cette configuration doit être validée par un menuisier avant d'être ajoutée au panier.");
         }
         $existing = $this->db->queryOne(
             'SELECT id, quantity FROM cart_items WHERE customer_id = ? AND configuration_id = ?',
