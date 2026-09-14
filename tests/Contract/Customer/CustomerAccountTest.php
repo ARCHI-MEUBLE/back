@@ -52,7 +52,6 @@ final class CustomerAccountTest extends ContractTestCase
 
     public function testProfileEndpointUsedByTheFront(): void
     {
-        $this->skipOnLegacy('PUT customers/profile.php is called by CustomerContext.updateProfile but no script exists');
         $client = Accounts::registerVerifiedCustomer($this->client(), Accounts::uniqueEmail('profile'), 'Profile#2026');
         $response = $client->put('/backend/api/customers/profile.php', ['first_name' => 'Via', 'last_name' => 'Profile', 'city' => 'Roubaix']);
 
@@ -63,7 +62,6 @@ final class CustomerAccountTest extends ContractTestCase
     public function testChangePassword(): void
     {
         $this->assertSnapshot('customer.change-password.unauthorized', $this->client()->put('/backend/api/customers/change-password.php', ['current_password' => 'a', 'new_password' => 'b']));
-        $this->skipOnLegacy('customers/change-password.php reads a password column that does not exist');
         $email = Accounts::uniqueEmail('mdp');
         $client = Accounts::registerVerifiedCustomer($this->client(), $email, 'Ancien#2026');
         $this->assertSnapshot('customer.change-password.wrong', $client->put('/backend/api/customers/change-password.php', ['current_password' => 'faux', 'new_password' => 'Nouveau#2026']));
@@ -74,7 +72,6 @@ final class CustomerAccountTest extends ContractTestCase
     public function testAccountPassword(): void
     {
         $this->assertSnapshot('account.password.unauthorized', $this->client()->put('/backend/api/account/password.php', ['currentPassword' => 'a', 'newPassword' => 'b']));
-        $this->skipOnLegacy('account/password.php reads a password column that does not exist');
         $email = Accounts::uniqueEmail('acc');
         $client = Accounts::registerVerifiedCustomer($this->client(), $email, 'Ancien#2026');
         $this->assertSnapshot('account.password.wrong', $client->put('/backend/api/account/password.php', ['currentPassword' => 'faux', 'newPassword' => 'Nouveau#2026']));

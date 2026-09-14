@@ -11,6 +11,7 @@ parameters:
     treatPhpDocTypesAsCertain: false
     scanFiles:
         - backend/core/Session.php
+        - backend/services/EmailService.php
     reportUnmatchedIgnoredErrors: false
     tmpDir: .phpstan.cache
     ignoreErrors:

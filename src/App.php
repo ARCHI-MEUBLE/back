@@ -17,6 +17,12 @@ use App\Domain\Auth\LegacyAuthService;
 use App\Domain\Auth\LegacyUserRepository;
 use App\Domain\Auth\LegacyUsersAdminRoutes;
 use App\Domain\Auth\LegacyUsersAdminService;
+use App\Domain\Customer\CustomerAuthRoutes;
+use App\Domain\Customer\CustomerAuthService;
+use App\Domain\Customer\CustomerProfileRoutes;
+use App\Domain\Customer\CustomerProfileService;
+use App\Domain\Customer\CustomerRepository;
+use App\Domain\Customer\CustomerVerificationRepository;
 use App\Domain\System\AdminCreationRoutes;
 use App\Domain\System\SystemRoutes;
 use App\Http\Kernel;
@@ -32,6 +38,7 @@ use App\Http\RouteCollection;
 use App\Http\Router;
 use App\Http\Runtime;
 use App\Http\StaticFileHandler;
+use App\Infrastructure\Mail\LegacyEmailGateway;
 use App\Lib\Logger;
 use App\Lib\SystemClock;
 
@@ -80,6 +87,11 @@ final class App
         (new AdminAccountsRoutes(new AdminAccountsService($db, $admins)))->register($routes);
         (new LegacyAuthRoutes(new LegacyAuthService($legacyUsers)))->register($routes);
         (new LegacyUsersAdminRoutes(new LegacyUsersAdminService($legacyUsers, $admins)))->register($routes);
+        $customers = new CustomerRepository($db);
+        $verifications = new CustomerVerificationRepository($db);
+        $mail = new LegacyEmailGateway($this->settings->rootDir);
+        (new CustomerAuthRoutes(new CustomerAuthService($customers, $verifications, $mail, $this->settings->frontendUrl)))->register($routes);
+        (new CustomerProfileRoutes(new CustomerProfileService($customers)))->register($routes);
         return new Kernel(
             new Router($routes, $legacy),
             new StaticFileHandler($this->settings->paths),
