@@ -17,6 +17,12 @@ final class PricingTest extends ContractTestCase
         $this->assertSnapshot('pricing.by-name', $this->client()->get('/backend/api/pricing/index.php?name=default'));
     }
 
+    public function testWritesRequireAdmin(): void
+    {
+        $this->assertSnapshot('pricing.create.unauthorized', $this->client()->post('/backend/api/pricing/index.php', ['name' => 'x', 'price_per_m3' => 1]));
+        $this->assertSnapshot('pricing-config.create.unauthorized', $this->client()->post('/backend/api/pricing-config/index.php', ['category' => 'a', 'item_type' => 'b', 'param_name' => 'c', 'param_value' => 1, 'unit' => 'eur']));
+    }
+
     public function testPricingCrud(): void
     {
         $admin = $this->admin();
