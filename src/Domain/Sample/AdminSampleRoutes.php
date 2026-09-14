@@ -82,6 +82,9 @@ final class AdminSampleRoutes
         if (!isset($input['type_id'], $input['name']) || $input['type_id'] === '' || $input['name'] === '') {
             return Response::json(['error' => 'type_id et name requis'], 400);
         }
+        if ($this->types->findById((int) $input['type_id']) === null) {
+            throw new NotFoundException("Type d'échantillon non trouvé");
+        }
         $id = $this->colors->create(
             (int) $input['type_id'],
             (string) $input['name'],
