@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Sample;
 
+use App\Domain\Shared\NotFoundException;
 use App\Http\Guard\AdminGuard;
 use App\Http\Request;
 use App\Http\Response;
@@ -61,8 +62,10 @@ final class AdminSampleRoutes
         if (!isset($input['id']) || $input['id'] === '') {
             return Response::json(['error' => 'id requis'], 400);
         }
-        $ok = $this->types->update((int) $input['id'], $input);
-        return Response::json(['success' => $ok], $ok ? 200 : 500);
+        if (!$this->types->update((int) $input['id'], $input)) {
+            throw new NotFoundException('Type d\'échantillon non trouvé');
+        }
+        return Response::json(['success' => true]);
     }
 
     private function deleteType(array $input): Response
@@ -96,8 +99,10 @@ final class AdminSampleRoutes
         if (!isset($input['id']) || $input['id'] === '') {
             return Response::json(['error' => 'id requis'], 400);
         }
-        $ok = $this->colors->update((int) $input['id'], $input);
-        return Response::json(['success' => $ok], $ok ? 200 : 500);
+        if (!$this->colors->update((int) $input['id'], $input)) {
+            throw new NotFoundException('Couleur d\'échantillon non trouvée');
+        }
+        return Response::json(['success' => true]);
     }
 
     private function deleteColor(array $input): Response
