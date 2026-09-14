@@ -16,6 +16,11 @@ use App\Domain\Auth\LegacyAuthService;
 use App\Domain\Auth\LegacyUserRepository;
 use App\Domain\Auth\LegacyUsersAdminRoutes;
 use App\Domain\Auth\LegacyUsersAdminService;
+use App\Domain\Catalogue\AdminCatalogueRoutes;
+use App\Domain\Catalogue\AdminCatalogueVariationRoutes;
+use App\Domain\Catalogue\CatalogueRepository;
+use App\Domain\Catalogue\CatalogueRoutes;
+use App\Domain\Catalogue\CatalogueVariationRepository;
 use App\Domain\Category\CategoryRepository;
 use App\Domain\Category\CategoryRoutes;
 use App\Domain\Category\CategoryService;
@@ -88,5 +93,10 @@ final class RouteRegistry
         (new EmailTemplateRoutes(new EmailTemplateRepository($db)))->register($routes);
         (new PricingRoutes(new PricingRepository($db)))->register($routes);
         (new PricingConfigRoutes(new PricingConfigRepository($db)))->register($routes);
+        $catalogueItems = new CatalogueRepository($db);
+        $catalogueVariations = new CatalogueVariationRepository($db);
+        (new CatalogueRoutes($catalogueItems, $catalogueVariations))->register($routes);
+        (new AdminCatalogueRoutes($catalogueItems))->register($routes);
+        (new AdminCatalogueVariationRoutes($catalogueVariations))->register($routes);
     }
 }
