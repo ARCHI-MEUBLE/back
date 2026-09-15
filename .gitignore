@@ -70,4 +70,5 @@ pnpm-lock.yaml
 
 # Fichiers générés en local
 /storage/*
+!/storage/*/
 !/storage/**/.gitkeep
