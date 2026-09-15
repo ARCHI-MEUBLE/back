@@ -46,7 +46,7 @@ final class CategoryService
         if (!$this->categories->update($id, $data)) {
             throw new ConflictException('Une catégorie avec ce nom ou cet identifiant existe déjà');
         }
-        return (array) $this->categories->findById($id);
+        return $this->categories->findById($id);
     }
 
     public function reorder(array $ids): void
