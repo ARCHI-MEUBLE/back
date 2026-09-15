@@ -1,0 +1,20 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "data": {
+                "object": {
+                    "config_url": "string",
+                    "email": "string",
+                    "end_time": "string",
+                    "event_type": "string",
+                    "name": "string",
+                    "start_time": "string",
+                    "timezone": "string"
+                }
+            },
+            "message": "string",
+            "success": "bool"
+        }
+    }
+}

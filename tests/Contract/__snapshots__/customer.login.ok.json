@@ -1,0 +1,23 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "customer": {
+                "object": {
+                    "address": "string",
+                    "city": "string",
+                    "country": "string",
+                    "created_at": "string",
+                    "email": "string",
+                    "first_name": "string",
+                    "id": "number",
+                    "last_name": "string",
+                    "phone": "string",
+                    "postal_code": "string"
+                }
+            },
+            "message": "string",
+            "success": "bool"
+        }
+    }
+}

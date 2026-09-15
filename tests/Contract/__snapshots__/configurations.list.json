@@ -1,0 +1,32 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "configurations": {
+                "list": {
+                    "object": {
+                        "config_string": "string",
+                        "created_at": "string",
+                        "dxf_url": {
+                            "union": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        "glb_url": "string",
+                        "id": "number",
+                        "order_id": "null",
+                        "order_payment_status": "null",
+                        "price": "string",
+                        "prompt": "string",
+                        "status": "string",
+                        "template_id": "number",
+                        "user_id": "string",
+                        "user_session": "null"
+                    }
+                }
+            },
+            "total": "number"
+        }
+    }
+}

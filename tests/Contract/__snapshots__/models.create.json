@@ -1,0 +1,23 @@
+{
+    "status": 201,
+    "shape": {
+        "object": {
+            "model": {
+                "object": {
+                    "category": "string",
+                    "config_data": "null",
+                    "created_at": "string",
+                    "description": "string",
+                    "hover_image_url": "null",
+                    "id": "number",
+                    "image_url": "string",
+                    "name": "string",
+                    "price": "string",
+                    "prompt": "string",
+                    "updated_at": "string"
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

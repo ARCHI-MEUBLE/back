@@ -1,0 +1,150 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "order": {
+                "object": {
+                    "admin_notes": "string",
+                    "amount": "string",
+                    "balance_payment_status": "string",
+                    "billing_address": "string",
+                    "catalogue_items": {
+                        "list": {
+                            "object": {
+                                "catalogue_item_id": "number",
+                                "created_at": "string",
+                                "id": "number",
+                                "image_url": "string",
+                                "item_name": "string",
+                                "name": "null",
+                                "order_id": "number",
+                                "product_name": "string",
+                                "quantity": "number",
+                                "total_price": "string",
+                                "unit_price": "string",
+                                "variation_id": "number",
+                                "variation_name": "string"
+                            }
+                        }
+                    },
+                    "created_at": "string",
+                    "customer": {
+                        "object": {
+                            "address": "string",
+                            "city": "string",
+                            "country": "string",
+                            "created_at": "string",
+                            "email": "string",
+                            "email_verified": "bool",
+                            "first_name": "string",
+                            "id": "number",
+                            "last_name": "string",
+                            "password_hash": "string",
+                            "phone": "string",
+                            "postal_code": "string",
+                            "stripe_customer_id": "null",
+                            "updated_at": "string"
+                        }
+                    },
+                    "customer_email": "string",
+                    "customer_name": "string",
+                    "customer_phone": "string",
+                    "deposit_amount": "number",
+                    "deposit_payment_status": "string",
+                    "deposit_percentage": "string",
+                    "facade_items": {
+                        "list": {
+                            "object": {
+                                "config": {
+                                    "object": {
+                                        "depth": "number",
+                                        "drillings": {
+                                            "list": "empty"
+                                        },
+                                        "height": "number",
+                                        "hinges": {
+                                            "object": {
+                                                "count": "number",
+                                                "type": "string"
+                                            }
+                                        },
+                                        "material": {
+                                            "object": {
+                                                "id": "number"
+                                            }
+                                        },
+                                        "width": "number"
+                                    }
+                                },
+                                "config_data": "string",
+                                "created_at": "string",
+                                "id": "number",
+                                "order_id": "number",
+                                "quantity": "number",
+                                "total_price": "string",
+                                "unit_price": "string"
+                            }
+                        }
+                    },
+                    "id": "number",
+                    "items": {
+                        "list": {
+                            "object": {
+                                "config_data": {
+                                    "object": {
+                                        "dimensions": {
+                                            "object": {
+                                                "width": "number"
+                                            }
+                                        },
+                                        "name": "string"
+                                    }
+                                },
+                                "configuration_id": "number",
+                                "created_at": "string",
+                                "glb_url": "string",
+                                "id": "number",
+                                "name": "string",
+                                "order_id": "number",
+                                "price": "string",
+                                "production_notes": "null",
+                                "production_status": "string",
+                                "prompt": "string",
+                                "quantity": "number",
+                                "total_price": "string",
+                                "unit_price": "string"
+                            }
+                        }
+                    },
+                    "notes": "string",
+                    "order_number": "string",
+                    "payment_method": "string",
+                    "payment_status": "string",
+                    "payment_strategy": "string",
+                    "remaining_amount": "number",
+                    "samples": {
+                        "list": {
+                            "object": {
+                                "created_at": "string",
+                                "hex": "string",
+                                "id": "number",
+                                "image_url": "null",
+                                "material": "string",
+                                "order_id": "number",
+                                "price": "string",
+                                "quantity": "number",
+                                "sample_color_id": "number",
+                                "sample_name": "string",
+                                "sample_type_name": "string"
+                            }
+                        }
+                    },
+                    "shipping_address": "string",
+                    "status": "string",
+                    "total": "string",
+                    "updated_at": "string"
+                }
+            }
+        }
+    }
+}

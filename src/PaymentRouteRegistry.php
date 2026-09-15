@@ -1,0 +1,82 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App;
+
+use App\Config\Settings;
+use App\Db\Connection;
+use App\Domain\Cart\CartRepository;
+use App\Domain\Customer\CustomerRepository;
+use App\Domain\Notification\AdminNotificationRepository;
+use App\Domain\Notification\NotificationRepository;
+use App\Domain\Order\OrderRepository;
+use App\Domain\Payment\AdminGeneratePaymentLinkRoutes;
+use App\Domain\Payment\AdminPaymentLinksRoutes;
+use App\Domain\Payment\ExportPaymentsRoutes;
+use App\Domain\Payment\InstallmentRepository;
+use App\Domain\Payment\OrderInvoiceRoutes;
+use App\Domain\Payment\OrderPaymentConfirmedRoutes;
+use App\Domain\Payment\OrderPaymentIntentRoutes;
+use App\Domain\Payment\PaymentAnalyticsRepository;
+use App\Domain\Payment\PaymentAnalyticsRoutes;
+use App\Domain\Payment\PaymentConfirmationService;
+use App\Domain\Payment\PaymentFailedHandler;
+use App\Domain\Payment\PaymentLinkCreateIntentRoutes;
+use App\Domain\Payment\PaymentLinkDownloadInvoiceRoutes;
+use App\Domain\Payment\PaymentLinkPublicRoutes;
+use App\Domain\Payment\PaymentLinkRepository;
+use App\Domain\Payment\PaymentLinkVerifyRoutes;
+use App\Domain\Payment\PaymentStrategyRepository;
+use App\Domain\Payment\PaymentStrategyRoutes;
+use App\Domain\Payment\PaymentSucceededHandler;
+use App\Domain\Payment\RecentTransactionsRoutes;
+use App\Domain\Payment\StripeCreatePaymentIntentRoutes;
+use App\Domain\Payment\StripeWebhookRoutes;
+use App\Domain\Payment\SyncPaymentStatusRoutes;
+use App\Http\RouteCollection;
+use App\Infrastructure\Invoice\LegacyInvoiceGateway;
+use App\Infrastructure\Mail\EmailGatewayFactory;
+use App\Infrastructure\Stripe\StripeGateway;
+use App\Lib\Logger;
+
+final class PaymentRouteRegistry
+{
+    public static function register(RouteCollection $routes, Settings $settings, Connection $db, Logger $logger): void
+    {
+        $stripe = new StripeGateway($settings->stripe);
+        $customers = new CustomerRepository($db);
+        $orders = new OrderRepository($db);
+        $adminNotifications = new AdminNotificationRepository($db);
+        $mail = EmailGatewayFactory::create($settings, $db);
+        $links = new PaymentLinkRepository($db);
+        (new PaymentStrategyRoutes(new PaymentStrategyRepository($db)))->register($routes);
+        (new PaymentAnalyticsRoutes(new PaymentAnalyticsRepository($db)))->register($routes);
+        (new RecentTransactionsRoutes($db))->register($routes);
+        (new ExportPaymentsRoutes($db))->register($routes);
+        (new SyncPaymentStatusRoutes($db, $stripe))->register($routes);
+        (new OrderPaymentIntentRoutes($db))->register($routes);
+        (new OrderPaymentConfirmedRoutes($db, $adminNotifications))->register($routes);
+        (new StripeCreatePaymentIntentRoutes($stripe, $customers))->register($routes);
+        (new PaymentLinkPublicRoutes($links))->register($routes);
+        (new PaymentLinkCreateIntentRoutes($links, $stripe, $db))->register($routes);
+        (new PaymentLinkDownloadInvoiceRoutes($orders, $customers, new LegacyInvoiceGateway($settings->rootDir)))->register($routes);
+        (new OrderInvoiceRoutes($orders, $customers, new LegacyInvoiceGateway($settings->rootDir)))->register($routes);
+        (new AdminGeneratePaymentLinkRoutes($links, $db, new NotificationRepository($db), $mail, $settings->frontendUrl))->register($routes);
+        (new AdminPaymentLinksRoutes($links, $settings->frontendUrl))->register($routes);
+        $confirmation = new PaymentConfirmationService(
+            $db,
+            $orders,
+            $customers,
+            new CartRepository($db),
+            $adminNotifications,
+            $mail,
+            new LegacyInvoiceGateway($settings->rootDir),
+            $links,
+        );
+        (new PaymentLinkVerifyRoutes($db, $stripe, $confirmation))->register($routes);
+        $succeeded = new PaymentSucceededHandler($confirmation, new InstallmentRepository($db));
+        $failed = new PaymentFailedHandler($db, $orders, $customers, $adminNotifications, $mail);
+        (new StripeWebhookRoutes($stripe, $db, $logger, $succeeded, $failed))->register($routes);
+    }
+}

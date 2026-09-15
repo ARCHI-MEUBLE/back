@@ -1,0 +1,26 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "count": "number",
+            "data": {
+                "list": {
+                    "object": {
+                        "category": "string",
+                        "config_data": "string",
+                        "created_at": "string",
+                        "description": "string",
+                        "id": "number",
+                        "image_url": "null",
+                        "is_active": "bool",
+                        "name": "string",
+                        "price": "string",
+                        "prompt": "string",
+                        "updated_at": "string"
+                    }
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

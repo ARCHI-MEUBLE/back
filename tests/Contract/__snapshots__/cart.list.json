@@ -1,0 +1,41 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "count": "number",
+            "item_count": "number",
+            "items": {
+                "list": {
+                    "object": {
+                        "added_at": "string",
+                        "configuration": {
+                            "object": {
+                                "config_data": {
+                                    "object": {
+                                        "dimensions": {
+                                            "object": {
+                                                "width": "number"
+                                            }
+                                        },
+                                        "name": "string"
+                                    }
+                                },
+                                "created_at": "string",
+                                "glb_url": "string",
+                                "id": "number",
+                                "name": "string",
+                                "price": "string",
+                                "prompt": "string",
+                                "thumbnail_url": "null"
+                            }
+                        },
+                        "configuration_id": "number",
+                        "id": "number",
+                        "quantity": "number"
+                    }
+                }
+            },
+            "total": "number"
+        }
+    }
+}

@@ -1,0 +1,35 @@
+{
+    "status": 201,
+    "shape": {
+        "object": {
+            "message": "string",
+            "order": {
+                "object": {
+                    "customer": {
+                        "object": {
+                            "address": "string",
+                            "city": "string",
+                            "country": "string",
+                            "created_at": "string",
+                            "email": "string",
+                            "first_name": "string",
+                            "id": "number",
+                            "last_name": "string",
+                            "phone": "string",
+                            "postal_code": "string",
+                            "stripe_customer_id": "null"
+                        }
+                    },
+                    "facades_count": "number",
+                    "id": "number",
+                    "needs_validation": "bool",
+                    "order_number": "string",
+                    "samples_count": "number",
+                    "status": "string",
+                    "total": "number"
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

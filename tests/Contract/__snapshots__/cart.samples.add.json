@@ -1,0 +1,10 @@
+{
+    "status": 201,
+    "shape": {
+        "object": {
+            "item_id": "number",
+            "message": "string",
+            "success": "bool"
+        }
+    }
+}

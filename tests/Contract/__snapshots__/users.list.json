@@ -1,0 +1,29 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "admins": {
+                "list": {
+                    "object": {
+                        "created_at": "string",
+                        "email": "string",
+                        "id": "number",
+                        "type": "string",
+                        "username": "string"
+                    }
+                }
+            },
+            "users": {
+                "list": {
+                    "object": {
+                        "created_at": "string",
+                        "email": "string",
+                        "id": "string",
+                        "name": "string",
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}

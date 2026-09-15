@@ -1,0 +1,1514 @@
+# %%
+#imports
+import numpy as np # numpy pour le calcul vectoriel
+import pyvista as pv # pyvista bibliothèque intermédiaire pour la 3D
+from copy import deepcopy,copy # copy pour gerer les copy profonde des objets mutables
+import trimesh # trimesh : librairy 3D principale
+import sys # system
+import ezdxf # edition de fichiers dxf
+from PIL import Image, ImageDraw, ImageFont # gestion des images (textures)
+import svgwrite # édition de fichiers svg
+import json # json : gestion de données
+
+# fonctions géométriques pures (voir lib/geometry_utils.py)
+from lib.geometry_utils import (
+    slice,
+    plane_equation,
+    line_plane_intersection,
+    reconstruct_contour,
+    project_points_on_plane,
+    perpendicular_unit_vectors,
+    create_number_image,
+    create_cylinder,
+)
+# catalogue matières (voir lib/materials.py)
+from lib.materials import Texture, load_textures_dict, sectionner_par_texture as _sectionner_par_texture
+# modèle géométrique : Alesage, Face, Zone (voir lib/geometry_model.py)
+import lib.geometry_model as _geometry_model
+from lib.geometry_model import Alesage, Face, Zone
+# fabriques de zones de base + parsing de la chaîne (voir lib/module_factories.py)
+from lib.module_factories import M0, M1, M2, M3, M4, M5, retirer_espaces, subsequence
+# pont d'ID frontend <-> backend pour la suppression de panneaux (voir lib/panel_mapping.py)
+from lib.panel_mapping import count_segments_from_zones, convert_frontend_id_to_backend
+# règles de placement des alésages (voir lib/hardware_rules.py)
+from lib.hardware_rules import config
+import os
+
+
+def sectionner_par_texture(planches):
+    return _sectionner_par_texture(planches, textures_dict)
+
+# %%
+#chargement des textures
+# L'objet texture permet d'avoir toutes les informations concernant les matériaux utilisés : nom, reference founisseur, epaisseur, largeur, longueur, et prix
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+textures_dict = load_textures_dict(script_dir)
+
+# Zone.texturer()/prix() ont besoin de ces deux valeurs (voir la docstring de lib/geometry_model.py)
+_geometry_model.textures_dict = textures_dict
+_geometry_model.script_dir = script_dir
+
+# %%
+# definition du proces et parsing
+
+textures={"exterieur": textures_dict["Blanc Premium"],"interieur": textures_dict["Blanc Premium"],"porte": textures_dict["Chêne Brun"],"tiroir": textures_dict["Chêne Brun"]}
+
+print(textures_dict["Chêne Brun"].epaisseur)
+
+def process(sequence,zone,textures=textures) : # cette fonction sert à parser un sequence de caractère pour modeliser un meuble 
+    #l'objet zone est ammenée à évoluer suite aux opération faites dessus cela repésente une zone d'espace 
+    # l'objet Listplanches permet d'accumuler les planches qui résultent des différentes opérations
+    
+    #Cette fonction décode la sequence et exécute des fonctions plus bas niveaux qui vont crééer des planche.
+    # La methode "envelopper" permet de creer des planches prise sur le bord de la zone, le long d'un label donné. Le label peut etre h (haut), b (bas), g(gauche), d (droite), f (fond), a (avant)
+    # La méthode "cloisonner" permet de séparer une zone en sous-zones et de crééer des planches qui vont les séparer. Cette  séparation se fait selon 3 axes : "avant" "horizontal" et "verticale"
+    # La methode "couper" permet de séparer une zone en sous-zone sans creer de nouvelle planche
+    sequence=sequence+"   "
+    Listplanches=[]
+    i=0
+    while i<len(sequence) :  #boucle de lecrture des caractères
+        char=sequence[i]
+        
+        # Helper pour extraire le type de poignée (chiffre 1-4)
+        def check_handle(idx):
+            if idx + 1 < len(sequence) and sequence[idx+1].isdigit():
+                return int(sequence[idx+1]), idx + 1
+            return None, idx
+
+        if char=="M": # "M"+"chiffre" permet la création d'une zone. Il faut obligatoirement initialiser le meuble par une création de zone 
+            print("M")
+            i=i+1
+            char=sequence[i]
+            if char=="0" : #ne jamais utiliser car très dangereux
+                i=i+1
+                seq1,seq2,seq3,seq4,seq5,seq6=subsequence(sequence[i:])
+                i=i+len(seq1)+len(seq2)+len(seq3)+len(seq4)+len(seq5)+len(seq6)+6
+                zone=M0(seq1,seq2,seq3,seq4,seq5,seq6)
+            if char=="1":# permet de faire un meuble rectangulaire avec 3 valeur en mm (largeur, profondeur,haueteur) Exemple : M1(1500,344,2000)
+                i=i+1
+                seq1,seq2,seq3=subsequence(sequence[i:])
+                i=i+len(seq1)+len(seq2)+len(seq3)+3
+                zone=M0(seq1,seq2,seq3,seq3,seq3,seq3)
+            if char=="2": # permet de faire un meuble sous mansarde avec 4 valeur en mm (largeur, profondeur,petite hauteur, grande hauteur) Exemple : M2(1500,344,1200,2000)
+                i=i+1
+                seq1,seq2,seq3,seq4=subsequence(sequence[i:])
+                i=i+len(seq1)+len(seq2)+len(seq3)+len(seq4)+4
+                zone=M0(seq1,seq2,seq3,seq4,seq3,seq4)
+            if char=="3": # permet de faire un meuble sous escalier avec 4 valeur en mm (largeur, profondeur,petite hauteur, grande hauteur) Exemple : M3(1500,344,1200,2000)
+                i=i+1
+                seq1,seq2,seq3,seq4=subsequence(sequence[i:])
+                i=i+len(seq1)+len(seq2)+len(seq3)+len(seq4)+4
+                zone=M0(seq1,seq2,seq3,seq3,seq4,seq4)
+            if char=="4": #ne pas utiliser car trop dangereux 
+                i=i+1
+                seq1,seq2,seq3,seq4=subsequence(sequence[i:])
+                i=i+len(seq1)+len(seq2)+len(seq3)+len(seq4)+4
+                zone=M4(seq1,seq2,seq3,seq4)
+            if char=="5": #permet de faire un meuble d'angle avec 3 valeur en mm (longeur1, longeur2,hauteur). Exemple M5(500,400,600)
+                i=i+1
+                seq1,seq2,seq3=subsequence(sequence[i:])
+                i=i+len(seq1)+len(seq2)+len(seq3)+3
+                zone=M5(seq1,seq2,seq3)
+        elif char=="E" : # E comme enveloppe : créer une enveloppe externe au meuble 
+            print("E")
+            planches,zone=zone.envelopper(label="d",epaisseur=textures["exterieur"].epaisseur,texture=textures["exterieur"])
+            Listplanches=Listplanches+planches
+            planches,zone=zone.envelopper(label="g",epaisseur=textures["exterieur"].epaisseur,texture=textures["exterieur"])
+            Listplanches=Listplanches+planches
+            planches,zone=zone.envelopper(label="h",epaisseur=textures["exterieur"].epaisseur,texture=textures["exterieur"])
+            Listplanches=Listplanches+planches
+        elif char=="F" : # F permet d'ajouter une planche de fond
+            print("F")
+            planches,zone=zone.envelopper(label="f",epaisseur=textures["exterieur"].epaisseur,texture=textures["exterieur"])
+            Listplanches=Listplanches+planches  
+        elif char=="V": # V permet de faire une séparation verticale
+            print("V")
+            i=i+1
+            char=sequence[i]
+            if char=="I": #si on ajoute I la séparartion devient invisible : il n'y a pas création de planche 
+                print("I")
+                i=i+1
+                char=sequence[i]
+
+                if char=="L": # si on ajoute L on passe en mode longueur. Le mode par défaut reste le mode proportions 
+                    
+                    mode="longueurs"
+                    i=i+1
+                    char=sequence[i]
+                else : 
+                    mode="proportions"
+                
+
+                if char=="(": #si on a des parenthèses directes, on divise juste en 2
+                    
+                    zones=zone.couper(dir="verticale")
+                    Lmeubles=zones
+                    seq1,seq2=subsequence(sequence[i:])
+                    Lseq=[seq1,seq2]
+                    # i sera incrémenté plus bas
+                elif char=="[": #si on a des crochets, on indique des proportion ou des longeurs (si on est en mode longeur )
+                    Lseq_prop=subsequence(sequence[i:])
+                    i=i+1
+                    sommelen=sum([len(seq) for seq in Lseq_prop])
+                    i=i+sommelen+len(Lseq_prop)
+                    Lseq_prop=[int(seq) for seq in Lseq_prop]
+                    zones=zone.couper(dir="verticale",mode=mode , longueurs=np.array(Lseq_prop) , prop=np.array(Lseq_prop))
+                    Lmeubles=zones
+                    Lseq=[] # sera rempli par le ( ) suivant
+
+                elif char.isdigit(): # si c'est un chriffre n on divise en n part égales
+                    k=int(char)
+                    prop=np.ones(k)
+                    zones=zone.couper(dir="verticale",prop=prop)
+                    Lmeubles=zones
+                    Lseq=[]
+                    i=i+1
+                
+                if i < len(sequence) and sequence[i]=="(": # si on descide de préciser ce qu'on veut dans chaque sous zone
+                    Lseq=subsequence(sequence[i:])
+                    i=i+1
+                
+                if Lseq:
+                    for j, seq in enumerate(Lseq)  : # on execute les sous séquence sur les sous meuble de gauche à droite 
+                        if j < len(Lmeubles):
+                            i=i+len(seq)+1
+                            Listplanches=Listplanches+process(seq,Lmeubles[j],textures)
+
+
+
+            else :  # meme chose qu'en haut mais on va crééer des planche 
+                epaisseur=textures["interieur"].epaisseur
+                if char=="L":
+                    
+                    mode="longueurs"
+                    i=i+1
+                    char=sequence[i]
+                else : 
+                    mode="proportions"
+                
+
+                if char=="(":
+                    
+                    zones,planches=zone.cloisonner(dir="verticale",epaisseur=epaisseur,texture=textures["interieur"])
+                    Lmeubles=zones
+                    if epaisseur>1 :
+                        Listplanches=Listplanches+planches
+                    seq1,seq2=subsequence(sequence[i:])
+                    Lseq=[seq1,seq2]
+                elif char=="[":
+                    Lseq_prop=subsequence(sequence[i:])
+                    i=i+1
+                    sommelen=sum([len(seq) for seq in Lseq_prop])
+                    i=i+sommelen+len(Lseq_prop)
+                    Lseq_prop=[int(seq) for seq in Lseq_prop]
+                    zones,planches=zone.cloisonner(dir="verticale",mode=mode , longueurs=np.array(Lseq_prop) , prop=np.array(Lseq_prop),epaisseur=epaisseur,texture=textures["interieur"])
+                    Lmeubles=zones
+                    if epaisseur>1 :
+                        Listplanches=Listplanches+planches
+                    Lseq=[]
+                elif char.isdigit():
+                    k=int(char)
+                    prop=np.ones(k)
+                    zones,planches=zone.cloisonner(dir="verticale",prop=prop,epaisseur=epaisseur,texture=textures["interieur"])
+                    Lmeubles=zones
+                    if epaisseur>1 :
+                        Listplanches=Listplanches+planches
+                    Lseq=[]
+                    i=i+1
+                
+                if i < len(sequence) and sequence[i]=="(":
+                    Lseq=subsequence(sequence[i:])
+                    i=i+1
+                
+                if Lseq:
+                    for j, seq in enumerate(Lseq)  :
+                        if j < len(Lmeubles):
+                            i=i+len(seq)+1
+                            Listplanches=Listplanches+process(seq,Lmeubles[j],textures)
+        elif char=="H":  # H permet de faire des séparation horizontale. En ajoutant "I" à la suite du H, on fait des séparations invisibles. Si on rajoute un "L" on passen en mode longueur, le mode par defaut étant la proportion 
+            print("H")
+            i=i+1
+            char=sequence[i]
+            if char=="I":
+                print("I")
+                i=i+1
+                char=sequence[i]
+
+                if char=="L":
+                    
+                    mode="longueurs"
+                    i=i+1
+                    char=sequence[i]
+                else : 
+                    mode="proportions"
+                
+
+                if char=="(":
+                    
+                    zones=zone.couper(dir="horizontale")
+                    Lmeubles=zones
+                    seq1,seq2=subsequence(sequence[i:])
+                    Lseq=[seq1,seq2]
+                elif char=="[":
+                    Lseq_prop=subsequence(sequence[i:])
+                    i=i+1
+                    sommelen=sum([len(seq) for seq in Lseq_prop])
+                    i=i+sommelen+len(Lseq_prop)
+                    Lseq_prop=[int(seq) for seq in Lseq_prop]
+                    zones=zone.couper(dir="horizontale",mode=mode , longueurs=np.array(Lseq_prop) , prop=np.array(Lseq_prop))
+                    Lmeubles=zones
+                    Lseq=[]
+
+                elif char.isdigit():
+                    k=int(char)
+                    prop=np.ones(k)
+                    zones=zone.couper(dir="horizontale",prop=prop)
+                    Lmeubles=zones
+                    Lseq=[]
+                    i=i+1
+                
+                if i < len(sequence) and sequence[i]=="(":
+                    Lseq=subsequence(sequence[i:])
+                    i=i+1
+                
+                if Lseq:
+                    for j, seq in enumerate(Lseq)  :  # On exécute les sous meubles sur les sous zones de bas en Haut 
+                        if j < len(Lmeubles):
+                            i=i+len(seq)+1
+                            Listplanches=Listplanches+process(seq,Lmeubles[j],textures)
+
+
+
+            else : 
+                epaisseur=textures["interieur"].epaisseur
+                if char=="L":
+                    
+                    mode="longueurs"
+                    i=i+1
+                    char=sequence[i]
+                else : 
+                    mode="proportions"
+                
+
+                if char=="(":
+                    
+                    zones,planches=zone.cloisonner(dir="horizontale",epaisseur=epaisseur,texture=textures["interieur"])
+                    Lmeubles=zones
+                    if epaisseur>1 :
+                        Listplanches=Listplanches+planches
+                    seq1,seq2=subsequence(sequence[i:])
+                    Lseq=[seq1,seq2]
+                elif char=="[":
+                    Lseq_prop=subsequence(sequence[i:])
+                    i=i+1
+                    sommelen=sum([len(seq) for seq in Lseq_prop])
+                    i=i+sommelen+len(Lseq_prop)
+                    Lseq_prop=[int(seq) for seq in Lseq_prop]
+                    zones,planches=zone.cloisonner(dir="horizontale",mode=mode , longueurs=np.array(Lseq_prop) , prop=np.array(Lseq_prop),epaisseur=epaisseur,texture=textures["interieur"])
+                    Lmeubles=zones
+                    if epaisseur>1 :
+                        Listplanches=Listplanches+planches
+                    Lseq=[]
+                elif char.isdigit():
+                    k=int(char)
+                    prop=np.ones(k)
+                    zones,planches=zone.cloisonner(dir="horizontale",prop=prop,epaisseur=epaisseur,texture=textures["interieur"])
+                    Lmeubles=zones
+                    if epaisseur>1 :
+                        Listplanches=Listplanches+planches
+                    Lseq=[]
+                    i=i+1
+                
+                if i < len(sequence) and sequence[i]=="(":
+                    Lseq=subsequence(sequence[i:])
+                    i=i+1
+                
+                if Lseq:
+                    for j, seq in enumerate(Lseq)  : 
+                        if j < len(Lmeubles):
+                            i=i+len(seq)+1
+                            Listplanches=Listplanches+process(seq,Lmeubles[j],textures)
+        elif char=="P": # P permet d'ajouter une porte elle peut être encastre si on la fait après les planches adjacentes (exemple EP) ou bien en applique si on la fait avant (exemple PE)
+            print("P")
+            i=i+1
+            char=sequence[i]
+            if char=="2" :
+                handle_type, i = check_handle(i)
+                planches,zone=zone.envelopper(label="a",epaisseur=textures["porte"].epaisseur+0.1,texture=textures["porte"])
+                planche=planches[0]
+                _,planche=planche.envelopper(label="g",epaisseur=3)
+                _,planche=planche.envelopper(label="d",epaisseur=3)
+                _,planche=planche.envelopper(label="h",epaisseur=3)
+                _,planche=planche.envelopper(label="b",epaisseur=7)
+                
+
+
+                zones,planches=planche.cloisonner(dir="verticale",epaisseur=3,texture=textures["porte"])
+                planchegauche = zones[0]
+                planchedroite = zones[1]
+
+                _,planchegauche=planchegauche.envelopper(label="a",epaisseur=1)
+                _,planchedroite=planchedroite.envelopper(label="a",epaisseur=1)
+
+                planchedroite.bloc="ported"
+                planchegauche.bloc="porteg"
+                
+                planchegauche.handle_type = handle_type
+                planchedroite.handle_type = handle_type
+
+                planchedroite.face_usine=[face for face in planchedroite.listface if face.label=="f"][0]
+                planchegauche.face_usine=[face for face in planchegauche.listface if face.label=="f"][0]
+                Listplanches.append(planchegauche)
+                Listplanches.append(planchedroite)
+            elif char=="g" or char=="d":
+                handle_type, i = check_handle(i)
+                planches,zone=zone.envelopper(label="a",epaisseur=textures["porte"].epaisseur+0.1,texture=textures["porte"])
+                planche=planches[0]
+                _,planche=planche.envelopper(label="g",epaisseur=3)
+                _,planche=planche.envelopper(label="d",epaisseur=3)
+                _,planche=planche.envelopper(label="h",epaisseur=3)
+                _,planche=planche.envelopper(label="b",epaisseur=7)
+                _,planche=planche.envelopper(label="a",epaisseur=1)
+                if char=="d":
+                    planche.bloc="ported"
+                elif char=="g" :
+                    planche.bloc="porteg"
+                
+                planche.handle_type = handle_type
+                planche.face_usine=[face for face in planche.listface if face.label=="f"][0]
+                Listplanches.append(planche)
+            elif char=="m": # MIROIR
+                handle_type, i = check_handle(i)
+                planches,zone=zone.envelopper(label="a",epaisseur=textures["porte"].epaisseur+0.1,texture=textures["porte"])
+                planche=planches[0]
+                _,planche=planche.envelopper(label="g",epaisseur=3)
+                _,planche=planche.envelopper(label="d",epaisseur=3)
+                _,planche=planche.envelopper(label="h",epaisseur=3)
+                _,planche=planche.envelopper(label="b",epaisseur=7)
+                _,planche=planche.envelopper(label="a",epaisseur=1)
+                planche.bloc="miroir"
+                planche.handle_type = handle_type
+                planche.face_usine=[face for face in planche.listface if face.label=="f"][0]
+                Listplanches.append(planche)
+            elif char=="o": # PUSH TO OPEN
+                planches,zone=zone.envelopper(label="a",epaisseur=textures["porte"].epaisseur+0.1,texture=textures["porte"])
+                planche=planches[0]
+                _,planche=planche.envelopper(label="g",epaisseur=3)
+                _,planche=planche.envelopper(label="d",epaisseur=3)
+                _,planche=planche.envelopper(label="h",epaisseur=3)
+                _,planche=planche.envelopper(label="b",epaisseur=7)
+                _,planche=planche.envelopper(label="a",epaisseur=1)
+                planche.bloc="porteg" # On peut utiliser porteg pour le moment
+                planche.face_usine=[face for face in planche.listface if face.label=="f"][0]
+                Listplanches.append(planche)
+            elif char=="c":
+                planches,zone=zone.envelopper(label="a",epaisseur=62,texture=textures["porte"])
+                planche=planches[0]
+                for face in planche.listface :
+                    if face.label=="f" :
+                        hauteurs = np.dot(planche.points[face.contour],planche.normalh)
+                        h= np.max(hauteurs)-np.min(hauteurs)
+                        print(h)
+                
+                
+                planche,coulisse=planche.couper(dir="horizontale",mode="longueurs", longueurs=np.array([h-43]))
+                coulisse.bloc="coulisse"
+                coulisse.texture=textures["interieur"]
+                
+                
+                Listplanches.append(coulisse)
+
+                _,planche=planche.envelopper(label="g",epaisseur=1)
+                _,planche=planche.envelopper(label="d",epaisseur=1)
+                
+                _,planche=planche.envelopper(label="b",epaisseur=7)
+                
+                planche.bloc="porte_coulissante"
+
+                planchedroite,planchegauche=planche.couper(dir="verticale")
+                _,planchedroite=planchedroite.envelopper(label="a",epaisseur=10,texture=textures["porte"])
+                planchedroite,_=planchedroite.envelopper(label="a",epaisseur=19,texture=textures["porte"])
+
+                _,planchegauche=planchegauche.envelopper(label="f",epaisseur=10,texture=textures["porte"])
+                planchegauche,_=planchegauche.envelopper(label="f",epaisseur=19,texture=textures["porte"])
+                planchedroite=planchedroite[0]
+                planchegauche=planchegauche[0]
+                
+                #planchedroite.face_usine=[face for face in planche.listface if face.label=="f"][0]
+                Listplanches.append(planchedroite)
+                Listplanches.append(planchegauche)
+
+
+            else :
+
+                i=i-1
+                char=sequence[i]
+                
+                planches,zone=zone.envelopper(label="a",epaisseur=19.1,texture=textures["porte"])
+                planche=planches[0]
+                _,planche=planche.envelopper(label="g",epaisseur=3)
+                _,planche=planche.envelopper(label="d",epaisseur=3)
+                _,planche=planche.envelopper(label="h",epaisseur=3)
+                _,planche=planche.envelopper(label="b",epaisseur=7)
+                _,planche=planche.envelopper(label="a",epaisseur=1)
+
+                planche.bloc="porteg"
+                
+                planche.face_usine=[face for face in planche.listface if face.label=="f"][0]
+                Listplanches.append(planche)
+        elif char=="A": #A marche sur le même principe que H et V mais il y a peu de cas où c'est pertinant de faire une division selon l'axe d'ouverture du meuble 
+            print("A")
+            i=i+1
+            char=sequence[i]
+            if char=="I":
+                print("I")
+                i=i+1
+                char=sequence[i]
+
+                if char=="L":
+                    
+                    mode="longueurs"
+                    i=i+1
+                    char=sequence[i]
+                else : 
+                    mode="proportions"
+                
+
+                if char=="(":
+                    
+                    zones=zone.couper(dir="avant")
+                    meublehaut,meublebas=zones[0],zones[1]
+                    seq1,seq2=subsequence(sequence[i:])
+                    i=i+len(seq1)+len(seq2)+2
+                    Listplanches=Listplanches+process(seq1,meublebas,textures)
+                    Listplanches=Listplanches+process(seq2,meublehaut,textures)
+                elif char=="[":
+                    Lseq=subsequence(sequence[i:])
+                    i=i+1
+                    sommelen=sum([len(seq) for seq in Lseq])
+                    i=i+sommelen+len(Lseq)
+                    Lseq=[int(seq) for seq in Lseq]
+                    zones=zone.couper(dir="avant",mode=mode , longueurs=np.array(Lseq) , prop=np.array(Lseq))
+                    Lmeubles=zones
+
+                elif char.isdigit():
+                    k=int(char)
+                    prop=np.ones(k)
+                    zones=zone.couper(dir="avant",prop=prop)
+                    Lmeubles=zones
+                    i=i+1
+                
+                char=sequence[i]  
+                if char=="(":
+                    Lseq=subsequence(sequence[i:])
+                    i=i+1
+                    for j, seq in enumerate(Lseq)  :
+                        i=i+len(seq)+1
+                        Listplanches=Listplanches+process(seq,Lmeubles[j],textures)
+
+
+
+            else : 
+                epaisseur=textures["interieur"].epaisseur
+                if char=="L":
+                    
+                    mode="longueurs"
+                    i=i+1
+                    char=sequence[i]
+                else : 
+                    mode="proportions"
+                
+
+                if char=="(":
+                    
+                    zones,planches=zone.cloisonner(dir="avant",epaisseur=epaisseur,texture=textures["interieur"])
+                    meublehaut,meublebas,planche=zones[0],zones[1],planches[0]
+                    seq1,seq2=subsequence(sequence[i:])
+                    i=i+len(seq1)+len(seq2)+2
+                    if epaisseur>1 :
+                        Listplanches.append(planche)
+                    Listplanches=Listplanches+process(seq1,meublebas,textures)
+                    Listplanches=Listplanches+process(seq2,meublehaut,textures)
+                elif char=="[":
+                    Lseq=subsequence(sequence[i:])
+                    i=i+1
+                    sommelen=sum([len(seq) for seq in Lseq])
+                    i=i+sommelen+len(Lseq)
+                    Lseq=[int(seq) for seq in Lseq]
+                    zones,planches=zone.cloisonner(dir="avant",mode=mode , longueurs=np.array(Lseq) , prop=np.array(Lseq),epaisseur=epaisseur,texture=textures["interieur"])
+                    planches,Lmeubles=planches,zones
+                    if epaisseur>1 :
+                        Listplanches=Listplanches+planches
+                elif char.isdigit():
+                    k=int(char)
+                    prop=np.ones(k)
+                    zones,planches=zone.cloisonner(dir="avant",prop=prop,epaisseur=epaisseur,texture=textures["interieur"])
+                    planches,Lmeubles=planches,zones
+                    if epaisseur>1 :
+                        Listplanches=Listplanches+planches
+                    i=i+1
+                
+                char=sequence[i]  
+                if char=="(":
+                    Lseq=subsequence(sequence[i:])
+                    i=i+1
+                    for j, seq in enumerate(Lseq)  :
+                        i=i+len(seq)+1
+                        Listplanches=Listplanches+process(seq,Lmeubles[j],textures)
+        elif char=="S":  # S permet de faire un socle en bas du meuble il faut toujours faire un socle en bas du meuble 
+
+            print("S")
+            zones,planches=zone.cloisonner(dir="horizontale",mode="longueurs" , longueurs=np.array([50]) ,epaisseur=textures["interieur"].epaisseur,texture=textures["interieur"])
+            planches[0].bloc="socle"
+            Listplanches=Listplanches+planches
+            zonebas,zone = zones
+            planches,zonebas=zonebas.envelopper(label="a",epaisseur=textures["interieur"].epaisseur,texture=textures["interieur"])
+            planche=planches[0]
+            planche.bloc="socle"
+            Listplanches.append(planche)
+
+            i=i+1
+            char=sequence[i]
+            if char == "2" :
+                
+                planches,zonebas=zonebas.envelopper(label="f",epaisseur=textures["interieur"].epaisseur,texture=textures["interieur"])
+                planche=planches[0]
+                planche.bloc="socle"
+                Listplanches.append(planche)
+            else :
+                i=i-1
+                char=sequence[i]
+        elif char=="R": # simple retrait. Peut donner un coté esthétique. A utiliser avec parcimonie 
+            print("R")
+            _,zone=zone.envelopper(label="a",epaisseur=19)    
+        elif char=="T": # T défini un tiroir dans la zone courante 
+            print("T")
+            i=i+1
+            char_next=sequence[i]
+            bloc_name = "tiroir"
+            if char_next == "o":
+                bloc_name = "tiroir_push"
+            else:
+                i = i - 1
+            
+            handle_type, i = check_handle(i)
+            
+            planches,zone=zone.envelopper(label="g",epaisseur=3)
+            planches,zone=zone.envelopper(label="d",epaisseur=3)
+            planches,zone=zone.envelopper(label="h",epaisseur=3)
+            planches,zone=zone.envelopper(label="b",epaisseur=3)
+            planches,zone=zone.envelopper(label="f",epaisseur=19)
+
+            planches,zone=zone.envelopper(label="a",epaisseur=textures["tiroir"].epaisseur,texture=textures["tiroir"])
+            planche=planches[0]
+            planche.bloc=bloc_name
+            planche.handle_type = handle_type
+            Listplanches.append(planche)
+        
+
+            planches_h,zone=zone.envelopper(label="h",epaisseur=30)
+            Listplanches = Listplanches + planches_h
+            planches_b,zone=zone.envelopper(label="b",epaisseur=2)
+            Listplanches = Listplanches + planches_b
+            planches_g,zone=zone.envelopper(label="g",epaisseur=13)
+            Listplanches = Listplanches + planches_g
+            planches_d,zone=zone.envelopper(label="d",epaisseur=13)
+            Listplanches = Listplanches + planches_d
+
+            planches,zone=zone.envelopper(label="g",epaisseur=textures["interieur"].epaisseur,texture=textures["interieur"])
+            planche=planches[0]
+            planche.bloc="tiroir"
+            Listplanches.append(planche)
+            planches,zone=zone.envelopper(label="d",epaisseur=textures["interieur"].epaisseur,texture=textures["interieur"])
+            planche=planches[0]
+            planche.bloc="tiroir"
+            Listplanches.append(planche)
+            planches,zone=zone.envelopper(label="f",epaisseur=textures["interieur"].epaisseur,texture=textures["interieur"])
+            planche=planches[0]
+            planche.bloc="tiroir"
+            Listplanches.append(planche)
+            planches,zone=zone.envelopper(label="b",epaisseur=textures["interieur"].epaisseur,texture=textures["interieur"])
+            planche=planches[0]
+            planche.bloc="tiroir"
+            Listplanches.append(planche)
+        elif char =="r": # fait une rotation des labels de la zone d'un quart de tour
+            zone.rotation()
+        elif char=="h": # h planche en haut 
+            print("h")
+            planches,zone=zone.envelopper(label="h",epaisseur=textures["exterieur"].epaisseur,texture=textures["exterieur"])
+            
+            Listplanches=Listplanches+planches
+        elif char=="d": # d planche à droite 
+            print("d")
+            planches,zone=zone.envelopper(label="d",epaisseur=textures["exterieur"].epaisseur,texture=textures["exterieur"])
+            Listplanches=Listplanches+planches
+        elif char=="g": # g planche à gauche 
+            print("g")
+            planches,zone=zone.envelopper(label="g",epaisseur=textures["exterieur"].epaisseur,texture=textures["exterieur"])
+            Listplanches=Listplanches+planches
+        elif char=="b": # b planche en bas 
+            print("b")
+            planches,zone=zone.envelopper(label="b",epaisseur=textures["exterieur"].epaisseur,texture=textures["exterieur"])
+            Listplanches=Listplanches+planches
+        elif char=="a": # a planche avant (attention ne pas utiliser n'importe comment )
+            print("a")
+            planches,zone=zone.envelopper(label="a",epaisseur=textures["porte"].epaisseur,texture=textures["porte"])
+            Listplanches=Listplanches+planches
+        elif char=="C": # laisser les couleur tel quel pour le moment 
+            print("C")
+            i=i+1
+            char=sequence[i]
+            if char=="(":
+                seq1,seq2,seq3,seq4=subsequence(sequence[i:])
+                i=i+len(seq1)+len(seq2)+len(seq3)+len(seq4)+4
+                textures={"exterieur": textures_dict[seq1],"interieur": textures_dict[seq2],"porte": textures_dict[seq3],"tiroir": textures_dict[seq4]}
+        elif char=="c": # c for cable hole
+            print("c")
+            # Calcul du centre de la zone sur le plan du fond
+            z_points = zone.points[np.unique(np.hstack([f.contour for f in zone.listface]))]
+            
+            # Centre horizontal (normalv)
+            v_coords = z_points @ zone.normalv
+            v_mid = (np.max(v_coords) + np.min(v_coords)) / 2
+            
+            # Bas du compartiment + 50mm (normalh)
+            h_coords = z_points @ zone.normalh
+            h_pos = np.min(h_coords) + 50
+            
+            # Profondeur (normala) -> on veut le fond (mina)
+            a_coords = z_points @ zone.normala
+            a_back = np.min(a_coords)
+            
+            point_trou = v_mid * zone.normalv + h_pos * zone.normalh + a_back * zone.normala
+            
+            # Rayon du passe-câble (30mm)
+            rayon_trou = 30
+            
+            # 1. Ajouter l'alésage sur le fond pour le DXF
+            for p in Listplanches:
+                if getattr(p, 'type', '') == 'enveloppe_f':
+                    if p.face_usine:
+                        origin = p.points[p.face_usine.contour[0]]
+                        u_vec = p.sens_fibres
+                        normal = p.face_usine.equation[:3]
+                        v_vec = np.cross(normal, u_vec)
+                        rel = point_trou - origin
+                        
+                        new_alesage = Alesage(
+                            positionxyz=point_trou,
+                            positionsnu=np.array([np.dot(rel, u_vec), np.dot(rel, v_vec), 0]),
+                            rayon=rayon_trou,
+                            profondeur=p.epaisseur + 5,
+                            face_usinage="plat",
+                            couleur="blue"
+                        )
+                        p.face_usine.alesages.append(new_alesage)
+            
+            # 2. Ajouter une représentation visuelle pour le GLB (disque noir)
+            disque = create_cylinder(rayon_trou*2, 2, point_trou + 1 * zone.normala, zone.normala)
+            trou_visuel = Zone(None, None, None, None, None, type="cable_hole_visual", mesh=disque)
+            trou_visuel.bloc = "cable_hole"
+            Listplanches.append(trou_visuel)
+            
+        elif char=="D":
+            print("D")
+
+            points=zone.points[np.hstack([face.contour for face in zone.listface]).flatten()]
+
+            planv=zone.normalv
+            scalarsv= points@planv
+            maxv=np.max(scalarsv)
+            minv=np.min(scalarsv)
+            
+            planh=zone.normalh
+            scalarsh= points@planh
+            maxh=np.max(scalarsh)
+            minh=np.min(scalarsh)
+
+            plana=zone.normala
+            scalarsa= points@plana
+            maxa=np.max(scalarsa)
+            mina=np.min(scalarsa)
+
+            point_central= (maxa+mina)/2*plana + (minh+70)*planh + (maxv+minv)/2*planv
+
+
+
+            cylindre = create_cylinder(20,maxv-minv,point_central,zone.normalv)
+            dressing=Zone(None,None,None,None,None,type="dressing",mesh=cylindre)
+
+            Listplanches.append(dressing)
+        elif char=="v": # v for glass shelf
+            print("v")
+            # Une étagère en verre de 6mm d'épaisseur
+            zones,planches=zone.cloisonner(dir="horizontale",mode="proportions",prop=np.array([1,1]),epaisseur=6,texture=textures["interieur"])
+            # zones[0] est la zone du bas, zones[1] est la zone du haut. 
+            # cloisonner renvoie zones (liste des sous-zones) et planches (liste des planches de séparation)
+            if planches:
+                planche=planches[0]
+                planche.bloc="verre"
+                Listplanches.append(planche)
+                zone = zones[1] # On continue avec la zone du haut
+        elif char=="p": # p for pegboard
+            print("p")
+            # Le pegboard est une planche de fond perforée
+            planches,zone=zone.envelopper(label="f",epaisseur=textures["interieur"].epaisseur,texture=textures["interieur"])
+            if planches:
+                planche=planches[0]
+                planche.bloc="pegboard"
+                Listplanches.append(planche)
+        elif char=="m" :
+            planches,zone=zone.envelopper(label="d",epaisseur=10)
+            planches,zone=zone.envelopper(label="g",epaisseur=10)
+            planches,zone=zone.envelopper(label="f",epaisseur=10)
+            planches,zone=zone.envelopper(label="h",epaisseur=10)
+        elif char=="N" :
+            i=i+1
+            char=sequence[i]
+            if char=="(":
+                nom=str(subsequence(sequence[i:])[0])
+                print(nom)
+                zone.nom=nom
+                i=i+len(nom)
+                char=char=sequence[i]
+        i=i+1
+
+
+    return Listplanches
+
+
+# %%
+## execution
+
+# Récupérer les arguments : prompt, output_path et --closed
+if len(sys.argv) < 2:
+    print("[ERROR] Usage: python procedure_real.py <prompt> [output_path] [--closed] [--colors JSON] [--deleted-panels JSON]", file=sys.stderr)
+    sys.exit(1)
+
+chaine = sys.argv[1]  # Le prompt M1(...)
+output_path = sys.argv[2] if len(sys.argv) > 2 else "./meuble.glb"  # Chemin de sortie
+closed_mode = "--closed" in sys.argv  # Mode fermé (tiroirs et portes fermés)
+
+# Récupérer les couleurs hex si fournies (format JSON pour multi-couleurs)
+custom_colors = {}
+if "--colors" in sys.argv:
+    colors_index = sys.argv.index("--colors")
+    if colors_index + 1 < len(sys.argv):
+        import json
+        try:
+            custom_colors = json.loads(sys.argv[colors_index + 1])
+            print(f"[INFO] Couleurs personnalisées (multi): {custom_colors}")
+        except json.JSONDecodeError as e:
+            print(f"[WARNING] Format JSON invalide pour --colors: {e}")
+            custom_colors = {}
+elif "--color" in sys.argv:
+    # Support legacy single color
+    color_index = sys.argv.index("--color")
+    if color_index + 1 < len(sys.argv):
+        custom_colors = {"all": sys.argv[color_index + 1]}
+        print(f"[INFO] Couleur unique: {custom_colors['all']}")
+
+# Récupérer les panneaux supprimés (pour exclure du DXF)
+deleted_panels = []
+if "--deleted-panels" in sys.argv:
+    dp_index = sys.argv.index("--deleted-panels")
+    if dp_index + 1 < len(sys.argv):
+        try:
+            deleted_panels = json.loads(sys.argv[dp_index + 1])
+            print(f"[INFO] Panneaux à exclure du DXF: {deleted_panels}")
+        except json.JSONDecodeError as e:
+            print(f"[WARNING] Format JSON invalide pour --deleted-panels: {e}")
+            deleted_panels = []
+
+# Récupérer la structure des zones (pour segmentation des panneaux)
+zones_structure = None
+if "--zones" in sys.argv:
+    zones_index = sys.argv.index("--zones")
+    if zones_index + 1 < len(sys.argv):
+        try:
+            zones_structure = json.loads(sys.argv[zones_index + 1])
+            print(f"[INFO] Structure des zones reçue pour segmentation")
+        except json.JSONDecodeError as e:
+            print(f"[WARNING] Format JSON invalide pour --zones: {e}")
+            zones_structure = None
+
+print(f"[INFO] Génération du meuble avec prompt: {chaine}")
+print(f"[INFO] Fichier de sortie: {output_path}")
+print(f"[INFO] Mode fermé: {closed_mode}") 
+
+#chaine=retirer_espaces(chaine)
+planches=process(chaine,1,textures) 
+
+
+
+
+# %%
+#enregistrement des modele 3D
+# enregistre 4 models : avec sans portes et avec textures ou numéroté 
+
+for i, planche in enumerate(planches) :
+    planche.trimesh()  
+
+
+for i, planche in enumerate(planches) :
+    planche.texturer()
+
+# Si des couleurs personnalisées sont fournies, remplacer les textures par des couleurs unies
+if custom_colors:
+    print(f"[INFO] Application des couleurs personnalisées par composant")
+
+    def hex_to_rgba(hex_color):
+        """Convertit une couleur hex en RGBA"""
+        hex_color = hex_color.lstrip('#')
+        if len(hex_color) == 6:
+            r = int(hex_color[0:2], 16)
+            g = int(hex_color[2:4], 16)
+            b = int(hex_color[4:6], 16)
+            return [r, g, b, 255]
+        return None
+
+    # Mapping des types de composants vers les clés de couleur
+    # Types de blocs dans le code: "tiroir", "porteg", "ported", "portec", "porte_coulissante", "socle"
+    # Clés frontend: "structure", "drawers", "doors", "base"
+
+    for planche in planches:
+        if not hasattr(planche, 'mesh') or planche.mesh is None:
+            continue
+
+        # Déterminer quelle couleur appliquer selon le type de bloc ou le type de zone
+        color_key = None
+        bloc_type = getattr(planche, 'bloc', None)
+        zone_type = getattr(planche, 'type', None)
+
+        if bloc_type == "tiroir" or bloc_type == "tiroir_push":
+            color_key = "drawers"
+        elif bloc_type in ["porteg", "ported", "portec", "porte_coulissante", "porteg_push"]:
+            color_key = "doors"
+        elif bloc_type == "miroir":
+            # Appliquer un aspect miroir (argenté brillant)
+            planche.mesh.visual = trimesh.visual.ColorVisuals(
+                mesh=planche.mesh,
+                vertex_colors=[230, 230, 235, 255]
+            )
+            continue
+        elif bloc_type == "verre":
+            # Appliquer un aspect verre (plus visible mais transparent)
+            planche.mesh.visual = trimesh.visual.ColorVisuals(
+                mesh=planche.mesh,
+                vertex_colors=[200, 230, 255, 140] # Alpha 140
+            )
+            continue
+        elif bloc_type == "pegboard":
+            # Couleur bois perforé
+            planche.mesh.visual = trimesh.visual.ColorVisuals(
+                mesh=planche.mesh,
+                vertex_colors=[139, 115, 85, 255]
+            )
+            continue
+        elif bloc_type == "socle":
+            color_key = "base"
+        elif zone_type == "cloisonnement_horizontale":
+            color_key = "shelves"
+        elif zone_type == "enveloppe_f" or bloc_type == "pegboard":
+            color_key = "back"
+        elif bloc_type == "cable_hole":
+            # Le passe-câble est toujours noir
+            planche.mesh.visual = trimesh.visual.ColorVisuals(
+                mesh=planche.mesh,
+                vertex_colors=[20, 20, 20, 255]
+            )
+            continue
+        else:
+            # Structure (planches du corps du meuble)
+            color_key = "structure"
+
+        # Récupérer la couleur appropriée (ou "all" si couleur unique)
+        hex_color = custom_colors.get(color_key) or custom_colors.get("all")
+
+        if hex_color:
+            rgb_color = hex_to_rgba(hex_color)
+            if rgb_color:
+                planche.mesh.visual = trimesh.visual.ColorVisuals(
+                    mesh=planche.mesh,
+                    vertex_colors=rgb_color
+                )
+                print(f"[INFO] Couleur appliquée à {color_key or 'structure'} ({bloc_type or 'planche'}): {hex_color} -> RGB{rgb_color[:3]}")
+            else:
+                print(f"[WARNING] Format hex invalide pour {color_key}: {hex_color}")
+
+
+# La génération des fichiers (GLB et DXF) a été déplacée à la fin du script 
+# pour inclure les alésages de montage et les numérotations.
+
+# Appliquer l'ouverture des tiroirs seulement si on n'est pas en mode fermé
+if not closed_mode:
+    for planche in planches :
+        if planche.bloc in ["tiroir", "tiroir_push"]:
+            # Décalage vers l'avant (-normala car normala pointe vers le fond)
+            shift = -300 * planche.normala
+            planche.mesh.vertices += shift
+            planche.points += shift
+        elif planche.bloc in ["porteg", "ported", "porteg_push", "miroir"]:
+            # Petite ouverture pour les portes
+            shift = -20 * planche.normala
+            planche.mesh.vertices += shift
+            planche.points += shift
+        # On pourrait aussi ajouter l'ouverture des portes ici si souhaité
+
+# Génération des poignées (Désactivé à la demande de l'utilisateur)
+handle_meshes = []
+# for planche in planches:
+#     # Déterminer le type de poignée (priorité au type spécifié, sinon défaut pour portes/tiroirs)
+#     h_type = getattr(planche, 'handle_type', None)
+#     
+#     # Pas de poignée pour les systèmes push-to-open ou si explicitement désactivé (ex: code 0 si on en ajoutait un)
+#     is_push = planche.bloc and "push" in str(planche.bloc)
+#     if not h_type and not is_push and planche.bloc in ["porteg", "ported", "tiroir"]:
+#         h_type = 1 # Barre verticale par défaut
+#         
+#     if h_type:
+#         try:
+#             # Trouver la face avant pour positionner la poignée
+#             face_front = [f for f in planche.listface if f.label == "a"][0]
+#             points_face = planche.points[face_front.contour]
+#             normal = face_front.equation[:3]
+#             centre_face = np.mean(points_face, axis=0)
+#             
+#             # Calculer vecteurs pour largeur/hauteur locale
+#             # normalv est [-1, 0, 0] (gauche), normalh est [0, -1, 0] (bas)
+#             u_horiz = -planche.normalv # Vers la droite
+#             u_vert = -planche.normalh  # Vers le haut
+#             
+#             # Dimensions de la face
+#             scalars_h = points_face @ u_horiz
+#             scalars_v = points_face @ u_vert
+#             w_face = np.max(scalars_h) - np.min(scalars_h)
+#             h_face = np.max(scalars_v) - np.min(scalars_v)
+#             
+#             # Positionnement horizontal
+#             offset_x = 0
+#             if planche.bloc == "porteg": # Charnières à gauche, poignée à droite
+#                 offset_x = w_face/2 - 40
+#             elif planche.bloc == "ported": # Charnières à droite, poignée à gauche
+#                 offset_x = -(w_face/2 - 40)
+#             elif planche.bloc in ["tiroir", "tiroir_push"]:
+#                 offset_x = 0
+#                 
+#             pos_h = centre_face + offset_x * u_horiz + 15 * normal # Devant la face
+#             
+#             h_mesh = None
+#             if h_type == 3: # Knob
+#                 h_mesh = trimesh.creation.uv_sphere(radius=15)
+#                 h_mesh.apply_translation(pos_h)
+#             elif h_type == 2: # Horizontal bar
+#                 h_mesh = create_cylinder(16, min(w_face*0.6, 120), pos_h, u_horiz)
+#             elif h_type == 4: # Recessed
+#                 h_mesh = trimesh.creation.box(extents=[min(w_face*0.5, 80), 20, 5])
+#                 h_mesh.apply_translation(pos_h - 12 * normal) # Un peu enfoncé
+#                 h_mesh.visual = trimesh.visual.ColorVisuals(mesh=h_mesh, vertex_colors=[40, 40, 40, 255])
+#             else: # Default 1: Vertical bar
+#                 bar_len = min(h_face * 0.3, 300)
+#                 # Orienter verticalement (le long de u_vert)
+#                 h_mesh = create_cylinder(16, bar_len, pos_h, u_vert)
+#             
+#             if h_mesh:
+#                 if h_type != 4:
+#                     h_mesh.visual = trimesh.visual.ColorVisuals(mesh=h_mesh, vertex_colors=[192, 192, 192, 255])
+#                 handle_meshes.append(h_mesh)
+#         except Exception as e:
+#             print(f"[WARNING] Erreur generation poignée sur {planche.nom}: {e}")
+
+# Concatenation de toutes les mailles pour l'export final (Utiliser une Scene pour préserver les matériaux/transparence)
+all_meshes = [planche.mesh for planche in planches if hasattr(planche, 'mesh') and planche.mesh is not None]
+all_meshes.extend(handle_meshes)
+
+# Créer une scène au lieu de concaténer pour mieux gérer la transparence et les matériaux
+scene = trimesh.Scene()
+for i, m in enumerate(all_meshes):
+    scene.add_geometry(m, node_name=f"mesh_{i}")
+
+# Conversion mm -> m pour le GLB
+scene.apply_scale(0.001)
+
+# Export vers le chemin spécifié par l'API
+scene.export(output_path)
+print(f"[INFO] Fichier GLB généré: {output_path}")
+
+# Si on n'est pas en mode fermé, on remet les tiroirs à leur place pour la suite (calculs d'alésages etc)
+if not closed_mode:
+    for planche in planches :
+        if planche.bloc in ["tiroir", "tiroir_push"]:
+            shift = +300 * planche.normala
+            planche.mesh.vertices += shift
+            planche.points += shift
+        elif planche.bloc in ["porteg", "ported", "porteg_push", "miroir"]:
+            shift = +20 * planche.normala
+            planche.mesh.vertices += shift
+            planche.points += shift
+
+# Filtrer uniquement les vraies planches pour le DXF et la suite
+planches = [p for p in planches if (hasattr(p, 'planche') and p.planche) and getattr(p, 'bloc', None) != "coulisse"]
+
+# Helper function: analyser la structure des zones pour déterminer le nombre de segments
+# Filtrer les panneaux supprimés pour le DXF
+if deleted_panels and len(deleted_panels) > 0:
+    original_count = len(planches)
+
+    # Analyser les panneaux supprimés pour comprendre la segmentation
+    deleted_panel_types = set()  # Types de panneaux à supprimer complètement
+
+    for dp in deleted_panels:
+        panel_info = convert_frontend_id_to_backend(dp, zones_structure)
+        if panel_info:
+            # Pour l'instant, si un segment est supprimé, on supprime tout le panneau
+            # (car le backend crée un seul panneau physique par type)
+            deleted_panel_types.add(panel_info['panel_type'])
+            print(f"[INFO] Panel segment {dp} -> suppression du panneau {panel_info['panel_type']} entier")
+
+    # Créer un mapping des IDs pour chaque planche
+    planche_ids = {}
+    separator_counts = {'separator-vertical': 0, 'separator-horizontal': 0}
+
+    for idx, p in enumerate(planches):
+        zone_type = getattr(p, 'type', '') if hasattr(p, 'type') else ''
+        if hasattr(p, 'zone') and hasattr(p.zone, 'type'):
+            zone_type = p.zone.type
+
+        type_mapping = {
+            'enveloppe_g': 'left',
+            'enveloppe_d': 'right',
+            'enveloppe_h': 'top',
+            'enveloppe_b': 'bottom',
+            'enveloppe_f': 'back',
+            'cloisonnement_verticale': 'separator-vertical',
+            'cloisonnement_horizontale': 'separator-horizontal',
+        }
+
+        panel_type = type_mapping.get(zone_type, None)
+
+        if panel_type:
+            if panel_type.startswith('separator'):
+                panel_id = f"{panel_type}-{separator_counts[panel_type]}"
+                separator_counts[panel_type] += 1
+            else:
+                panel_id = f"{panel_type}-0-0"
+            planche_ids[idx] = (panel_id, panel_type)
+
+    # Filtrer les planches dont le type est dans deleted_panel_types
+    planches_filtered = []
+    for idx, p in enumerate(planches):
+        planche_info = planche_ids.get(idx)
+        if planche_info:
+            panel_id, panel_type = planche_info
+            # Vérifier si ce type de panneau doit être supprimé
+            if panel_type in deleted_panel_types:
+                print(f"[INFO] Planche exclue du DXF: {panel_id} (type: {getattr(p, 'type', 'N/A')})")
+                continue
+            # Vérifier aussi l'ancien format d'ID (pour compatibilité)
+            if panel_id in deleted_panels:
+                print(f"[INFO] Planche exclue du DXF: {panel_id} (type: {getattr(p, 'type', 'N/A')})")
+                continue
+        planches_filtered.append(p)
+
+    planches = planches_filtered
+    print(f"[INFO] {original_count - len(planches)} planches exclues du DXF sur {original_count}")
+
+# Numéroter les planches pour le DXF
+for i, p in enumerate(planches):
+    p.nom = str(i + 1) # Commencer à 1 pour être plus naturel
+
+# Grouper les planches par texture pour le DXF
+groupes = sectionner_par_texture(planches)
+
+
+
+
+# %%
+#coupes biaises détection des coupes biaies
+for planche in planches :
+    normale=planche.plan[:3]
+    for face in planche.listface :
+        if face.chant :
+            if abs(np.dot(normale,face.equation[:3]))>0.01:
+                planche.biseau=abs(np.arccos(np.dot(normale,face.equation[:3]))*180/np.pi-90)
+
+
+
+
+# %%
+#placement par doublet 
+
+
+faces = [face for planche in planches for face in planche.listface]
+
+doublets = [
+    (face1, face2)
+    for i, face1 in enumerate(faces)
+    for j, face2 in enumerate(faces)
+    ]
+
+doublet_contact=[]
+
+for doublet in doublets : # creer le graph de connexité des planches 
+    face = doublet[0]
+    faceoppose = doublet[1]
+    if face.remonter_facesupport() == faceoppose.remonter_facesupport().faceoppose :  #les faces sont en contact
+        if faceoppose.chant and not face.chant : # Les faces sont chant et non chants
+            if np.abs(np.dot(faceoppose.equation[:3],faceoppose.zone.face_usine.equation[:3]))<0.05 : # orthogonalité 
+                doublet_contact.append(doublet) #doublet : [plat chant]
+print(doublet_contact)
+
+for doublet in doublet_contact : # place les alésages en fonction de la configuration 
+
+    face = doublet[0]
+    faceoppose = doublet[1]
+
+    alesages = config(faceoppose,face)
+    
+    n= faceoppose.equation[:3]
+    u= faceoppose.zone.face_usine.equation[:3]
+    s= np.cross(n,u)
+    M = np.column_stack((s, n, u))
+
+
+    if alesages is None :
+        1==1
+    else : 
+        for alesage in alesages :
+            try : 
+
+                # on commence par reconstituer le segment de contact
+                distance_au_coin = alesage.distance_au_coin
+                planche=faceoppose.zone
+                segments = faceoppose.segments()
+                points = planche.points
+                plan= planche.plan
+                segmentsreels = points[segments]
+                new_segment=[]
+                for segment in segmentsreels :
+                    boolean=slice(segment,plan)
+                    
+                    if np.all(boolean) or np.all(~boolean):
+                        pass
+                    else :
+                        new_segment.append((segment[0]+segment[1])/2)
+            
+                if len(new_segment) < 2:
+                    print(f"[WARNING] Segment de contact trop court ou invalide pour les alésages sur {planche.nom}")
+                    continue
+
+                vect = new_segment[0]-new_segment[1]
+                l = np.linalg.norm(vect)
+                if l > 200 : 
+                    centres = [new_segment[0] - vect/l*distance_au_coin,new_segment[1] + vect/l*distance_au_coin]
+                else :
+                    centres = [(new_segment[0]+new_segment[1])/2]
+                
+                #ajout des différents alésages 
+                print(centres)
+                print([alesage.rayon for alesage in alesages])
+                for centre in centres :
+                    alesagecopy=deepcopy(alesage)
+                    alesagecopy.positionxyz = centre +  M @ alesagecopy.positionsnu
+                    if alesagecopy.face_usinage == "chant" :
+                        faceoppose.alesages.append(alesagecopy)
+                    elif alesagecopy.face_usinage == "plat" :
+                        face.alesages.append(alesagecopy)
+
+            except Exception as e :
+                print("error " , e) 
+
+
+# %%
+# génération du dxf
+doc = ezdxf.new()
+# Définir explicitement que le dessin utilise des millimètres comme unité
+doc.header['$INSUNITS'] = 4  # 4 = millimètres
+doc.header['$MEASUREMENT'] = 1  # 1 = métrique
+doc.header['$LUNITS'] = 2  # 2 = décimal
+
+doc.layers.add("contour_haut", color=1)  
+doc.layers.add("contour_bas", color=2) 
+doc.layers.add("texte", color=9)  # Création d'une nouvelle couche pour le texte
+msp = doc.modelspace()
+
+marge = 50  # marge en mm
+X = 0
+Y = 0
+
+diameter_layers = {}  # Dictionnaire pour stocker les layers créés
+toutes_facades = []  # Collecter toutes les façades pour les placer ensemble en haut à droite
+X_max_global = 0  # Suivre le X maximum de toutes les planches normales
+
+for planches_index, planches in enumerate(groupes):
+
+    # Séparer les façades (portes, tiroirs, miroirs) des autres planches
+    facades_types = [
+        "porteg", "ported", "portec", "porte_coulissante", "porteg_push",  # Portes
+        "tiroir", "tiroir_push",  # Tiroirs (normaux et push-to-open)
+        "miroir", "verre"  # Miroirs et vitres
+    ]
+    planches_normales = [p for p in planches if getattr(p, 'bloc', None) not in facades_types]
+    planches_facades = [p for p in planches if getattr(p, 'bloc', None) in facades_types]
+
+    # Collecter les façades pour les placer ensemble plus tard
+    for facade in planches_facades:
+        toutes_facades.append((planches_index, facade))
+
+    # Traiter d'abord les planches normales (à gauche)
+    X_max_normales = 0
+    for i, planche in enumerate(planches_normales):
+
+        # Projeter les points et rester en mm
+        projection = project_points_on_plane(planche.points,
+                                            planche.points[planche.face_usine.contour[0]],
+                                            np.cross(planche.sens_fibres,planche.face_usine.equation[:3]),
+                                            planche.sens_fibres)
+        # projection = projection / 1000  # Suppression de la conversion en m
+
+        xmax = np.max(projection[:, 0])
+        xmin = np.min(projection[:, 0])
+
+        ymax = np.max(projection[:, 1])
+        ymin = np.min(projection[:, 1])
+
+        projection[:, 0] = projection[:, 0] - xmin + X
+        projection[:, 1] = projection[:, 1] - ymin + Y
+
+        for face in planche.listface:
+            if planche.biseau:
+                print(planche.biseau)
+                if not face.chant:
+                    if face == planche.face_usine:
+                        contour_2d = projection[face.contour]
+                        msp.add_lwpolyline(
+                            points=contour_2d,
+                            close=True,
+                            dxfattribs={"layer": "contour_haut"},
+                        )
+                        
+                        # Ajout de texte pour ce contour
+                        texte = planche.nom+f"G{planches_index+1}"+"\n biseau"+str(np.round(planche.biseau))
+                        # Calculer le centre du contour pour placer le texte
+                        x_center = np.min(contour_2d[:, 0])
+                        y_center = (np.max(contour_2d[:, 1]) + np.min(contour_2d[:, 1])) / 2
+                        msp.add_text(
+                            texte,
+                            dxfattribs={
+                                "layer": "texte",
+                                "height": 15,  # hauteur du texte en mm
+                                "style": "Standard",
+                                "insert": (x_center, y_center)
+                            }
+                        )
+                    else :
+                        contour_2d = projection[face.contour]
+                        msp.add_lwpolyline(
+                            points=contour_2d,
+                            close=True,
+                            dxfattribs={"layer": "contour_bas"},
+                        )
+
+                
+            else:
+                if face == planche.face_usine: # ajouter les deux face non chant en cas de coupe biaise 
+                    contour_2d = projection[face.contour]
+                    msp.add_lwpolyline(
+                        points=contour_2d,
+                        close=True,
+                        dxfattribs={"layer": "contour_haut"},
+                    )
+                    
+                    # Ajout de texte pour ce contour
+                    texte = planche.nom+f"G{planches_index+1}"
+                    # Calculer le centre du contour pour placer le texte
+                    x_center = np.min(contour_2d[:, 0])
+                    y_center = (np.max(contour_2d[:, 1]) + np.min(contour_2d[:, 1])) / 2
+                    msp.add_text(
+                        texte,
+                        dxfattribs={
+                            "layer": "texte",
+                            "height": 15,  # hauteur du texte en mm
+                            "style": "Standard",
+                            "insert": (x_center, y_center)
+                        }
+                    )
+
+            for alesage in face.alesages:
+                # Projeter le centre de l'alésage
+                projectioncentre = project_points_on_plane(alesage.positionxyz,
+                                                          planche.points[planche.face_usine.contour[0]],
+                                                          np.cross(planche.sens_fibres,planche.face_usine.equation[:3]), 
+                                                          planche.sens_fibres)
+                # projectioncentre = projectioncentre / 1000  # Suppression de la conversion en m
+                projectioncentre[:, 0] = projectioncentre[:, 0] - xmin + X
+                projectioncentre[:, 1] = projectioncentre[:, 1] - ymin + Y
+
+                # Définir le nom de couche avec unité mm
+                radius_mm = alesage.rayon 
+                diameter_mm = round(2 * radius_mm, 1) 
+                layer_name = f"diam_{diameter_mm}mm" 
+
+                # Ajouter le layer si ce diamètre n'a pas encore de couche
+                if layer_name not in diameter_layers:
+                    doc.layers.add(layer_name, color=len(diameter_layers) + 2)  # Assigner une couleur différente
+                    diameter_layers[layer_name] = True  # Marquer comme ajouté
+
+                # Ajouter le cercle au bon layer
+                msp.add_circle(
+                    center=(projectioncentre[0, 0], projectioncentre[0, 1]),
+                    radius=radius_mm,
+                    dxfattribs={"layer": layer_name},
+                )
+
+        X = X + marge + xmax - xmin
+        X_max_normales = max(X_max_normales, X)
+
+    # Mettre à jour le X maximum global
+    X_max_global = max(X_max_global, X_max_normales)
+
+    # Les façades seront placées après la boucle principale
+    Y = Y + 1000  # Décalage de 1000 mm (1m) pour le groupe suivant
+    X = 0 # Réinitialiser X pour le nouveau groupe
+
+# Placer toutes les façades ensemble en haut à droite
+Y_facades = 2500  # Très haut dans le DXF (grande valeur positive pour monter)
+X_facades = X_max_global + 500  # À droite des planches normales, avec marge de 500mm
+
+for planches_index, planche in toutes_facades:
+
+    # Projeter les points et rester en mm
+    projection = project_points_on_plane(planche.points,
+                                        planche.points[planche.face_usine.contour[0]],
+                                        np.cross(planche.sens_fibres,planche.face_usine.equation[:3]),
+                                        planche.sens_fibres)
+
+    xmax = np.max(projection[:, 0])
+    xmin = np.min(projection[:, 0])
+
+    ymax = np.max(projection[:, 1])
+    ymin = np.min(projection[:, 1])
+
+    projection[:, 0] = projection[:, 0] - xmin + X_facades
+    projection[:, 1] = projection[:, 1] - ymin + Y_facades
+
+    for face in planche.listface:
+        if planche.biseau:
+            print(planche.biseau)
+            if not face.chant:
+                if face == planche.face_usine:
+                    contour_2d = projection[face.contour]
+                    msp.add_lwpolyline(
+                        points=contour_2d,
+                        close=True,
+                        dxfattribs={"layer": "contour_haut"},
+                    )
+
+                    # Ajout de texte pour ce contour
+                    texte = planche.nom+f"G{planches_index+1}"+"\n biseau"+str(np.round(planche.biseau))
+                    # Calculer le centre du contour pour placer le texte
+                    x_center = np.min(contour_2d[:, 0])
+                    y_center = (np.max(contour_2d[:, 1]) + np.min(contour_2d[:, 1])) / 2
+                    msp.add_text(
+                        texte,
+                        dxfattribs={
+                            "layer": "texte",
+                            "height": 15,  # hauteur du texte en mm
+                            "style": "Standard",
+                            "insert": (x_center, y_center)
+                        }
+                    )
+                else :
+                    contour_2d = projection[face.contour]
+                    msp.add_lwpolyline(
+                        points=contour_2d,
+                        close=True,
+                        dxfattribs={"layer": "contour_bas"},
+                    )
+
+
+        else:
+            if face == planche.face_usine: # ajouter les deux face non chant en cas de coupe biaise
+                contour_2d = projection[face.contour]
+                msp.add_lwpolyline(
+                    points=contour_2d,
+                    close=True,
+                    dxfattribs={"layer": "contour_haut"},
+                )
+
+                # Ajout de texte pour ce contour
+                texte = planche.nom+f"G{planches_index+1}"
+                # Calculer le centre du contour pour placer le texte
+                x_center = np.min(contour_2d[:, 0])
+                y_center = (np.max(contour_2d[:, 1]) + np.min(contour_2d[:, 1])) / 2
+                msp.add_text(
+                    texte,
+                    dxfattribs={
+                        "layer": "texte",
+                        "height": 15,  # hauteur du texte en mm
+                        "style": "Standard",
+                        "insert": (x_center, y_center)
+                    }
+                )
+
+        for alesage in face.alesages:
+            # Projeter le centre de l'alésage
+            projectioncentre = project_points_on_plane(alesage.positionxyz,
+                                                      planche.points[planche.face_usine.contour[0]],
+                                                      np.cross(planche.sens_fibres,planche.face_usine.equation[:3]),
+                                                      planche.sens_fibres)
+            projectioncentre[:, 0] = projectioncentre[:, 0] - xmin + X_facades
+            projectioncentre[:, 1] = projectioncentre[:, 1] - ymin + Y_facades
+
+            # Définir le nom de couche avec unité mm
+            radius_mm = alesage.rayon
+            diameter_mm = round(2 * radius_mm, 1)
+            layer_name = f"diam_{diameter_mm}mm"
+
+            # Ajouter le layer si ce diamètre n'a pas encore de couche
+            if layer_name not in diameter_layers:
+                doc.layers.add(layer_name, color=len(diameter_layers) + 2)
+                diameter_layers[layer_name] = True
+
+            # Ajouter le cercle au bon layer
+            msp.add_circle(
+                center=(projectioncentre[0, 0], projectioncentre[0, 1]),
+                radius=radius_mm,
+                dxfattribs={"layer": layer_name},
+            )
+
+    X_facades = X_facades + marge + xmax - xmin
+
+# Ajouter des métadonnées pour clarifier les unités
+doc.header['$MENU'] = "Toutes les unités sont en millimètres"
+doc.header['$INSUNITS'] = 4 # 4 = Millimètres dans la norme DXF
+
+# Générer le nom du fichier DXF basé sur le nom du fichier GLB
+dxf_filename = os.path.splitext(os.path.basename(output_path))[0] + ".dxf"
+dxf_output_dir = os.path.dirname(output_path)
+dxf_output_path = os.path.join(dxf_output_dir, dxf_filename)
+
+# Sauvegarder aussi dans pieces/ pour compatibilité avec l'ancien code
+pieces_dir = os.path.join(script_dir, "pieces")
+os.makedirs(pieces_dir, exist_ok=True)
+doc.saveas(os.path.join(pieces_dir, "piece_general.dxf"))
+
+# Sauvegarder le DXF unique avec le même nom que le GLB
+doc.saveas(dxf_output_path)
+print(f"[INFO] Fichier DXF généré: {dxf_output_path}")
+
+# S'assurer que le fichier est bien écrit sur le disque avant de quitter
+try:
+    if os.path.exists(dxf_output_path):
+        # Optionnel: On peut aussi copier le fichier dans un endroit générique si besoin
+        # Mais l'API cherche maintenant le fichier spécifique
+        pass
+except:
+    pass
+
+# On arrête le script ici pour éviter les générations SVG/DXF redondantes qui écrasent tout
+sys.exit(0)
+
+
+

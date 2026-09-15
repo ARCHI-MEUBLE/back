@@ -1,0 +1,22 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "content_type": "string",
+            "get": {
+                "list": "empty"
+            },
+            "headers": {
+                "object": {
+                    "Accept": "string",
+                    "Host": "string"
+                }
+            },
+            "method": "string",
+            "post": {
+                "list": "empty"
+            },
+            "raw_input": "string"
+        }
+    }
+}

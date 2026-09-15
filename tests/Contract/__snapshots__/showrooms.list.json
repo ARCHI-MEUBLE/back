@@ -1,0 +1,48 @@
+{
+    "status": 200,
+    "shape": {
+        "list": {
+            "object": {
+                "address": "string",
+                "city": "string",
+                "country": "string",
+                "email": "string",
+                "id": "string",
+                "imageUrl": "string",
+                "lat": "number",
+                "lng": "number",
+                "name": "string",
+                "openingHours": {
+                    "list": {
+                        "object": {
+                            "close": {
+                                "union": [
+                                    "absent",
+                                    "string"
+                                ]
+                            },
+                            "closed": {
+                                "union": [
+                                    "absent",
+                                    "bool"
+                                ]
+                            },
+                            "day": "string",
+                            "open": {
+                                "union": [
+                                    "absent",
+                                    "string"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "phone": "string",
+                "postalCode": "string",
+                "services": {
+                    "list": "string"
+                }
+            }
+        }
+    }
+}
