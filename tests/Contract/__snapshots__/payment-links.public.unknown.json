@@ -1,0 +1,12 @@
+{
+    "status": 400,
+    "shape": {
+        "object": {
+            "error": "string",
+            "expired": "bool",
+            "revoked": "bool",
+            "success": "bool",
+            "used": "bool"
+        }
+    }
+}

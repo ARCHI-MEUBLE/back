@@ -1,0 +1,24 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "data": {
+                "object": {
+                    "config_string": "string",
+                    "created_at": "string",
+                    "dxf_url": "string",
+                    "glb_url": "string",
+                    "id": "number",
+                    "order_id": "null",
+                    "price": "string",
+                    "prompt": "string",
+                    "status": "string",
+                    "template_id": "number",
+                    "user_id": "string",
+                    "user_session": "null"
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

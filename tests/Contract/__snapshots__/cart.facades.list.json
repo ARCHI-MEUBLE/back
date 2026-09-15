@@ -1,0 +1,44 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "count": "number",
+            "items": {
+                "list": {
+                    "object": {
+                        "config": {
+                            "object": {
+                                "depth": "number",
+                                "drillings": {
+                                    "list": "empty"
+                                },
+                                "height": "number",
+                                "hinges": {
+                                    "object": {
+                                        "count": "number",
+                                        "direction": "string",
+                                        "type": "string"
+                                    }
+                                },
+                                "material": {
+                                    "object": {
+                                        "color_hex": "string",
+                                        "id": "number",
+                                        "name": "string",
+                                        "texture_url": "string"
+                                    }
+                                },
+                                "width": "number"
+                            }
+                        },
+                        "created_at": "string",
+                        "id": "number",
+                        "quantity": "number",
+                        "unit_price": "string"
+                    }
+                }
+            },
+            "total": "number"
+        }
+    }
+}

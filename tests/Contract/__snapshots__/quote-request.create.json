@@ -1,0 +1,23 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "data": {
+                "object": {
+                    "quote_request_id": "number",
+                    "uploaded_files": {
+                        "list": {
+                            "object": {
+                                "name": "string",
+                                "size": "number",
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "message": "string",
+            "success": "bool"
+        }
+    }
+}

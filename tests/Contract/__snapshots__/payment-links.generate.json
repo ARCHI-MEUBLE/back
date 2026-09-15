@@ -1,0 +1,19 @@
+{
+    "status": 201,
+    "shape": {
+        "object": {
+            "data": {
+                "object": {
+                    "created_by": "string",
+                    "expires_at": "string",
+                    "id": "number",
+                    "order_id": "number",
+                    "token": "string",
+                    "url": "string"
+                }
+            },
+            "message": "string",
+            "success": "bool"
+        }
+    }
+}

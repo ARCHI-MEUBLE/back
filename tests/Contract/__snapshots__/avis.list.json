@@ -1,0 +1,14 @@
+{
+    "status": 200,
+    "shape": {
+        "list": {
+            "object": {
+                "authorName": "string",
+                "date": "string",
+                "id": "string",
+                "rating": "number",
+                "text": "string"
+            }
+        }
+    }
+}

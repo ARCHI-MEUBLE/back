@@ -1,0 +1,12 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "message": "string",
+            "new_end_time": "string",
+            "new_start_time": "string",
+            "new_status": "string",
+            "success": "bool"
+        }
+    }
+}

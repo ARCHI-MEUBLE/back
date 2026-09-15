@@ -1,0 +1,32 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "orders": {
+                "list": {
+                    "object": {
+                        "admin_notes": "string",
+                        "amount": "string",
+                        "balance_payment_status": "string",
+                        "billing_address": "string",
+                        "created_at": "string",
+                        "deposit_amount": "number",
+                        "deposit_payment_status": "string",
+                        "deposit_percentage": "string",
+                        "id": "number",
+                        "notes": "string",
+                        "order_number": "string",
+                        "payment_method": "string",
+                        "payment_status": "string",
+                        "payment_strategy": "string",
+                        "remaining_amount": "number",
+                        "shipping_address": "string",
+                        "status": "string",
+                        "total": "string",
+                        "updated_at": "string"
+                    }
+                }
+            }
+        }
+    }
+}

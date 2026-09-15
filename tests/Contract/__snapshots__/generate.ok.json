@@ -1,0 +1,13 @@
+{
+    "status": 201,
+    "shape": {
+        "object": {
+            "dxf_url": "string",
+            "execution_time": "string",
+            "filename": "string",
+            "glb_url": "string",
+            "prompt": "string",
+            "success": "bool"
+        }
+    }
+}
