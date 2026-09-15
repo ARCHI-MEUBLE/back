@@ -1,0 +1,23 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "realisations": {
+                "list": {
+                    "object": {
+                        "categorie": "string",
+                        "created_at": "string",
+                        "date_projet": "string",
+                        "description": "string",
+                        "dimensions": "string",
+                        "id": "number",
+                        "image_url": "string",
+                        "lieu": "string",
+                        "titre": "string"
+                    }
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

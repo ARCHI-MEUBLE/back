@@ -1,0 +1,8 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "authenticated": "bool"
+        }
+    }
+}

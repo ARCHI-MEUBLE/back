@@ -31,8 +31,11 @@ RUN apt-get install -y \
     cron \
     fontconfig \
     libfreetype6 \
+    libfreetype6-dev \
     libjpeg62-turbo \
+    libjpeg62-turbo-dev \
     libpng16-16 \
+    libpng-dev \
     libx11-6 \
     libxcb1 \
     libxext6 \
@@ -44,7 +47,8 @@ RUN apt-get install -y \
     libgl1-mesa-dri \
     xvfb \
     tzdata \
-    && docker-php-ext-install pdo pdo_pgsql \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo pdo_pgsql gd \
     && rm -rf /var/lib/apt/lists/*
 
 # Installer Composer (gestionnaire de dépendances PHP)
@@ -78,23 +82,17 @@ ARG CACHEBUST=7
 # Copier tous les fichiers de l'application
 COPY . /app
 
-# Créer les dossiers nécessaires
-RUN mkdir -p /app/devis \
-    && mkdir -p /app/pieces \
-    && mkdir -p /app/uploads \
-    && mkdir -p /app/models \
-    && mkdir -p /app/database \
-    && chmod -R 777 /app
+# Installer les dépendances PHP de production
+RUN composer install --no-dev --no-interaction --no-progress --prefer-dist --optimize-autoloader
+
+RUN chmod -R 777 /app
 
 # S'assurer que les scripts sont exécutables et avec des fins de ligne Unix
 RUN cp /app/backup-database.sh /usr/local/bin/backup-database.sh \
     && sed -i 's/\r$//' /usr/local/bin/backup-database.sh \
     && sed -i 's/\r$//' /app/start.sh \
-    && sed -i 's/\r$//' /app/init_db.sql \
-    && sed -i 's/\r$//' /app/create_missing_tables.py \
     && chmod +x /usr/local/bin/backup-database.sh \
-    && chmod +x /app/start.sh \
-    && chmod +x /app/create_missing_tables.py
+    && chmod +x /app/start.sh
 
 # Exposer le port 8080 pour le serveur PHP (Railway utilise 8080)
 EXPOSE 8080

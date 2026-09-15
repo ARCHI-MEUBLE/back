@@ -1,0 +1,11 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "data": {
+                "list": "string"
+            },
+            "success": "bool"
+        }
+    }
+}

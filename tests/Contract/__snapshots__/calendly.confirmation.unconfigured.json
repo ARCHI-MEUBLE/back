@@ -1,0 +1,10 @@
+{
+    "status": 500,
+    "shape": {
+        "object": {
+            "error": "string",
+            "instructions": "string",
+            "message": "string"
+        }
+    }
+}

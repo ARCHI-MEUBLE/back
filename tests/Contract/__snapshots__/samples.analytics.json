@@ -1,0 +1,24 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "analytics": {
+                "object": {
+                    "material_distribution": {
+                        "list": "empty"
+                    },
+                    "orders_with_samples": "number",
+                    "recent_orders": {
+                        "list": "empty"
+                    },
+                    "samples_in_cart": "number",
+                    "top_samples": {
+                        "list": "empty"
+                    },
+                    "total_ordered": "number"
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

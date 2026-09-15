@@ -1,0 +1,12 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "message": "string",
+            "new_status": "string",
+            "old_status": "string",
+            "order_id": "number",
+            "success": "bool"
+        }
+    }
+}

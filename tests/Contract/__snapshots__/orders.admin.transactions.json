@@ -1,0 +1,18 @@
+{
+    "status": 200,
+    "shape": {
+        "list": {
+            "object": {
+                "amount": "number",
+                "created_at": "string",
+                "customer_email": "string",
+                "customer_name": "string",
+                "id": "string",
+                "order_number": "string",
+                "payment_method": "string",
+                "payment_status": "string",
+                "stripe_payment_intent_id": "null"
+            }
+        }
+    }
+}
