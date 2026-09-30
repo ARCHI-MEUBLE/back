@@ -6,12 +6,14 @@ namespace App\Domain\QuoteRequest;
 
 use App\Domain\Notification\AdminNotificationRepository;
 use App\Domain\Shared\DomainException;
+use App\Infrastructure\Mail\EmailGateway;
 
 final class QuoteRequestService
 {
     public function __construct(
         private readonly QuoteRequestRepository $quotes,
         private readonly AdminNotificationRepository $notifications,
+        private readonly EmailGateway $mail,
         private readonly string $uploadsDir,
     ) {}
 
@@ -31,6 +33,14 @@ final class QuoteRequestService
         $this->notifications->notifyAllAdmins(
             'new_quote_request',
             sprintf('Demande de devis de %s %s avec %d fichier(s)', $form['first_name'], $form['last_name'], count($uploaded)),
+        );
+        $this->mail->sendNewQuoteRequestNotification(
+            (string) $form['first_name'],
+            (string) $form['last_name'],
+            (string) $form['email'],
+            (string) $form['phone'],
+            (string) ($form['description'] ?? ''),
+            count($uploaded),
         );
         return ['quote_request_id' => $quoteId, 'uploaded_files' => $uploaded];
     }

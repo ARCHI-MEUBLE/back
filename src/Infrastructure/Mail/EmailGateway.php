@@ -7,6 +7,7 @@ namespace App\Infrastructure\Mail;
 use App\Config\MailSettings;
 use App\Domain\Email\AdminOrderNotificationEmail;
 use App\Domain\Email\ConfigurationNotificationEmail;
+use App\Domain\Email\ContactRequestNotificationEmail;
 use App\Domain\Email\ItemDisplayNameResolver;
 use App\Domain\Email\OrderCancelledEmail;
 use App\Domain\Email\OrderConfirmationEmail;
@@ -14,6 +15,7 @@ use App\Domain\Email\OrderStatusUpdateEmail;
 use App\Domain\Email\PasswordResetEmail;
 use App\Domain\Email\PaymentFailedEmail;
 use App\Domain\Email\PaymentLinkEmail;
+use App\Domain\Email\QuoteRequestNotificationEmail;
 use App\Domain\Email\VerificationEmail;
 use App\Domain\Order\OrderRepository;
 
@@ -53,6 +55,24 @@ final class EmailGateway
     public function send(string $to, string $subject, string $html): bool
     {
         return $this->mailer->send($to, $subject, $html);
+    }
+
+    public function sendNewQuoteRequestNotification(string $firstName, string $lastName, string $email, string $phone, string $description, int $fileCount): void
+    {
+        $this->mailer->send(
+            $this->mail->adminEmail,
+            QuoteRequestNotificationEmail::subject($firstName, $lastName),
+            QuoteRequestNotificationEmail::html($firstName, $lastName, $email, $phone, $description, $fileCount, $this->frontendUrl),
+        );
+    }
+
+    public function sendNewContactRequestNotification(string $name, string $email, string $phone, string $company, string $subject, string $message): void
+    {
+        $this->mailer->send(
+            $this->mail->adminEmail,
+            ContactRequestNotificationEmail::subject($name, $subject),
+            ContactRequestNotificationEmail::html($name, $email, $phone, $company, $subject, $message, $this->frontendUrl),
+        );
     }
 
     public function sendOrderCancelled(string $email, string $name, string $orderNumber): void
