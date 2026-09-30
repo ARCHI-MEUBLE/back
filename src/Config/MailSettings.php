@@ -10,6 +10,7 @@ final class MailSettings
         public readonly ?string $resendApiKey,
         public readonly string $adminEmail,
         public readonly string $backendUrl,
+        public readonly string $adminPath,
     ) {}
 
     public static function fromEnv(Env $env): self
@@ -18,6 +19,7 @@ final class MailSettings
             $env->string('RESEND_API_KEY'),
             $env->string('ADMIN_EMAIL', 'pro.archimeuble@gmail.com') ?? 'pro.archimeuble@gmail.com',
             rtrim($env->string('BACKEND_URL', 'http://127.0.0.1:8000') ?? 'http://127.0.0.1:8000', '/'),
+            trim($env->string('ADMIN_PATH', '') ?? '', '/'),
         );
     }
 }
