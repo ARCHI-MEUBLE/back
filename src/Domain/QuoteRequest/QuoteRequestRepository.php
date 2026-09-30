@@ -35,4 +35,21 @@ final class QuoteRequestRepository
             [$limit],
         );
     }
+
+    public function filesFor(array $quoteRequestIds): array
+    {
+        if ($quoteRequestIds === []) {
+            return [];
+        }
+        $placeholders = implode(',', array_fill(0, count($quoteRequestIds), '?'));
+        $rows = $this->db->query(
+            "SELECT * FROM quote_request_files WHERE quote_request_id IN ({$placeholders}) ORDER BY created_at ASC",
+            array_values($quoteRequestIds),
+        );
+        $byQuoteRequest = [];
+        foreach ($rows as $row) {
+            $byQuoteRequest[(int) $row['quote_request_id']][] = $row;
+        }
+        return $byQuoteRequest;
+    }
 }

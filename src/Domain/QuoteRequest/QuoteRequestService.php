@@ -47,7 +47,19 @@ final class QuoteRequestService
 
     public function recent(int $limit): array
     {
-        return $this->quotes->recent($limit);
+        $requests = $this->quotes->recent($limit);
+        $ids = array_map(static fn(array $row): int => (int) $row['id'], $requests);
+        $filesByRequest = $this->quotes->filesFor($ids);
+        return array_map(static function (array $row) use ($filesByRequest): array {
+            $files = $filesByRequest[(int) $row['id']] ?? [];
+            $row['files'] = array_map(static fn(array $file): array => [
+                'name' => $file['file_name'],
+                'type' => $file['file_type'],
+                'size' => (int) $file['file_size'],
+                'url' => '/uploads/quote-requests/' . $file['file_path'],
+            ], $files);
+            return $row;
+        }, $requests);
     }
 
     private function storeFiles(int $quoteId, array $files): array
