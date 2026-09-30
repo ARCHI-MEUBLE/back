@@ -50,7 +50,7 @@ final class QuoteRequestNotificationEmail
                     {$descriptionHtml}
                     {$filesHtml}
                     <div style='text-align: center;'>
-                        <a href='{$dashboardUrl}' class='button'>Ouvrir ArchiMeuble</a>
+                        <a href='{$dashboardUrl}' class='button'>Voir dans le tableau de bord</a>
                     </div>
                 </div>
                 <div class='footer'>

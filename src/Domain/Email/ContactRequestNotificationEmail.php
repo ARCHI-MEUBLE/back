@@ -50,7 +50,7 @@ final class ContactRequestNotificationEmail
                     <p style='margin: 0 0 8px 0; color: #A8A7A3; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;'>Message</p>
                     <p style='margin: 0; white-space: pre-wrap;'>{$message}</p>
                     <div style='text-align: center;'>
-                        <a href='{$dashboardUrl}' class='button'>Ouvrir ArchiMeuble</a>
+                        <a href='{$dashboardUrl}' class='button'>Voir dans le tableau de bord</a>
                     </div>
                 </div>
                 <div class='footer'>

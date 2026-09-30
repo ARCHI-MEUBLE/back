@@ -62,7 +62,7 @@ final class EmailGateway
         $this->mailer->send(
             $this->mail->adminEmail,
             QuoteRequestNotificationEmail::subject($firstName, $lastName),
-            QuoteRequestNotificationEmail::html($firstName, $lastName, $email, $phone, $description, $fileCount, $this->frontendUrl),
+            QuoteRequestNotificationEmail::html($firstName, $lastName, $email, $phone, $description, $fileCount, $this->dashboardUrl()),
         );
     }
 
@@ -71,8 +71,13 @@ final class EmailGateway
         $this->mailer->send(
             $this->mail->adminEmail,
             ContactRequestNotificationEmail::subject($name, $subject),
-            ContactRequestNotificationEmail::html($name, $email, $phone, $company, $subject, $message, $this->frontendUrl),
+            ContactRequestNotificationEmail::html($name, $email, $phone, $company, $subject, $message, $this->dashboardUrl()),
         );
+    }
+
+    private function dashboardUrl(): string
+    {
+        return $this->mail->adminPath === '' ? $this->frontendUrl : "{$this->frontendUrl}/{$this->mail->adminPath}/dashboard";
     }
 
     public function sendOrderCancelled(string $email, string $name, string $orderNumber): void
