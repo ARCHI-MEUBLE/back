@@ -10,6 +10,13 @@ use App\Infrastructure\Mail\EmailGateway;
 
 final class QuoteRequestService
 {
+    // Extension enregistrée => nature attendue. Liste fermée : un .svg ou .html servi sur notre domaine pourrait exécuter du script
+    private const ALLOWED_EXTENSIONS = [
+        'jpg' => 'image', 'jpeg' => 'image', 'png' => 'image', 'gif' => 'image', 'webp' => 'image',
+        'avif' => 'image', 'heic' => 'image', 'heif' => 'image',
+        'mp4' => 'video', 'm4v' => 'video', 'mov' => 'video', 'avi' => 'video', 'webm' => 'video',
+    ];
+
     public function __construct(
         private readonly QuoteRequestRepository $quotes,
         private readonly AdminNotificationRepository $notifications,
@@ -72,21 +79,39 @@ final class QuoteRequestService
             if (($files['error'][$i] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
                 continue;
             }
-            $type = (string) $files['type'][$i];
-            $isImage = str_starts_with($type, 'image/');
-            $isVideo = str_starts_with($type, 'video/');
             $size = (int) $files['size'][$i];
-            if ((!$isImage && !$isVideo) || $size > 10 * 1024 * 1024) {
+            $tmpName = (string) $files['tmp_name'][$i];
+            $extension = strtolower(pathinfo((string) $name, PATHINFO_EXTENSION));
+            $kind = self::ALLOWED_EXTENSIONS[$extension] ?? null;
+            // Le type envoyé par le navigateur se falsifie : on lit le contenu réel du fichier
+            if ($kind === null || $size > 10 * 1024 * 1024 || !$this->contentMatches($tmpName, $kind, $extension)) {
                 continue;
             }
-            $extension = pathinfo((string) $name, PATHINFO_EXTENSION);
             $storedName = uniqid('quote_' . $quoteId . '_', true) . '.' . $extension;
-            if (!move_uploaded_file((string) $files['tmp_name'][$i], $this->uploadsDir . '/' . $storedName)) {
+            if (!move_uploaded_file($tmpName, $this->uploadsDir . '/' . $storedName)) {
                 continue;
             }
-            $this->quotes->addFile($quoteId, (string) $name, $storedName, $isImage ? 'image' : 'video', $size);
-            $uploaded[] = ['name' => $name, 'type' => $isImage ? 'image' : 'video', 'size' => $size];
+            $this->quotes->addFile($quoteId, (string) $name, $storedName, $kind, $size);
+            $uploaded[] = ['name' => $name, 'type' => $kind, 'size' => $size];
         }
         return $uploaded;
+    }
+
+    private function contentMatches(string $tmpName, string $kind, string $extension): bool
+    {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo === false) {
+            return false;
+        }
+        $detected = (string) finfo_file($finfo, $tmpName);
+        finfo_close($finfo);
+        if ($detected === 'image/svg+xml') {
+            return false;
+        }
+        if (str_starts_with($detected, $kind . '/')) {
+            return true;
+        }
+        // Les anciennes versions de libmagic ne reconnaissent pas le HEIC/HEIF
+        return in_array($extension, ['heic', 'heif'], true) && $detected === 'application/octet-stream';
     }
 }

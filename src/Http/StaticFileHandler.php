@@ -13,7 +13,9 @@ final class StaticFileHandler
         'png' => 'image/png', 'gif' => 'image/gif', 'webp' => 'image/webp', 'svg' => 'image/svg+xml',
         'glb' => 'model/gltf-binary', 'gltf' => 'model/gltf+json', 'ico' => 'image/x-icon', 'woff' => 'font/woff',
         'woff2' => 'font/woff2', 'ttf' => 'font/ttf', 'eot' => 'application/vnd.ms-fontobject', 'dxf' => 'application/dxf',
-        'pdf' => 'application/pdf', 'mp4' => 'video/mp4',
+        'pdf' => 'application/pdf', 'mp4' => 'video/mp4', 'avif' => 'image/avif', 'heic' => 'image/heic',
+        'heif' => 'image/heif', 'm4v' => 'video/x-m4v', 'mov' => 'video/quicktime', 'avi' => 'video/x-msvideo',
+        'webm' => 'video/webm',
     ];
 
     public function __construct(private readonly PathSettings $paths) {}
@@ -28,9 +30,15 @@ final class StaticFileHandler
         if ($file === null) {
             return Response::json(['error' => 'Fichier non trouvé'], 404);
         }
-        return Response::file($file, self::TYPES[$extension])
+        $response = Response::file($file, self::TYPES[$extension])
             ->withHeader('Access-Control-Allow-Origin', '*')
-            ->withHeader('Cache-Control', 'public, max-age=86400');
+            ->withHeader('Cache-Control', 'public, max-age=86400')
+            ->withHeader('X-Content-Type-Options', 'nosniff');
+        // Un SVG ouvert directement exécute ses scripts : on les neutralise (sans effet sur une balise <img>)
+        if ($extension === 'svg') {
+            $response = $response->withHeader('Content-Security-Policy', "sandbox; default-src 'none'; style-src 'unsafe-inline'");
+        }
+        return $response;
     }
 
     public function locate(string $path): ?string

@@ -70,4 +70,5 @@ echo ""
 echo "Starting PHP server on port $PORT..."
 echo "Sessions stored in: /data/sessions"
 echo "========================================="
-exec php -d session.save_path=/data/sessions -S 0.0.0.0:$PORT public/index.php
+# Sans ces options, PHP garde ses valeurs par défaut (2 Mo par fichier, 8 Mo par requête) et ignore les photos plus lourdes
+exec php -d session.save_path=/data/sessions -d upload_max_filesize=20M -d post_max_size=60M -S 0.0.0.0:$PORT public/index.php
