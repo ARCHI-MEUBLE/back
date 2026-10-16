@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Admin;
 
 use App\Db\Connection;
+use App\Domain\Customer\CustomerErasure;
 use App\Domain\Shared\ConflictException;
 use App\Domain\Shared\DomainException;
 use App\Domain\Shared\NotFoundException;
@@ -38,7 +39,7 @@ final class AdminAccountsService
     public function delete(int|string $id, string $type): void
     {
         $affected = match ($type) {
-            'user' => $this->db->execute('DELETE FROM customers WHERE id = ?', [(int) $id]),
+            'user' => (new CustomerErasure($this->db))->erase((int) $id) ? 1 : 0,
             'admin' => $this->deleteAdmin((int) $id),
             default => throw new DomainException('Type de compte invalide'),
         };

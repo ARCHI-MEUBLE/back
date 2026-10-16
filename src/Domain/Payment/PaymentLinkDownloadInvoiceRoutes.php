@@ -48,6 +48,6 @@ final class PaymentLinkDownloadInvoiceRoutes
         if (!is_file($pdfPath) || filesize($pdfPath) <= 500) {
             throw new NotFoundException('Facture PDF introuvable');
         }
-        return Response::file($pdfPath, 'application/pdf')->withHeader('Content-Disposition', 'inline; filename="' . $invoice['filename'] . '"');
+        return Response::file($pdfPath, 'application/pdf')->withHeader('Content-Disposition', Response::disposition('inline', (string) $invoice['filename']));
     }
 }

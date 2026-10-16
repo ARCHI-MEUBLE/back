@@ -34,7 +34,6 @@ final class StaticFileHandler
             ->withHeader('Access-Control-Allow-Origin', '*')
             ->withHeader('Cache-Control', 'public, max-age=86400')
             ->withHeader('X-Content-Type-Options', 'nosniff');
-        // Un SVG ouvert directement exécute ses scripts : on les neutralise (sans effet sur une balise <img>)
         if ($extension === 'svg') {
             $response = $response->withHeader('Content-Security-Policy', "sandbox; default-src 'none'; style-src 'unsafe-inline'");
         }

@@ -58,17 +58,7 @@ final class RateLimiter
 
     public static function clientIp(array $server): string
     {
-        foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'HTTP_CLIENT_IP', 'REMOTE_ADDR'] as $header) {
-            $value = $server[$header] ?? null;
-            if (!is_string($value) || $value === '') {
-                continue;
-            }
-            $ip = trim(explode(',', $value)[0]);
-            if (filter_var($ip, FILTER_VALIDATE_IP) !== false) {
-                return $ip;
-            }
-        }
-        return '0.0.0.0';
+        return ClientIp::from($server);
     }
 
     private function lockedDecision(int $lockedUntil): RateLimitDecision

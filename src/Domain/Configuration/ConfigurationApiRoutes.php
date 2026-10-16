@@ -7,6 +7,7 @@ namespace App\Domain\Configuration;
 use App\Domain\Shared\DomainException;
 use App\Domain\Shared\NotFoundException;
 use App\Http\ErrorStyle;
+use App\Http\Guard\AdminGuard;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\RouteCollection;
@@ -17,7 +18,7 @@ final class ConfigurationApiRoutes
 
     public function register(RouteCollection $routes): void
     {
-        $script = $routes->script('configurations', errorStyle: ErrorStyle::Success);
+        $script = $routes->script('configurations', [new AdminGuard()], ErrorStyle::Success);
         $script->get(null, fn(Request $r): Response => $this->get($r));
         $script->post(null, fn(Request $r): Response => $this->post($r));
     }

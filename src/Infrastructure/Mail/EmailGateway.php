@@ -18,6 +18,7 @@ use App\Domain\Email\PaymentLinkEmail;
 use App\Domain\Email\QuoteRequestNotificationEmail;
 use App\Domain\Email\VerificationEmail;
 use App\Domain\Order\OrderRepository;
+use App\Lib\Html;
 
 final class EmailGateway
 {
@@ -31,12 +32,12 @@ final class EmailGateway
 
     public function sendPasswordReset(string $email, string $name, string $resetUrl): void
     {
-        $this->mailer->send($email, PasswordResetEmail::subject(), PasswordResetEmail::html($name, $resetUrl));
+        $this->mailer->send($email, PasswordResetEmail::subject(), PasswordResetEmail::html(Html::e($name), Html::e($resetUrl)));
     }
 
     public function sendVerificationCode(string $email, string $name, string $code): bool
     {
-        return $this->mailer->send($email, VerificationEmail::subject(), VerificationEmail::html($name, $code));
+        return $this->mailer->send($email, VerificationEmail::subject(), VerificationEmail::html(Html::e($name), Html::e($code)));
     }
 
     public function sendNewConfigurationNotification(array $configuration, array $customer): void
@@ -48,7 +49,7 @@ final class EmailGateway
         $this->mailer->send(
             $this->mail->adminEmail,
             ConfigurationNotificationEmail::subject($configuration, $customer),
-            ConfigurationNotificationEmail::html($configuration, $customer, $this->frontendUrl, $this->mail->backendUrl),
+            ConfigurationNotificationEmail::html($configuration, Html::escapeAll($customer), Html::e($this->frontendUrl), Html::e($this->mail->backendUrl)),
         );
     }
 
@@ -62,7 +63,7 @@ final class EmailGateway
         $this->mailer->send(
             $this->mail->adminEmail,
             QuoteRequestNotificationEmail::subject($firstName, $lastName),
-            QuoteRequestNotificationEmail::html($firstName, $lastName, $email, $phone, $description, $fileCount, $this->dashboardUrl()),
+            QuoteRequestNotificationEmail::html(Html::e($firstName), Html::e($lastName), Html::e($email), Html::e($phone), Html::e($description), $fileCount, Html::e($this->dashboardUrl())),
         );
     }
 
@@ -71,7 +72,7 @@ final class EmailGateway
         $this->mailer->send(
             $this->mail->adminEmail,
             ContactRequestNotificationEmail::subject($name, $subject),
-            ContactRequestNotificationEmail::html($name, $email, $phone, $company, $subject, $message, $this->dashboardUrl()),
+            ContactRequestNotificationEmail::html(Html::e($name), Html::e($email), Html::e($phone), Html::e($company), Html::e($subject), Html::e($message), Html::e($this->dashboardUrl())),
         );
     }
 
@@ -82,36 +83,36 @@ final class EmailGateway
 
     public function sendOrderCancelled(string $email, string $name, string $orderNumber): void
     {
-        $this->mailer->send($email, OrderCancelledEmail::subject($orderNumber), OrderCancelledEmail::html($name, $orderNumber));
+        $this->mailer->send($email, OrderCancelledEmail::subject($orderNumber), OrderCancelledEmail::html(Html::e($name), Html::e($orderNumber)));
     }
 
     public function sendOrderStatusUpdate(string $email, string $name, string $orderNumber, string $status, int $orderId): void
     {
-        $this->mailer->send($email, OrderStatusUpdateEmail::subject($orderNumber), OrderStatusUpdateEmail::html($name, $orderNumber, $status, $this->frontendUrl));
+        $this->mailer->send($email, OrderStatusUpdateEmail::subject($orderNumber), OrderStatusUpdateEmail::html(Html::e($name), Html::e($orderNumber), $status, Html::e($this->frontendUrl)));
     }
 
     public function sendOrderConfirmation(array $order, array $customer, array $items, string $paymentType): void
     {
         $itemRows = array_map(fn(array $item): array => [
-            'name' => $this->itemNames->resolve($item),
-            'quantity' => $item['quantity'],
+            'name' => Html::e($this->itemNames->resolve($item)),
+            'quantity' => (int) $item['quantity'],
             'price' => (float) ($item['price'] ?? $item['unit_price'] ?? 0),
         ], $items);
-        $samples = $this->orders->samplesFor((int) $order['id']);
+        $samples = Html::escapeAll($this->orders->samplesFor((int) $order['id']));
         $this->mailer->send(
             $customer['email'],
             OrderConfirmationEmail::subject((string) $order['order_number'], $paymentType),
-            OrderConfirmationEmail::html($order, $customer, $itemRows, $samples, $paymentType, $this->frontendUrl),
+            OrderConfirmationEmail::html(Html::escapeAll($order), Html::escapeAll($customer), $itemRows, $samples, $paymentType, Html::e($this->frontendUrl)),
         );
     }
 
     public function sendNewOrderNotificationToAdmin(array $order, array $customer, array $items, string $paymentType = 'full'): void
     {
-        $itemNames = array_map(fn(array $item): array => ['name' => $this->itemNames->resolve($item), 'quantity' => $item['quantity']], $items);
+        $itemNames = array_map(fn(array $item): array => ['name' => Html::e($this->itemNames->resolve($item)), 'quantity' => (int) $item['quantity']], $items);
         $this->mailer->send(
             $this->mail->adminEmail,
             AdminOrderNotificationEmail::subject((string) $order['order_number'], (string) $customer['first_name'], (string) $customer['last_name'], $paymentType),
-            AdminOrderNotificationEmail::html($order, $customer, $itemNames, $paymentType),
+            AdminOrderNotificationEmail::html(Html::escapeAll($order), Html::escapeAll($customer), $itemNames, $paymentType),
         );
     }
 
@@ -120,12 +121,12 @@ final class EmailGateway
         $this->mailer->send(
             $customer['email'],
             PaymentFailedEmail::subject((string) $order['order_number']),
-            PaymentFailedEmail::html((string) $customer['first_name'], (string) $order['order_number'], $this->mail->adminEmail),
+            PaymentFailedEmail::html(Html::e($customer['first_name'] ?? ''), Html::e($order['order_number'] ?? ''), Html::e($this->mail->adminEmail)),
         );
     }
 
     public function sendPaymentLink(string $email, string $name, string $orderNumber, string $url, string $expiresAt, float $amount): void
     {
-        $this->mailer->send($email, PaymentLinkEmail::subject($orderNumber), PaymentLinkEmail::html($name, $orderNumber, $url, $expiresAt, $amount));
+        $this->mailer->send($email, PaymentLinkEmail::subject($orderNumber), PaymentLinkEmail::html(Html::e($name), Html::e($orderNumber), Html::e($url), Html::e($expiresAt), $amount));
     }
 }

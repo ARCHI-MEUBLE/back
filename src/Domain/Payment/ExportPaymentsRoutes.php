@@ -53,7 +53,7 @@ final class ExportPaymentsRoutes
         $csv = (string) stream_get_contents($stream);
         fclose($stream);
         return Response::text($csv, 'text/csv; charset=utf-8')
-            ->withHeader('Content-Disposition', 'attachment; filename="paiements_' . $period . '_' . date('Y-m-d') . '.csv"')
+            ->withHeader('Content-Disposition', Response::disposition('attachment', 'paiements_' . $period . '_' . date('Y-m-d') . '.csv'))
             ->withHeader('Pragma', 'no-cache')
             ->withHeader('Expires', '0');
     }

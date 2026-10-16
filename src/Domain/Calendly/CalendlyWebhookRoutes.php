@@ -18,6 +18,7 @@ final class CalendlyWebhookRoutes
     public function __construct(
         private readonly CalendlyAppointmentRepository $appointments,
         private readonly LegacyCalendlyEmailGateway $mail,
+        private readonly CalendlyWebhookSignature $signature,
     ) {}
 
     public function register(RouteCollection $routes): void
@@ -27,6 +28,12 @@ final class CalendlyWebhookRoutes
 
     private function handle(Request $r): Response
     {
+        if (!$this->signature->isConfigured()) {
+            return Response::json(['success' => false, 'error' => 'Webhook signing key not configured'], 503);
+        }
+        if (!$this->signature->verify($r->header('calendly-webhook-signature') ?? '', $r->rawBody())) {
+            return Response::json(['success' => false, 'error' => 'Invalid signature'], 401);
+        }
         $event = json_decode($r->rawBody(), true);
         if (!is_array($event)) {
             throw new DomainException('Invalid JSON');
@@ -49,10 +56,14 @@ final class CalendlyWebhookRoutes
         $endTime = $payload['scheduled_event']['end_time'] ?? 'N/A';
         $timezone = $payload['timezone'] ?? 'Europe/Paris';
         $calendlyEventId = $payload['event']['uri'] ?? uniqid('calendly_', true);
-        $start = new DateTime($startTime);
-        $end = new DateTime($endTime);
-        $start->setTimezone(new DateTimeZone($timezone));
-        $end->setTimezone(new DateTimeZone($timezone));
+        try {
+            $start = new DateTime((string) $startTime);
+            $end = new DateTime((string) $endTime);
+            $start->setTimezone(new DateTimeZone((string) $timezone));
+            $end->setTimezone(new DateTimeZone((string) $timezone));
+        } catch (Throwable) {
+            throw new DomainException('Invalid event dates');
+        }
         $formattedStart = $start->format('d/m/Y à H:i');
         $formattedEnd = $end->format('H:i');
         [$configUrl, $notes] = CalendlyQuestionExtractor::extract($payload['questions_and_answers'] ?? []);

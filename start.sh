@@ -18,7 +18,9 @@ mkdir -p /data/uploads/models
 mkdir -p /data/models
 mkdir -p /data/sessions
 mkdir -p /data/backups
-chmod -R 777 /data
+mkdir -p /data/uploads/quote-requests
+chmod 755 /data /data/uploads /data/models /data/uploads/models /data/uploads/quote-requests
+chmod 700 /data/backups /data/sessions
 
 echo "Directories created: /data, /data/uploads, /data/models, /data/sessions, /data/backups"
 
@@ -50,12 +52,12 @@ fi
 # Installer le cron de backup automatique
 echo ""
 echo "Setting up automated backup cron job..."
-if ! crontab -l 2>/dev/null | grep -q "backup-database.sh"; then
-    echo "0 3 * * * /usr/local/bin/backup-database.sh >> /data/backup-cron.log 2>&1" | crontab -
-    echo "Backup cron job installed (runs daily at 3:00 AM)"
-else
-    echo "Backup cron job already installed"
-fi
+# cron ne transmet pas l'environnement du conteneur : DATABASE_URL est écrit dans un fichier lisible par root seul
+umask 077
+printf 'export DATABASE_URL=%q\n' "$DATABASE_URL" > /etc/archimeuble-cron.env
+umask 022
+echo "0 3 * * * . /etc/archimeuble-cron.env && /usr/local/bin/backup-database.sh >> /data/backup-cron.log 2>&1" | crontab -
+echo "Backup cron job installed (runs daily at 3:00 AM)"
 
 # Démarrer le service cron en arrière-plan
 echo "Starting cron service..."
@@ -70,5 +72,7 @@ echo ""
 echo "Starting PHP server on port $PORT..."
 echo "Sessions stored in: /data/sessions"
 echo "========================================="
+# Le serveur intégré traite une requête à la fois sans workers : une génération 3D bloquerait tout le site
+export PHP_CLI_SERVER_WORKERS="${PHP_CLI_SERVER_WORKERS:-4}"
 # Sans ces options, PHP garde ses valeurs par défaut (2 Mo par fichier, 8 Mo par requête) et ignore les photos plus lourdes
 exec php -d session.save_path=/data/sessions -d upload_max_filesize=20M -d post_max_size=60M -S 0.0.0.0:$PORT public/index.php

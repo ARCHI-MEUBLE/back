@@ -15,7 +15,7 @@
                     "status": "string",
                     "template_id": "number",
                     "user_id": "string",
-                    "user_session": "string"
+                    "user_session": "null"
                 }
             },
             "message": "string",

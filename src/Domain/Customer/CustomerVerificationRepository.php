@@ -16,14 +16,6 @@ final class CustomerVerificationRepository
         $this->db->execute('INSERT INTO email_verifications (email, code, expires_at) VALUES (?, ?, ?)', [$email, $code, $expiresAt]);
     }
 
-    public function recentCodeCount(string $email): int
-    {
-        return (int) ($this->db->scalar(
-            "SELECT COUNT(*) FROM email_verifications WHERE email = ? AND created_at > NOW() - INTERVAL '1 hour'",
-            [$email],
-        ) ?? 0);
-    }
-
     public function findValidUnusedCode(string $email, string $code): ?array
     {
         return $this->db->queryOne(

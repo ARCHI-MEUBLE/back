@@ -9,10 +9,14 @@ use App\Http\Request;
 use App\Http\Response;
 use App\Http\RouteCollection;
 use App\Http\Session;
+use App\Infrastructure\RateLimit\RateLimiter;
 
 final class CustomerAuthRoutes
 {
-    public function __construct(private readonly CustomerAuthService $service) {}
+    public function __construct(
+        private readonly CustomerAuthService $service,
+        private readonly CustomerPasswordResetService $passwordReset,
+    ) {}
 
     public function register(RouteCollection $routes): void
     {
@@ -25,12 +29,16 @@ final class CustomerAuthRoutes
 
         $routes->script('customers/login')->post(null, function (Request $r, Session $s): Response {
             $data = CustomerSchemas::login()->validate($r->json());
-            return Response::json(Mapper::login($this->service->login($data['email'], $data['password'], $s)));
+            try {
+                return Response::json(Mapper::login($this->service->login($data['email'], $data['password'], RateLimiter::clientIp($_SERVER), $s)));
+            } catch (EmailNotVerifiedException $e) {
+                return Response::json(['success' => false, 'error' => $e->getMessage(), 'requiresVerification' => true, 'email' => $e->email], $e->status);
+            }
         });
 
         $routes->script('customers/register')->post(null, function (Request $r): Response {
             $data = CustomerSchemas::validateRegistration($r->json());
-            $outcome = $this->service->register($data);
+            $outcome = $this->service->register($data, RateLimiter::clientIp($_SERVER));
             return Response::json(Mapper::registered($outcome), $outcome->isNewAccount ? 201 : 200);
         });
 
@@ -47,13 +55,13 @@ final class CustomerAuthRoutes
 
         $routes->script('customers/forgot-password')->post(null, function (Request $r): Response {
             $data = CustomerSchemas::requiredEmail('Email requis')->validate($r->json());
-            $this->service->forgotPassword($data['email']);
+            $this->passwordReset->forgotPassword($data['email'], RateLimiter::clientIp($_SERVER));
             return Response::json(['success' => true, 'message' => 'Si cet email est associé à un compte, un lien de réinitialisation a été envoyé.']);
         });
 
         $routes->script('customers/reset-password')->post(null, function (Request $r): Response {
             $data = CustomerSchemas::resetPassword()->validate($r->json());
-            $this->service->resetPassword($data['token'], $data['password']);
+            $this->passwordReset->resetPassword($data['token'], $data['password']);
             return Response::json(['success' => true, 'message' => 'Votre mot de passe a été mis à jour avec succès.']);
         });
     }

@@ -29,7 +29,7 @@ final class CartSampleRoutes
             if (!isset($data['sample_color_id'])) {
                 throw new DomainException('sample_color_id requis');
             }
-            $quantity = isset($data['quantity']) ? (int) $data['quantity'] : 1;
+            $quantity = CartQuantity::forAdd($data['quantity'] ?? 1);
             $itemId = $this->samples->add((int) $s->customerId(), (int) $data['sample_color_id'], $quantity);
             return Response::json(['success' => true, 'message' => 'Échantillon ajouté au panier', 'item_id' => $itemId], 201);
         });
@@ -39,7 +39,7 @@ final class CartSampleRoutes
             if (!isset($data['item_id']) || !isset($data['quantity'])) {
                 throw new DomainException('item_id et quantity requis');
             }
-            $this->samples->updateQuantity((int) $s->customerId(), (int) $data['item_id'], (int) $data['quantity']);
+            $this->samples->updateQuantity((int) $s->customerId(), (int) $data['item_id'], CartQuantity::forUpdate($data['quantity']));
             return Response::json(['success' => true, 'message' => 'Quantité mise à jour']);
         });
 

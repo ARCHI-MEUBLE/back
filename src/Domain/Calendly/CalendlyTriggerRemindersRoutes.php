@@ -25,7 +25,7 @@ final class CalendlyTriggerRemindersRoutes
         if ($this->cronSecret === null || $this->cronSecret === '') {
             return Response::json(['success' => false, 'error' => 'CRON_SECRET not configured', 'message' => "Le token secret n'est pas configuré dans les variables d'environnement"], 500);
         }
-        if (($r->queryString('token') ?? '') !== $this->cronSecret) {
+        if (!hash_equals($this->cronSecret, $r->header('x-cron-token') ?? $r->queryString('token') ?? '')) {
             return Response::json(['success' => false, 'error' => 'Unauthorized', 'message' => 'Token invalide ou manquant'], 403);
         }
         $output = implode("\n", $this->reminders->run());

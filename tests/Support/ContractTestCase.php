@@ -9,6 +9,8 @@ use RuntimeException;
 
 abstract class ContractTestCase extends TestCase
 {
+    protected const CALENDLY_SIGNING_KEY = 'test-calendly-signing-key';
+
     private static ?ServerProcess $server = null;
     private static ?ApiClient $admin = null;
     private static ?ApiClient $customer = null;
@@ -93,7 +95,7 @@ abstract class ContractTestCase extends TestCase
 
     private static function resetBackupState(string $root): void
     {
-        foreach (['backup-rate-limit.json', 'backup-access.log'] as $file) {
+        foreach (['backup-rate-limit.json', 'admin-creation-rate-limit.json', 'backup-access.log'] as $file) {
             $path = $root . '/storage/' . $file;
             if (is_file($path)) {
                 unlink($path);
@@ -129,6 +131,7 @@ abstract class ContractTestCase extends TestCase
             'CRISP_WEBSITE_ID' => 'crisp-test',
             'CRON_SECRET' => 'test-cron-secret',
             'BACKUP_API_KEY' => 'test-backup-key',
+            'CALENDLY_WEBHOOK_SIGNING_KEY' => self::CALENDLY_SIGNING_KEY,
         ];
     }
 }

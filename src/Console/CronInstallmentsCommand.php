@@ -7,6 +7,7 @@ namespace App\Console;
 use App\Config\Settings;
 use App\Db\Connection;
 use App\Domain\Payment\InstallmentRepository;
+use App\Domain\Payment\PaymentAmountPolicy;
 use App\Infrastructure\Stripe\StripeGateway;
 use Stripe\Exception\CardException;
 use Throwable;
@@ -43,7 +44,7 @@ final class CronInstallmentsCommand
         $this->log("Traitement de la mensualité #{$installment['id']} - Commande {$installment['order_number']} - {$installment['installment_number']}/3");
         try {
             $intent = $stripe->createPaymentIntent([
-                'amount' => (int) ($installment['amount'] * 100),
+                'amount' => PaymentAmountPolicy::cents($installment['amount']),
                 'currency' => 'eur',
                 'customer' => $installment['stripe_customer_id'],
                 'payment_method_types' => ['card'],

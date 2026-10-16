@@ -24,7 +24,7 @@ final class CorsSettings
         );
         return new self(
             array_values(array_unique($origins)),
-            $env->list('CORS_ALLOWED_ORIGIN_SUFFIXES', ['.vercel.app', '.archimeuble.com']),
+            $env->list('CORS_ALLOWED_ORIGIN_SUFFIXES', ['.archimeuble.com']),
         );
     }
 

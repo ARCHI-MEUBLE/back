@@ -85,8 +85,6 @@ COPY . /app
 # Installer les dépendances PHP de production
 RUN composer install --no-dev --no-interaction --no-progress --prefer-dist --optimize-autoloader
 
-RUN chmod -R 777 /app
-
 # S'assurer que les scripts sont exécutables et avec des fins de ligne Unix
 RUN cp /app/backup-database.sh /usr/local/bin/backup-database.sh \
     && sed -i 's/\r$//' /usr/local/bin/backup-database.sh \

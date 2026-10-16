@@ -38,11 +38,14 @@ final class CalendlyConfirmationRoutes
         if (!isset($data['invitee_uri']) || $data['invitee_uri'] === '') {
             return Response::json(['error' => 'Missing invitee_uri', 'received_data' => array_keys($data)], 400);
         }
+        if (!is_string($data['invitee_uri']) || !CalendlyApiClient::isApiUrl($data['invitee_uri'])) {
+            return Response::json(['error' => 'Invalid invitee_uri'], 400);
+        }
         if ($this->calendlyApiToken === null || trim($this->calendlyApiToken) === '') {
             return Response::json(['error' => 'Calendly API token not configured', 'message' => 'Veuillez configurer CALENDLY_API_TOKEN dans le fichier .env', 'instructions' => 'Obtenez votre token sur: https://calendly.com/integrations/api_webhooks'], 500);
         }
         $client = new CalendlyApiClient($this->calendlyApiToken);
-        $invitee = $this->fetchResource($client, (string) $data['invitee_uri'], 'invitee data from Calendly');
+        $invitee = $this->fetchResource($client, $data['invitee_uri'], 'invitee data from Calendly');
         if ($invitee instanceof Response) {
             return $invitee;
         }

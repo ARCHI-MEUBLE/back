@@ -57,9 +57,9 @@ final class LegacyUserRepository
         return $this->db->execute('UPDATE users SET ' . implode(', ', $fields) . ' WHERE id = ?', $params);
     }
 
-    public function updatePasswordHash(string $id, string $passwordHash): void
+    public function updatePasswordHash(string $id, string $passwordHash): int
     {
-        $this->db->execute('UPDATE users SET password_hash = ? WHERE id = ?', [$passwordHash, $id]);
+        return $this->db->execute('UPDATE users SET password_hash = ? WHERE id = ?', [$passwordHash, $id]);
     }
 
     public function delete(string $id): bool

@@ -13,6 +13,7 @@ use App\Domain\Cart\CartRepository;
 use App\Domain\Cart\CartRoutes;
 use App\Domain\Cart\CartSampleRepository;
 use App\Domain\Cart\CartSampleRoutes;
+use App\Domain\Facade\FacadePriceCalculator;
 use App\Http\RouteCollection;
 
 final class CartRouteRegistry
@@ -22,6 +23,6 @@ final class CartRouteRegistry
         (new CartRoutes(new CartRepository($db)))->register($routes);
         (new CartSampleRoutes(new CartSampleRepository($db)))->register($routes);
         (new CartCatalogueRoutes(new CartCatalogueRepository($db)))->register($routes);
-        (new CartFacadeRoutes(new CartFacadeRepository($db)))->register($routes);
+        (new CartFacadeRoutes(new CartFacadeRepository($db), new FacadePriceCalculator($db)))->register($routes);
     }
 }

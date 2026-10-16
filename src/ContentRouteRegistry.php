@@ -40,12 +40,14 @@ use App\Domain\Sample\SampleTypeRepository;
 use App\Domain\Showroom\ShowroomRepository;
 use App\Domain\Showroom\ShowroomRoutes;
 use App\Http\RouteCollection;
+use App\Infrastructure\RateLimit\RateLimiter;
+use App\Infrastructure\RateLimit\Throttle;
 
 final class ContentRouteRegistry
 {
     public static function register(RouteCollection $routes, Settings $settings, Connection $db, AdminRepository $admins): void
     {
-        (new ReviewRoutes(new ReviewRepository($db)))->register($routes);
+        (new ReviewRoutes(new ReviewRepository($db), new Throttle(new RateLimiter($db))))->register($routes);
         (new ShowroomRoutes(new ShowroomRepository($settings->rootDir . '/backend/data/showrooms.json')))->register($routes);
         $realisations = new RealisationRepository($db);
         $realisationImages = new RealisationImageRepository($db);

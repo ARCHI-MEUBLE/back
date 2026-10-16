@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Contract\Calendly;
 
+use App\Domain\Calendly\CalendlyWebhookSignature;
+use Tests\Support\ApiResponse;
 use Tests\Support\ContractTestCase;
 
 final class CalendlyTest extends ContractTestCase
@@ -41,9 +43,14 @@ final class CalendlyTest extends ContractTestCase
 
     public function testWebhook(): void
     {
-        $this->assertSnapshot('calendly.webhook.invalid', $this->client()->raw('POST', '/backend/api/calendly/webhook.php', 'not json', ['Content-Type: application/json']));
-        $this->assertSnapshot('calendly.webhook.ignored', $this->client()->post('/backend/api/calendly/webhook.php', ['event' => 'invitee.canceled', 'payload' => []]));
-        $created = $this->client()->post('/backend/api/calendly/webhook.php', [
+        $this->assertSnapshot('calendly.webhook.unsigned', $this->client()->post('/backend/api/calendly/webhook.php', ['event' => 'invitee.canceled', 'payload' => []]));
+        $this->assertSnapshot('calendly.webhook.bad-signature', $this->client()->raw('POST', '/backend/api/calendly/webhook.php', '{}', [
+            'Content-Type: application/json',
+            'Calendly-Webhook-Signature: t=' . time() . ',v1=' . str_repeat('0', 64),
+        ]));
+        $this->assertSnapshot('calendly.webhook.invalid', $this->signed('not json'));
+        $this->assertSnapshot('calendly.webhook.ignored', $this->signed((string) json_encode(['event' => 'invitee.canceled', 'payload' => []])));
+        $created = $this->signed((string) json_encode([
             'event' => 'invitee.created',
             'payload' => [
                 'name' => 'Webhook Client',
@@ -54,8 +61,14 @@ final class CalendlyTest extends ContractTestCase
                 'scheduled_event' => ['start_time' => '2027-03-01T09:00:00Z', 'end_time' => '2027-03-01T09:30:00Z'],
                 'questions_and_answers' => [['question' => 'Lien de configuration', 'answer' => 'https://archimeuble.com/configurator/1']],
             ],
-        ]);
+        ]));
         $this->assertSnapshot('calendly.webhook.created', $created);
+    }
+
+    private function signed(string $body): ApiResponse
+    {
+        $signature = (new CalendlyWebhookSignature(self::CALENDLY_SIGNING_KEY))->sign($body, time());
+        return $this->client()->raw('POST', '/backend/api/calendly/webhook.php', $body, ['Content-Type: application/json', 'Calendly-Webhook-Signature: ' . $signature]);
     }
 
     public function testConfirmationAndReminders(): void

@@ -10,10 +10,14 @@ use App\Http\Request;
 use App\Http\Response;
 use App\Http\RouteCollection;
 use App\Infrastructure\Python\ProcOpenRunner;
+use App\Infrastructure\RateLimit\RateLimiter;
+use App\Infrastructure\RateLimit\Throttle;
 use App\Lib\Logger;
 
 final class GenerateRoutes
 {
+    private const MIN_DIMENSION_MM = 100;
+    private const MAX_DIMENSION_MM = 6000;
     private const PROMPT_PATTERN = '/^M[1-5]\(\d+,\d+,\d+(,\d+)?\)[A-Za-z0-9\(\),\[\]]+$/';
 
     public function __construct(
@@ -23,6 +27,7 @@ final class GenerateRoutes
         private readonly string $pythonScript,
         private readonly string $pythonBin,
         private readonly int $timeoutSeconds,
+        private readonly Throttle $throttle,
     ) {}
 
     public function register(RouteCollection $routes): void
@@ -43,6 +48,13 @@ final class GenerateRoutes
         if (strlen($prompt) > 200) {
             throw new DomainException('Prompt trop long (max 200 caractères)');
         }
+        preg_match('/^M[1-5]\(([\d,]+)\)/', $prompt, $dimensions);
+        foreach (explode(',', $dimensions[1] ?? '') as $dimension) {
+            if ((int) $dimension < self::MIN_DIMENSION_MM || (int) $dimension > self::MAX_DIMENSION_MM) {
+                throw new DomainException(sprintf('Dimensions invalides (entre %d et %d mm)', self::MIN_DIMENSION_MM, self::MAX_DIMENSION_MM));
+            }
+        }
+        $this->throttle->consume(RateLimiter::clientIp($_SERVER), 'generate_ip', 60, 10, 'Trop de générations 3D en peu de temps. Merci de patienter quelques minutes.');
         if (!is_file($this->pythonScript)) {
             throw new DomainException('Script Python introuvable', 500);
         }

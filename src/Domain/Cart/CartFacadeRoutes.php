@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Cart;
 
+use App\Domain\Facade\FacadePriceCalculator;
 use App\Domain\Shared\DomainException;
 use App\Http\Guard\CustomerGuard;
 use App\Http\Request;
@@ -13,7 +14,10 @@ use App\Http\Session;
 
 final class CartFacadeRoutes
 {
-    public function __construct(private readonly CartFacadeRepository $facades) {}
+    public function __construct(
+        private readonly CartFacadeRepository $facades,
+        private readonly FacadePriceCalculator $prices,
+    ) {}
 
     public function register(RouteCollection $routes): void
     {
@@ -26,12 +30,11 @@ final class CartFacadeRoutes
 
         $script->post(null, function (Request $r, Session $s): Response {
             $data = $r->jsonOrEmpty();
-            if (!isset($data['config']) || !isset($data['price'])) {
+            if (!isset($data['config']) || !is_array($data['config'])) {
                 throw new DomainException('config et price requis');
             }
-            $quantity = isset($data['quantity']) ? (int) $data['quantity'] : 1;
-            $config = is_array($data['config']) ? $data['config'] : [];
-            $id = $this->facades->add((int) $s->customerId(), $config, (float) $data['price'], $quantity);
+            $quantity = CartQuantity::forAdd($data['quantity'] ?? 1);
+            $id = $this->facades->add((int) $s->customerId(), $data['config'], $this->prices->unitPrice($data['config']), $quantity);
             return Response::json(['success' => true, 'message' => 'Façade ajoutée au panier', 'id' => (string) $id], 201);
         });
 
@@ -40,7 +43,10 @@ final class CartFacadeRoutes
             if (!isset($data['id']) || !isset($data['quantity'])) {
                 throw new DomainException('id et quantity requis');
             }
-            $this->facades->updateQuantity((int) $s->customerId(), (int) $data['id'], (int) $data['quantity']);
+            $quantity = CartQuantity::forUpdate($data['quantity']);
+            $quantity === 0
+                ? $this->facades->remove((int) $s->customerId(), (int) $data['id'])
+                : $this->facades->updateQuantity((int) $s->customerId(), (int) $data['id'], $quantity);
             return Response::json(['success' => true, 'message' => 'Quantité mise à jour']);
         });
 
