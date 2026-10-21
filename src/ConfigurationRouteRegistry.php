@@ -8,6 +8,7 @@ use App\Config\Settings;
 use App\Db\Connection;
 use App\Domain\Configuration\AdminConfigurationRoutes;
 use App\Domain\Configuration\AdminConfigurationStatusRoutes;
+use App\Domain\Configuration\ArModelRoutes;
 use App\Domain\Configuration\ConfigurationApiRoutes;
 use App\Domain\Configuration\ConfigurationDxfRoutes;
 use App\Domain\Configuration\ConfigurationRepository;
@@ -19,6 +20,7 @@ use App\Domain\Customer\CustomerRepository;
 use App\Http\RouteCollection;
 use App\Infrastructure\Mail\EmailGatewayFactory;
 use App\Infrastructure\Python\ProcOpenRunner;
+use App\Infrastructure\RateLimit\RateLimiter;
 use App\Lib\Logger;
 
 final class ConfigurationRouteRegistry
@@ -42,5 +44,6 @@ final class ConfigurationRouteRegistry
             $settings->python->binary,
             $settings->python->timeoutSeconds,
         ))->register($routes);
+        (new ArModelRoutes(new RateLimiter($db), $logger, $settings->paths->modelsDir))->register($routes);
     }
 }

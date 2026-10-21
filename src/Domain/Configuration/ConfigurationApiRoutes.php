@@ -50,8 +50,8 @@ final class ConfigurationApiRoutes
         if (!is_numeric($data['price']) || $data['price'] < 0) {
             throw new DomainException('Prix invalide');
         }
-        if (strlen((string) $data['prompt']) > 500) {
-            throw new DomainException('Prompt trop long (max 500 caractères)');
+        if (strlen((string) $data['prompt']) > GenerateRoutes::MAX_PROMPT_LENGTH) {
+            throw new DomainException('Prompt trop long (max ' . GenerateRoutes::MAX_PROMPT_LENGTH . ' caractères)');
         }
         $metadata = isset($data['metadata']) ? json_encode($data['metadata'], JSON_THROW_ON_ERROR) : null;
         $id = $this->configurations->create(null, null, $metadata, (float) $data['price'], $data['glb_url'] ?? null, (string) $data['prompt'], (string) $data['user_session'], 'en_attente_validation');
