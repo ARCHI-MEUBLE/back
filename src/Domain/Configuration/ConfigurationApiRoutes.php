@@ -50,7 +50,6 @@ final class ConfigurationApiRoutes
         if (!is_numeric($data['price']) || $data['price'] < 0) {
             throw new DomainException('Prix invalide');
         }
-        // Même limite que la génération : un meuble qu'on peut générer doit pouvoir s'enregistrer
         if (strlen((string) $data['prompt']) > GenerateRoutes::MAX_PROMPT_LENGTH) {
             throw new DomainException('Prompt trop long (max ' . GenerateRoutes::MAX_PROMPT_LENGTH . ' caractères)');
         }

@@ -16,8 +16,6 @@ final class GenerateRoutes
 {
     private const PROMPT_PATTERN = '/^M[1-5]\(\d+,\d+,\d+(,\d+)?\)[A-Za-z0-9\(\),\[\]]+$/';
 
-    // Le configurateur décrit chaque compartiment : un meuble très divisé (jusqu'à environ 14 colonnes de 18 cases dans
-    // les limites du front) dépasse largement 200 caractères. Le prompt passe en argument du script, sans shell.
     public const MAX_PROMPT_LENGTH = 4000;
 
     public function __construct(
