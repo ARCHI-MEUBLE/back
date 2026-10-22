@@ -234,14 +234,14 @@ Push to the `dev` branch triggers automatic deployment on Railway.
 
 ### Backup API
 
-A confidential endpoint (never linked from the admin UI) manages backups, protected by `BACKUP_API_KEY` (sent in the `X-Api-Key` header, or `?key=`) and a 10-requests-per-hour-per-IP rate limit. Dumps are made with `pg_dump --clean --if-exists`; a restore first takes a `*-pre-restore.sql` safety dump, then runs in a single transaction and stops at the first error:
+A confidential endpoint (never linked from the admin UI) manages backups, protected by `BACKUP_API_KEY` (sent in the `X-Api-Key` header only, so the key never ends up in proxy logs or browser history) and a 10-requests-per-hour-per-IP rate limit. Dumps are made with `pg_dump --clean --if-exists`; a restore first takes a `*-pre-restore.sql` safety dump, then runs in a single transaction and stops at the first error:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/backend/api/system/db-maintenance?key=XXX` | List backups |
-| GET | `/backend/api/system/db-maintenance/download/[file]?key=XXX` | Download a backup |
-| POST | `/backend/api/system/db-maintenance/create?key=XXX` | Create a backup (`pg_dump`) |
-| POST | `/backend/api/system/db-maintenance?key=XXX` | Restore a backup (`psql`), with a JSON body `{"filename": "..."}` |
+| GET | `/backend/api/system/db-maintenance` | List backups |
+| GET | `/backend/api/system/db-maintenance/download/[file]` | Download a backup |
+| POST | `/backend/api/system/db-maintenance/create` | Create a backup (`pg_dump`) |
+| POST | `/backend/api/system/db-maintenance` | Restore a backup (`psql`), with a JSON body `{"filename": "..."}` |
 
 ## Development
 

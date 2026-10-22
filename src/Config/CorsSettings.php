@@ -14,10 +14,10 @@ final class CorsSettings
         public readonly array $suffixes,
     ) {}
 
-    public static function fromEnv(Env $env, string $frontendUrl): self
+    public static function fromEnv(Env $env, string $frontendUrl, bool $allowLocalOrigins = false): self
     {
         $origins = array_merge(
-            self::LOCAL_ORIGINS,
+            $allowLocalOrigins ? self::LOCAL_ORIGINS : [],
             self::PRODUCTION_ORIGINS,
             [$frontendUrl],
             $env->list('CORS_ALLOWED_ORIGINS'),

@@ -76,7 +76,7 @@ final class PaymentRouteRegistry
         (new StripeCreatePaymentIntentRoutes($stripe, $customers, $db, $targets))->register($routes);
         (new PaymentLinkPublicRoutes($links))->register($routes);
         (new PaymentLinkCreateIntentRoutes($links, $stripe, $db))->register($routes);
-        (new PaymentLinkDownloadInvoiceRoutes($orders, $customers, new LegacyInvoiceGateway($settings->rootDir)))->register($routes);
+        (new PaymentLinkDownloadInvoiceRoutes($orders, $customers, new LegacyInvoiceGateway($settings->rootDir), $stripe))->register($routes);
         (new OrderInvoiceRoutes($orders, $customers, new LegacyInvoiceGateway($settings->rootDir)))->register($routes);
         (new AdminGeneratePaymentLinkRoutes($links, $db, new NotificationRepository($db), $mail, $settings->frontendUrl))->register($routes);
         (new AdminPaymentLinksRoutes($links, $settings->frontendUrl))->register($routes);

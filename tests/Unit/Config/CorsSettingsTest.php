@@ -12,7 +12,7 @@ final class CorsSettingsTest extends TestCase
 {
     public function testAllowsKnownOriginsAndSuffixes(): void
     {
-        $cors = CorsSettings::fromEnv(Env::fromArray(['CORS_ALLOWED_ORIGINS' => 'https://extra.example']), 'https://front.example');
+        $cors = CorsSettings::fromEnv(Env::fromArray(['CORS_ALLOWED_ORIGINS' => 'https://extra.example']), 'https://front.example', allowLocalOrigins: true);
 
         self::assertTrue($cors->allows('http://localhost:3000'));
         self::assertTrue($cors->allows('https://front.example'));
@@ -26,6 +26,15 @@ final class CorsSettingsTest extends TestCase
         self::assertFalse(CorsSettings::fromEnv(Env::fromArray([]), 'https://front.example')->allows('https://attacker.vercel.app'));
         $cors = CorsSettings::fromEnv(Env::fromArray(['CORS_ALLOWED_ORIGIN_SUFFIXES' => '.vercel.app']), 'https://front.example');
         self::assertTrue($cors->allows('https://archimeuble-git-dev.vercel.app'));
+    }
+
+    public function testLocalOriginsAreRejectedUnlessAllowed(): void
+    {
+        $cors = CorsSettings::fromEnv(Env::fromArray([]), 'https://front.example');
+
+        self::assertFalse($cors->allows('http://localhost:3000'));
+        self::assertFalse($cors->allows('http://127.0.0.1:3000'));
+        self::assertTrue($cors->allows('https://www.archimeuble.com'));
     }
 
     public function testRejectsUnknownOrigins(): void

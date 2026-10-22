@@ -1,6 +1,6 @@
 # Dockerfile pour ArchiMeuble Backend
-# Image de base avec PHP 8.2 et support Python
-FROM php:8.2-cli-bookworm
+# Image de base avec PHP 8.2 et support Python (8.2.35 = correctif de sécurité du 21/10/2026)
+FROM php:8.2.35-cli-bookworm
 
 # Configuration du fuseau horaire (Europe/Paris)
 ENV TZ=Europe/Paris

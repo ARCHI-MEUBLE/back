@@ -30,7 +30,7 @@ final class BackupAccessGuard
             $this->log('RATE_LIMIT', false, $ip, 'Too many requests');
             throw new DomainException('Too many requests. Try again later.', 429);
         }
-        $provided = $request->header('x-api-key') ?? $request->queryString('key') ?? '';
+        $provided = $request->header('x-api-key') ?? '';
         if ($provided === '' || !hash_equals($this->apiKey, $provided)) {
             $this->log('AUTH', false, $ip, 'Invalid API key');
             throw new ForbiddenException('Forbidden');

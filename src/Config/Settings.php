@@ -32,7 +32,7 @@ final class Settings
             $rootDir,
             $env->require('DATABASE_URL'),
             $frontendUrl,
-            CorsSettings::fromEnv($env, $frontendUrl),
+            CorsSettings::fromEnv($env, $frontendUrl, $appEnv !== 'production'),
             SessionSettings::fromEnv($env),
             PathSettings::fromEnv($env, $rootDir),
             $env->string('BACKUP_API_KEY', '') ?? '',
