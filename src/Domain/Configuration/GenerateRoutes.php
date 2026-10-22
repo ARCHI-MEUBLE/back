@@ -20,6 +20,8 @@ final class GenerateRoutes
     private const MAX_DIMENSION_MM = 6000;
     private const PROMPT_PATTERN = '/^M[1-5]\(\d+,\d+,\d+(,\d+)?\)[A-Za-z0-9\(\),\[\]]+$/';
 
+    public const MAX_PROMPT_LENGTH = 4000;
+
     public function __construct(
         private readonly ProcOpenRunner $runner,
         private readonly Logger $logger,
@@ -45,8 +47,8 @@ final class GenerateRoutes
         if (preg_match(self::PROMPT_PATTERN, $prompt) !== 1) {
             throw new DomainException('Format de prompt invalide. Attendu : M[1-5](largeur,profondeur,hauteur)MODULES(...)');
         }
-        if (strlen($prompt) > 200) {
-            throw new DomainException('Prompt trop long (max 200 caractères)');
+        if (strlen($prompt) > self::MAX_PROMPT_LENGTH) {
+            throw new DomainException('Prompt trop long (max ' . self::MAX_PROMPT_LENGTH . ' caractères)');
         }
         preg_match('/^M[1-5]\(([\d,]+)\)/', $prompt, $dimensions);
         foreach (explode(',', $dimensions[1] ?? '') as $dimension) {

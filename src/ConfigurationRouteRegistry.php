@@ -8,6 +8,7 @@ use App\Config\Settings;
 use App\Db\Connection;
 use App\Domain\Configuration\AdminConfigurationRoutes;
 use App\Domain\Configuration\AdminConfigurationStatusRoutes;
+use App\Domain\Configuration\ArModelRoutes;
 use App\Domain\Configuration\ConfigurationApiRoutes;
 use App\Domain\Configuration\ConfigurationDxfRoutes;
 use App\Domain\Configuration\ConfigurationRepository;
@@ -45,5 +46,6 @@ final class ConfigurationRouteRegistry
             $settings->python->timeoutSeconds,
             new Throttle(new RateLimiter($db)),
         ))->register($routes);
+        (new ArModelRoutes(new RateLimiter($db), $logger, $settings->paths->modelsDir))->register($routes);
     }
 }
