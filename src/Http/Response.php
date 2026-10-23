@@ -37,9 +37,14 @@ final class Response
             ->withHeader('Content-Type', $contentType)
             ->withHeader('Content-Length', (string) filesize($path));
         if ($downloadName !== null) {
-            $response = $response->withHeader('Content-Disposition', 'attachment; filename="' . $downloadName . '"');
+            $response = $response->withHeader('Content-Disposition', self::disposition('attachment', $downloadName));
         }
         return $response;
+    }
+
+    public static function disposition(string $type, string $fileName): string
+    {
+        return $type . '; filename="' . (preg_replace('/[^A-Za-z0-9._-]/', '_', $fileName) ?? 'file') . '"';
     }
 
     public function withHeader(string $name, string $value): self

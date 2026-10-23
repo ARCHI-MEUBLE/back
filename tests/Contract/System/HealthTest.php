@@ -21,11 +21,12 @@ final class HealthTest extends ContractTestCase
         $this->assertSnapshot('system.health', $this->client()->get('/health'));
     }
 
-    public function testTestEndpoint(): void
+    public function testDebugEchoEndpointIsGone(): void
     {
-        $response = $this->client()->get('/backend/api/test.php');
+        $response = $this->client()->get('/backend/api/test.php', ['Cookie: ARCHIMEUBLE_SESSID=secret']);
 
-        $this->assertSnapshot('system.test', $response);
+        self::assertSame(404, $response->status);
+        self::assertStringNotContainsString('secret', $response->body);
     }
 
     public function testUnknownEndpointIsJson404(): void

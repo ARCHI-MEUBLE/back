@@ -69,8 +69,11 @@ final class DbMaintenanceRoutes
         if (!is_file($this->backups->path($filename))) {
             return Response::json(['error' => 'Backup not found'], 404);
         }
-        $this->guard->log('RESTORE_BACKUP', true, $ip);
         $result = $this->backups->restore($filename);
-        return Response::json(['success' => true, 'message' => 'Database restored successfully'] + $result);
+        $this->guard->log('RESTORE_BACKUP', $result['ok'] === true, $ip, "File: {$filename}");
+        if ($result['ok'] !== true) {
+            return Response::json(['error' => 'Restore failed', 'details' => $result['output'], 'emergency_backup' => $result['emergency_backup'] ?? null], 500);
+        }
+        return Response::json(['success' => true, 'message' => 'Database restored successfully', 'restored_from' => $result['restored_from'], 'emergency_backup' => $result['emergency_backup']]);
     }
 }

@@ -32,11 +32,11 @@ final class StaticAndCorsTest extends ContractTestCase
         self::assertStringContainsString('DELETE', (string) $response->header('access-control-allow-methods'));
     }
 
-    public function testPreflightFrontendUrlAndVercelPreview(): void
+    public function testPreflightFrontendUrlButNotArbitraryVercelApps(): void
     {
         $vercel = $this->client()->options('/api/categories', ['Origin: https://archimeuble-git-dev.vercel.app']);
         self::assertSame(204, $vercel->status);
-        self::assertSame('https://archimeuble-git-dev.vercel.app', $vercel->header('access-control-allow-origin'));
+        self::assertNull($vercel->header('access-control-allow-origin'));
         $prod = $this->client()->options('/api/categories', ['Origin: https://www.archimeuble.com']);
         self::assertSame('https://www.archimeuble.com', $prod->header('access-control-allow-origin'));
     }

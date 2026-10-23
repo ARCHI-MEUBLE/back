@@ -15,6 +15,7 @@ use App\Domain\Calendly\CalendlyStatsRepository;
 use App\Domain\Calendly\CalendlyStatsRoutes;
 use App\Domain\Calendly\CalendlyTriggerRemindersRoutes;
 use App\Domain\Calendly\CalendlyWebhookRoutes;
+use App\Domain\Calendly\CalendlyWebhookSignature;
 use App\Domain\Notification\AdminNotificationRepository;
 use App\Http\RouteCollection;
 use App\Infrastructure\Calendly\LegacyCalendlyEmailGateway;
@@ -29,7 +30,7 @@ final class CalendlyRouteRegistry
         (new CalendlyAppointmentsRoutes($appointments))->register($routes);
         (new CalendlyStatsRoutes(new CalendlyStatsRepository($db)))->register($routes);
         (new CalendlyAppointmentActionsRoutes($appointments))->register($routes);
-        (new CalendlyWebhookRoutes($appointments, $mail))->register($routes);
+        (new CalendlyWebhookRoutes($appointments, $mail, new CalendlyWebhookSignature($settings->calendlyWebhookSigningKey)))->register($routes);
         (new CalendlyConfirmationRoutes($appointments, $adminNotifications, $mail, $settings->calendlyApiToken))->register($routes);
         (new CalendlyTriggerRemindersRoutes(new CalendlyReminderService($appointments, $mail), $settings->cronSecret))->register($routes);
     }

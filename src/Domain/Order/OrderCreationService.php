@@ -26,9 +26,12 @@ final class OrderCreationService
             if ($cartItems === [] && $sampleItems === [] && $catalogueItems === [] && $facadeItems === []) {
                 throw new DomainException('Panier vide', 500);
             }
+            if ($this->repository->unvalidatedConfigurationCount($customerId) > 0) {
+                throw new DomainException('Une configuration de votre panier a été modifiée et doit être revalidée par notre équipe avant la commande.', 409);
+            }
             $total = self::total($cartItems, $sampleItems, $catalogueItems, $facadeItems);
             $orderNumber = self::generateOrderNumber();
-            $status = $cartItems === [] ? 'confirmed' : 'pending';
+            $status = 'pending';
             $orderId = $this->repository->insertOrder($customerId, $orderNumber, $total, $shippingAddress, $billingAddress, $paymentMethod, $notes, $status);
             foreach ($cartItems as $item) {
                 $this->repository->insertConfigItem($orderId, $item);

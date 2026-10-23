@@ -34,15 +34,21 @@ final class PaymentLinkVerifyRoutes
             throw new DomainException('Payment Intent ID manquant');
         }
         $intentId = trim((string) $data['payment_intent_id']);
+        if (preg_match('/^pi_[A-Za-z0-9_]+$/', $intentId) !== 1) {
+            throw new DomainException('Payment Intent ID invalide');
+        }
         $this->stripe->ensureConfigured();
         $intent = $this->stripe->retrievePaymentIntent($intentId);
         if ($intent->status !== 'succeeded') {
             return Response::json(['success' => false, 'status' => $intent->status, 'message' => 'Paiement non confirmé']);
         }
         $metadata = StripeObjectReader::metadataArray($intent);
-        $result = $this->confirmation->confirm($intentId, $metadata);
+        $result = $this->confirmation->confirm($intentId, $metadata, StripeObjectReader::amountReceived($intent), (string) $intent->currency);
         if ($result->order === null) {
             throw new NotFoundException('Commande introuvable pour ce paiement');
+        }
+        if ($result->amountMismatch) {
+            return Response::json(['success' => false, 'status' => 'amount_mismatch', 'message' => 'Le montant payé ne correspond pas à la commande. Notre équipe a été prévenue.'], 409);
         }
         $final = $this->db->queryOne(
             'SELECT id, order_number, payment_status, deposit_payment_status, balance_payment_status, status FROM orders WHERE id = ?',

@@ -43,8 +43,8 @@ final class LegacyUsersAdminService
         }
         $hash = password_hash($newPassword, PASSWORD_BCRYPT);
         $affected = $type === 'user'
-            ? $this->users->applyWhitelistedUpdate((string) $id, ['password_hash' => $hash])
-            : $this->admins->applyWhitelistedUpdate((int) $id, ['password' => $hash]);
+            ? $this->users->updatePasswordHash((string) $id, $hash)
+            : $this->admins->updatePasswordHash((int) $id, $hash);
         if ($affected === 0) {
             throw new NotFoundException('Utilisateur non trouvé');
         }

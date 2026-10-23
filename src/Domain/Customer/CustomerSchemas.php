@@ -88,7 +88,7 @@ final class CustomerSchemas
     {
         return Schema::object([
             $currentKey => Field::string()->required('Mot de passe actuel et nouveau mot de passe requis'),
-            $newKey => Field::string()->required('Mot de passe actuel et nouveau mot de passe requis')->minLength(6, 'Le nouveau mot de passe doit contenir au moins 6 caractères'),
+            $newKey => Field::string()->required('Mot de passe actuel et nouveau mot de passe requis')->minLength(8, 'Le nouveau mot de passe doit contenir au moins 8 caractères'),
         ]);
     }
 

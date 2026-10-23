@@ -55,17 +55,22 @@ final class AdminOrderFromConfigRoutes
         $shippingAddress = trim(($config['address'] ?? '') . ', ' . ($config['city'] ?? '') . ', ' . ($config['postal_code'] ?? '') . ', ' . ($config['country'] ?? 'France'));
         $orderNumber = 'ORD-' . date('Y') . '-' . str_pad((string) random_int(1, 999999), 6, '0', STR_PAD_LEFT);
         $adminNotes = "Commande créée depuis configuration #{$configId} par " . $s->string('admin_email');
-        $orderId = $this->db->insertReturningId(
-            "INSERT INTO orders (customer_id, order_number, total_amount, shipping_address, billing_address, payment_method, payment_status, status, notes, admin_notes, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, 'card', 'pending', 'pending', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id",
-            [$config['customer_id'], $orderNumber, $config['price'], $shippingAddress, $shippingAddress, "Commande créée par l'admin après validation téléphonique", $adminNotes],
-        );
-        $this->db->execute(
-            "INSERT INTO order_items (order_id, configuration_id, prompt, config_data, glb_url, quantity, unit_price, total_price, production_status, created_at)
-             VALUES (?, ?, ?, ?, ?, 1, ?, ?, 'pending', CURRENT_TIMESTAMP)",
-            [$orderId, $configId, $config['prompt'], $config['config_string'], $config['glb_url'], $config['price'], $config['price']],
-        );
-        $this->db->execute("UPDATE configurations SET status = 'en_commande' WHERE id = ?", [$configId]);
+        $orderId = (int) $this->db->transaction(function (Connection $db) use ($config, $configId, $orderNumber, $shippingAddress, $adminNotes): int {
+            if ($db->execute("UPDATE configurations SET status = 'en_commande' WHERE id = ? AND status NOT IN ('en_commande', 'payee')", [$configId]) === 0) {
+                throw new DomainException('Cette configuration a déjà été transformée en commande');
+            }
+            $orderId = $db->insertReturningId(
+                "INSERT INTO orders (customer_id, order_number, total_amount, shipping_address, billing_address, payment_method, payment_status, status, notes, admin_notes, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, 'card', 'pending', 'pending', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id",
+                [$config['customer_id'], $orderNumber, $config['price'], $shippingAddress, $shippingAddress, "Commande créée par l'admin après validation téléphonique", $adminNotes],
+            );
+            $db->execute(
+                "INSERT INTO order_items (order_id, configuration_id, prompt, config_data, glb_url, quantity, unit_price, total_price, production_status, created_at)
+                 VALUES (?, ?, ?, ?, ?, 1, ?, ?, 'pending', CURRENT_TIMESTAMP)",
+                [$orderId, $configId, $config['prompt'], $config['config_string'], $config['glb_url'], $config['price'], $config['price']],
+            );
+            return $orderId;
+        });
         $this->adminNotifications->notifyAllAdmins('new_order', "Nouvelle commande #{$orderNumber} créée depuis config", $orderId);
         return Response::json([
             'success' => true,

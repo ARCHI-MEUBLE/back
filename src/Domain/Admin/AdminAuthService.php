@@ -18,8 +18,10 @@ final class AdminAuthService
 
     public function loginRateLimited(string $email, string $password, string $ip, Session $session): AdminAccount
     {
+        $email = trim($email);
+        $accountKey = strtolower($email);
         $ipDecision = $this->rateLimiter->check($ip, 'admin_login_ip', 5, 30);
-        $accountDecision = $this->rateLimiter->check($email, 'admin_login_account', 3, 60);
+        $accountDecision = $this->rateLimiter->check($accountKey, 'admin_login_account', 3, 60);
         if (!$ipDecision->allowed || !$accountDecision->allowed) {
             $blocking = $ipDecision->allowed ? $accountDecision : $ipDecision;
             throw new ConflictException($blocking->message ?? 'Trop de tentatives de connexion');
@@ -27,28 +29,17 @@ final class AdminAuthService
         $admin = $this->admins->verifyCredentials($email, $password);
         if ($admin === null) {
             $this->rateLimiter->hit($ip, 'admin_login_ip', false, 5, 60);
-            $this->rateLimiter->hit($email, 'admin_login_account', false, 3, 120);
+            $this->rateLimiter->hit($accountKey, 'admin_login_account', false, 3, 120);
             throw new UnauthorizedException('Identifiants invalides');
         }
         $this->rateLimiter->resetAttempts($ip, 'admin_login_ip');
-        $this->rateLimiter->resetAttempts($email, 'admin_login_account');
+        $this->rateLimiter->resetAttempts($accountKey, 'admin_login_account');
         $session->regenerate();
         $session->remove('customer_id');
         $session->remove('customer_email');
         $session->remove('customer_name');
         $session->set('admin_email', $admin->email);
         $session->set('admin_id', $admin->id);
-        $session->set('is_admin', true);
-        return $admin;
-    }
-
-    public function loginLegacy(string $email, string $password, Session $session): AdminAccount
-    {
-        $admin = $this->admins->verifyCredentials($email, $password);
-        if ($admin === null) {
-            throw new UnauthorizedException('Identifiants invalides');
-        }
-        $session->set('admin_email', $admin->email);
         $session->set('is_admin', true);
         return $admin;
     }

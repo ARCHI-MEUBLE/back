@@ -60,9 +60,9 @@ final class AdminRepository
         return 'updated';
     }
 
-    public function updatePasswordHash(int $id, string $passwordHash): void
+    public function updatePasswordHash(int $id, string $passwordHash): int
     {
-        $this->db->execute('UPDATE admins SET password = ?, password_hash = ? WHERE id = ?', [$passwordHash, $passwordHash, $id]);
+        return $this->db->execute('UPDATE admins SET password = ?, password_hash = ? WHERE id = ?', [$passwordHash, $passwordHash, $id]);
     }
 
     public function applyWhitelistedUpdate(int $id, array $data): int

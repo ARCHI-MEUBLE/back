@@ -17,8 +17,6 @@ use App\Infrastructure\Mail\EmailGateway;
 
 final class AdminOrderRoutes
 {
-    private const VALID_STATUSES = ['pending', 'confirmed', 'paid', 'in_production', 'shipped', 'delivered', 'cancelled', 'refunded'];
-
     public function __construct(
         private readonly OrderRepository $orders,
         private readonly CustomerRepository $customers,
@@ -86,8 +84,8 @@ final class AdminOrderRoutes
             throw new DomainException('ID de commande invalide');
         }
         $newStatus = trim((string) $data['status']);
-        if (!in_array($newStatus, self::VALID_STATUSES, true)) {
-            return Response::json(['error' => 'Statut invalide', 'valid_statuses' => self::VALID_STATUSES], 400);
+        if (!in_array($newStatus, OrderRepository::VALID_STATUSES, true)) {
+            return Response::json(['error' => 'Statut invalide', 'valid_statuses' => OrderRepository::VALID_STATUSES], 400);
         }
         $adminNotes = isset($data['admin_notes']) ? trim(strip_tags((string) $data['admin_notes'])) : null;
         if ($adminNotes !== null && strlen($adminNotes) > 2000) {

@@ -1327,9 +1327,9 @@ ISM
   0
 CLASS
   1
-LAYOUT
+ACDBPLACEHOLDER
   2
-AcDbLayout
+AcDbPlaceHolder
   3
 ObjectDBX Classes
  90
@@ -1343,9 +1343,9 @@ ObjectDBX Classes
   0
 CLASS
   1
-ACDBPLACEHOLDER
+LAYOUT
   2
-AcDbPlaceHolder
+AcDbLayout
   3
 ObjectDBX Classes
  90
@@ -3042,6 +3042,26 @@ AcDbCircle
 0.0
  40
 4.0
+  0
+CIRCLE
+  5
+5C
+330
+17
+100
+AcDbEntity
+  8
+diam_5.0mm
+100
+AcDbCircle
+ 10
+800.0
+ 20
+220.66666666666663
+ 30
+0.0
+ 40
+2.5
   0
 CIRCLE
   5
@@ -6291,7 +6311,7 @@ AcDbText
  40
 15.0
   1
-9G1
+10G1
 100
 AcDbText
   0
@@ -13390,6 +13410,62 @@ AcDbCircle
 0.0
  40
 7.5
+  0
+LWPOLYLINE
+  5
+179
+330
+17
+100
+AcDbEntity
+  8
+contour_haut
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+11158.25
+ 20
+2500.0
+ 10
+11158.25
+ 20
+2906.25
+ 10
+10834.25
+ 20
+2906.25
+ 10
+10834.25
+ 20
+2500.0
+  0
+TEXT
+  5
+17A
+330
+17
+100
+AcDbEntity
+  8
+texte
+100
+AcDbText
+ 10
+10834.25
+ 20
+2703.125
+ 30
+0.0
+ 40
+15.0
+  1
+17G1
+100
+AcDbText
   0
 CIRCLE
   5

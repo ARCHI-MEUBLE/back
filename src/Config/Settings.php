@@ -20,6 +20,7 @@ final class Settings
         public readonly ?string $calendlyApiToken,
         public readonly ?string $cronSecret,
         public readonly MailSettings $mail,
+        public readonly ?string $calendlyWebhookSigningKey = null,
     ) {}
 
     public static function fromEnv(Env $env, string $rootDir): self
@@ -31,7 +32,7 @@ final class Settings
             $rootDir,
             $env->require('DATABASE_URL'),
             $frontendUrl,
-            CorsSettings::fromEnv($env, $frontendUrl),
+            CorsSettings::fromEnv($env, $frontendUrl, $appEnv !== 'production'),
             SessionSettings::fromEnv($env),
             PathSettings::fromEnv($env, $rootDir),
             $env->string('BACKUP_API_KEY', '') ?? '',
@@ -40,6 +41,7 @@ final class Settings
             $env->string('CALENDLY_API_TOKEN'),
             $env->string('CRON_SECRET'),
             MailSettings::fromEnv($env),
+            $env->string('CALENDLY_WEBHOOK_SIGNING_KEY'),
         );
     }
 

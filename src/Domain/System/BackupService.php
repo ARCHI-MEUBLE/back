@@ -35,19 +35,19 @@ final class BackupService
     {
         $this->ensureDir();
         $file = $this->dir . '/database-backup-' . date('Y-m-d_H-i-s') . '.sql';
-        $output = shell_exec('pg_dump ' . escapeshellarg($this->databaseUrl) . ' > ' . escapeshellarg($file) . ' 2>&1');
-        if (is_file($file) && filesize($file) > 0) {
+        [$code, $output] = $this->dump($file);
+        if ($code === 0 && is_file($file) && filesize($file) > 0) {
             return ['ok' => true, 'filename' => basename($file), 'size' => round(filesize($file) / 1024 / 1024, 2) . ' MB'];
         }
         if (is_file($file)) {
             unlink($file);
         }
-        return ['ok' => false, 'output' => is_string($output) ? $output : ''];
+        return ['ok' => false, 'output' => $output];
     }
 
     public function isValidFilename(string $filename): bool
     {
-        return preg_match('/^database-backup-[\d_-]+\.sql$/', $filename) === 1;
+        return preg_match('/^database-backup-[A-Za-z0-9_-]+\.sql$/', $filename) === 1;
     }
 
     public function path(string $filename): string
@@ -57,17 +57,36 @@ final class BackupService
 
     public function restore(string $filename): array
     {
-        $backupPath = $this->path($filename);
-        $emergencyFile = $this->dir . '/database-backup-before-restore-' . date('Y-m-d_H-i-s') . '.sql';
-        shell_exec('pg_dump ' . escapeshellarg($this->databaseUrl) . ' > ' . escapeshellarg($emergencyFile) . ' 2>&1');
-        shell_exec('psql ' . escapeshellarg($this->databaseUrl) . ' < ' . escapeshellarg($backupPath) . ' 2>&1');
-        return ['restored_from' => $filename, 'emergency_backup' => basename($emergencyFile)];
+        $emergencyFile = $this->dir . '/database-backup-' . date('Y-m-d_H-i-s') . '-pre-restore.sql';
+        [$dumpCode, $dumpOutput] = $this->dump($emergencyFile);
+        if ($dumpCode !== 0) {
+            return ['ok' => false, 'output' => 'Sauvegarde de sécurité impossible, restauration annulée: ' . $dumpOutput];
+        }
+        [$code, $output] = $this->run(sprintf(
+            "sed -e '/^SET transaction_timeout = /d' %s | psql --single-transaction -v ON_ERROR_STOP=1 -q %s 2>&1",
+            escapeshellarg($this->path($filename)),
+            escapeshellarg($this->databaseUrl),
+        ));
+        return ['ok' => $code === 0, 'output' => $output, 'restored_from' => $filename, 'emergency_backup' => basename($emergencyFile)];
+    }
+
+    private function dump(string $file): array
+    {
+        return $this->run(sprintf('pg_dump --clean --if-exists --no-owner %s -f %s 2>&1', escapeshellarg($this->databaseUrl), escapeshellarg($file)));
+    }
+
+    private function run(string $command): array
+    {
+        $output = [];
+        $code = 1;
+        exec($command, $output, $code);
+        return [$code, substr(implode("\n", $output), -2000)];
     }
 
     private function ensureDir(): void
     {
         if (!is_dir($this->dir)) {
-            @mkdir($this->dir, 0755, true);
+            @mkdir($this->dir, 0o700, true);
         }
     }
 }

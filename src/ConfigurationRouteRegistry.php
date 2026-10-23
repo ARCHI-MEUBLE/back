@@ -21,6 +21,7 @@ use App\Http\RouteCollection;
 use App\Infrastructure\Mail\EmailGatewayFactory;
 use App\Infrastructure\Python\ProcOpenRunner;
 use App\Infrastructure\RateLimit\RateLimiter;
+use App\Infrastructure\RateLimit\Throttle;
 use App\Lib\Logger;
 
 final class ConfigurationRouteRegistry
@@ -43,6 +44,7 @@ final class ConfigurationRouteRegistry
             $settings->python->scriptPath,
             $settings->python->binary,
             $settings->python->timeoutSeconds,
+            new Throttle(new RateLimiter($db)),
         ))->register($routes);
         (new ArModelRoutes(new RateLimiter($db), $logger, $settings->paths->modelsDir))->register($routes);
     }

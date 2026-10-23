@@ -69,10 +69,12 @@ final class OrderInvoiceRoutes
         $pdfPath = $invoice['filepath'];
         $htmlPath = str_replace('.pdf', '.html', $pdfPath);
         if (is_file($pdfPath) && filesize($pdfPath) > 500) {
-            return Response::file($pdfPath, 'application/pdf')->withHeader('Content-Disposition', 'inline; filename="' . $invoice['filename'] . '"');
+            return Response::file($pdfPath, 'application/pdf')->withHeader('Content-Disposition', Response::disposition('inline', (string) $invoice['filename']));
         }
         if (is_file($htmlPath)) {
-            return Response::file($htmlPath, 'text/html; charset=UTF-8')->withHeader('Content-Disposition', 'inline; filename="' . str_replace('.pdf', '.html', $invoice['filename']) . '"');
+            return Response::file($htmlPath, 'text/html; charset=UTF-8')
+                ->withHeader('Content-Disposition', Response::disposition('attachment', str_replace('.pdf', '.html', (string) $invoice['filename'])))
+                ->withHeader('Content-Security-Policy', "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data: https:");
         }
         throw new NotFoundException('Fichiers de facture introuvables');
     }

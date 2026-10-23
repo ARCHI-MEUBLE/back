@@ -75,7 +75,7 @@ final class CartRepository
         if ($existing !== null) {
             $this->db->execute(
                 'UPDATE cart_items SET quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-                [$existing['quantity'] + $quantity, $existing['id']],
+                [CartQuantity::capped((int) $existing['quantity'] + $quantity), $existing['id']],
             );
             return;
         }
