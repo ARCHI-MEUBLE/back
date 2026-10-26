@@ -7,6 +7,7 @@ namespace App\Infrastructure\Mail;
 use App\Config\MailSettings;
 use App\Domain\Email\AdminOrderNotificationEmail;
 use App\Domain\Email\ConfigurationNotificationEmail;
+use App\Domain\Email\ConfigurationRequestEmail;
 use App\Domain\Email\ContactRequestNotificationEmail;
 use App\Domain\Email\ItemDisplayNameResolver;
 use App\Domain\Email\OrderCancelledEmail;
@@ -50,6 +51,16 @@ final class EmailGateway
             $this->mail->adminEmail,
             ConfigurationNotificationEmail::subject($configuration, $customer),
             ConfigurationNotificationEmail::html($configuration, Html::escapeAll($customer), Html::e($this->frontendUrl), Html::e($this->mail->backendUrl)),
+        );
+    }
+
+    public function sendConfigurationRequest(array $request, array $share): bool
+    {
+        $link = "{$this->frontendUrl}/configurator/" . rawurlencode($share['configurator_id']) . '?partage=' . rawurlencode($share['code']);
+        return $this->mailer->send(
+            $this->mail->adminEmail,
+            ConfigurationRequestEmail::subject((string) $request['name']),
+            ConfigurationRequestEmail::html($request, $share, $link),
         );
     }
 
