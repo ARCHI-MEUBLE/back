@@ -73,7 +73,7 @@ final class MigratorTest extends TestCase
         $applied = $migrator->migrate();
         self::assertNotEmpty($applied);
         self::assertSame([], $migrator->migrate());
-        self::assertSame('48', (string) $this->db->scalar("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'migrator_test' AND table_name <> 'schema_migrations'"));
+        self::assertSame('49', (string) $this->db->scalar("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'migrator_test' AND table_name <> 'schema_migrations'"));
         self::assertSame('4', (string) $this->db->scalar('SELECT count(*) FROM email_templates'));
         self::assertSame('1', (string) $this->db->scalar("SELECT count(*) FROM information_schema.columns WHERE table_schema = 'migrator_test' AND table_name = 'admins' AND column_name = 'password_hash'"));
     }

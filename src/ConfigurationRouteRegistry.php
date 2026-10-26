@@ -12,8 +12,12 @@ use App\Domain\Configuration\ArModelRoutes;
 use App\Domain\Configuration\ConfigurationApiRoutes;
 use App\Domain\Configuration\ConfigurationDxfRoutes;
 use App\Domain\Configuration\ConfigurationRepository;
+use App\Domain\Configuration\ConfigurationRequestService;
 use App\Domain\Configuration\ConfigurationSaveRoutes;
 use App\Domain\Configuration\ConfigurationSaveService;
+use App\Domain\Configuration\ConfigurationShareRepository;
+use App\Domain\Configuration\ConfigurationShareRoutes;
+use App\Domain\Configuration\ConfigurationShareService;
 use App\Domain\Configuration\CustomerConfigurationRoutes;
 use App\Domain\Configuration\GenerateRoutes;
 use App\Domain\Customer\CustomerRepository;
@@ -37,6 +41,12 @@ final class ConfigurationRouteRegistry
         $mail = EmailGatewayFactory::create($settings, $db);
         $saveService = new ConfigurationSaveService($configurations, new CustomerRepository($db), $mail);
         (new ConfigurationSaveRoutes($saveService))->register($routes);
+        $shares = new ConfigurationShareRepository($db);
+        $throttle = new Throttle(new RateLimiter($db));
+        (new ConfigurationShareRoutes(
+            new ConfigurationShareService($shares, $throttle),
+            new ConfigurationRequestService($shares, $mail, $throttle),
+        ))->register($routes);
         (new GenerateRoutes(
             new ProcOpenRunner(),
             $logger,
