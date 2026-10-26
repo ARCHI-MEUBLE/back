@@ -21,6 +21,7 @@ use App\Domain\Category\CategoryRoutes;
 use App\Domain\Category\CategoryService;
 use App\Domain\Customer\CustomerAuthRoutes;
 use App\Domain\Customer\CustomerAuthService;
+use App\Domain\Customer\CustomerPasswordResetService;
 use App\Domain\Customer\CustomerProfileRoutes;
 use App\Domain\Customer\CustomerProfileService;
 use App\Domain\Customer\CustomerRepository;
@@ -34,10 +35,10 @@ use App\Domain\System\BackupAccessGuard;
 use App\Domain\System\BackupService;
 use App\Domain\System\DbMaintenanceRoutes;
 use App\Domain\System\SystemRoutes;
-use App\Domain\System\TestEchoRoutes;
 use App\Http\RouteCollection;
 use App\Infrastructure\Mail\EmailGatewayFactory;
 use App\Infrastructure\RateLimit\RateLimiter;
+use App\Infrastructure\RateLimit\Throttle;
 use App\Lib\SystemClock;
 
 final class RouteRegistry
@@ -47,22 +48,28 @@ final class RouteRegistry
         $admins = new AdminRepository($db);
         $legacyUsers = new LegacyUserRepository($db);
         $rateLimiter = new RateLimiter($db);
+        $throttle = new Throttle($rateLimiter);
         (new SystemRoutes(new SystemClock()))->register($routes);
-        (new TestEchoRoutes())->register($routes);
-        (new AdminCreationRoutes($admins, $settings->backupApiKey))->register($routes);
         $backupsDataDir = dirname($settings->paths->backupsDir);
+        (new AdminCreationRoutes(
+            $admins,
+            new BackupAccessGuard($settings->backupApiKey, $backupsDataDir . '/backup-access.log', $backupsDataDir . '/admin-creation-rate-limit.json', 5),
+        ))->register($routes);
         (new DbMaintenanceRoutes(
             new BackupService($settings->paths->backupsDir, $settings->databaseUrl),
             new BackupAccessGuard($settings->backupApiKey, $backupsDataDir . '/backup-access.log', $backupsDataDir . '/backup-rate-limit.json'),
         ))->register($routes);
         (new AdminAuthRoutes(new AdminAuthService($admins, $rateLimiter)))->register($routes);
         (new AdminAccountsRoutes(new AdminAccountsService($db, $admins)))->register($routes);
-        (new LegacyAuthRoutes(new LegacyAuthService($legacyUsers)))->register($routes);
+        (new LegacyAuthRoutes(new LegacyAuthService($legacyUsers, $throttle)))->register($routes);
         (new LegacyUsersAdminRoutes(new LegacyUsersAdminService($legacyUsers, $admins)))->register($routes);
         $customers = new CustomerRepository($db);
         $verifications = new CustomerVerificationRepository($db);
         $mail = EmailGatewayFactory::create($settings, $db);
-        (new CustomerAuthRoutes(new CustomerAuthService($customers, $verifications, $mail, $settings->frontendUrl)))->register($routes);
+        (new CustomerAuthRoutes(
+            new CustomerAuthService($customers, $verifications, $mail, $throttle),
+            new CustomerPasswordResetService($customers, $verifications, $mail, $settings->frontendUrl, $throttle),
+        ))->register($routes);
         (new CustomerProfileRoutes(new CustomerProfileService($customers)))->register($routes);
         (new CategoryRoutes(new CategoryService(new CategoryRepository($db))))->register($routes);
         (new ModelRoutes(new ModelService(new ModelRepository($db))))->register($routes);

@@ -47,7 +47,7 @@ final class FacadeDxfRoutes
                 (string) ($config['material']['name'] ?? 'Materiau'),
             );
             return Response::text($dxf, 'application/dxf')
-                ->withHeader('Content-Disposition', 'attachment; filename="facade_' . $facadeId . '.dxf"')
+                ->withHeader('Content-Disposition', Response::disposition('attachment', 'facade_' . $facadeId . '.dxf'))
                 ->withHeader('Cache-Control', 'no-cache, must-revalidate')
                 ->withHeader('Expires', '0');
         });

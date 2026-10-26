@@ -9,7 +9,7 @@ use App\Domain\Shared\DomainException;
 
 final class OrderRepository
 {
-    private const VALID_STATUSES = ['pending', 'confirmed', 'in_production', 'shipped', 'delivered', 'cancelled'];
+    public const VALID_STATUSES = ['pending', 'confirmed', 'paid', 'in_production', 'shipped', 'delivered', 'cancelled', 'refunded'];
 
     public function __construct(private readonly Connection $db) {}
 
@@ -77,7 +77,7 @@ final class OrderRepository
     public function updateStatus(int $orderId, string $status, ?string $adminNotes): void
     {
         if (!in_array($status, self::VALID_STATUSES, true)) {
-            throw new DomainException('Erreur serveur', 500);
+            throw new DomainException('Statut invalide');
         }
         if ($status === 'cancelled') {
             $this->db->execute("UPDATE payment_links SET status = 'revoked' WHERE order_id = ? AND status = 'active'", [$orderId]);
@@ -99,6 +99,7 @@ final class OrderRepository
                 $this->db->execute("UPDATE configurations SET status = 'termine' WHERE id = ?", [$item['configuration_id']]);
             }
         }
+        $this->db->execute("DELETE FROM payment_installments WHERE order_id = ? AND status <> 'paid'", [$orderId]);
         $this->db->execute('DELETE FROM order_items WHERE order_id = ?', [$orderId]);
         $this->db->execute('DELETE FROM order_sample_items WHERE order_id = ?', [$orderId]);
         $this->db->execute('DELETE FROM order_catalogue_items WHERE order_id = ?', [$orderId]);

@@ -48,7 +48,7 @@ final class AdminAuthRoutes
         return function (string $method, string $action, Request $request, Session $session): Response {
             if ($method === 'POST' && $action === 'login') {
                 $data = AdminSchemas::login()->validate($request->json());
-                return Response::json(Mapper::login($this->service->loginLegacy($data['email'], $data['password'], $session)));
+                return Response::json(Mapper::login($this->service->loginRateLimited($data['email'], $data['password'], RateLimiter::clientIp($_SERVER), $session)));
             }
             if ($method === 'POST' && $action === 'logout') {
                 $session->destroy();

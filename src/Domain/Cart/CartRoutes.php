@@ -35,7 +35,7 @@ final class CartRoutes
             if (!isset($data['configuration_id'])) {
                 throw new DomainException('configuration_id requis');
             }
-            $quantity = isset($data['quantity']) ? (int) $data['quantity'] : 1;
+            $quantity = CartQuantity::forAdd($data['quantity'] ?? 1);
             $this->cart->addItem((int) $s->customerId(), (int) $data['configuration_id'], $quantity);
             return Response::json(['success' => true, 'message' => 'Ajouté au panier'], 201);
         });
@@ -45,7 +45,7 @@ final class CartRoutes
             if (!isset($data['configuration_id']) || !isset($data['quantity'])) {
                 throw new DomainException('configuration_id et quantity requis');
             }
-            $this->cart->updateQuantity((int) $s->customerId(), (int) $data['configuration_id'], (int) $data['quantity']);
+            $this->cart->updateQuantity((int) $s->customerId(), (int) $data['configuration_id'], CartQuantity::forUpdate($data['quantity']));
             return Response::json(['success' => true, 'message' => 'Quantité mise à jour']);
         });
 

@@ -11,6 +11,7 @@ use App\Http\Request;
 use App\Http\Response;
 use App\Http\RouteCollection;
 use App\Http\Session;
+use App\Infrastructure\RateLimit\RateLimiter;
 use App\Lib\Validation\Field;
 use App\Lib\Validation\Schema;
 
@@ -28,7 +29,7 @@ final class LegacyAuthRoutes
         return function (string $method, string $action, Request $request, Session $session): Response {
             if ($method === 'POST' && $action === 'login') {
                 $data = self::credentials()->validate($request->json());
-                return Response::json(Mapper::loggedIn($this->service->login($data['email'], $data['password'], $session)));
+                return Response::json(Mapper::loggedIn($this->service->login($data['email'], $data['password'], RateLimiter::clientIp($_SERVER), $session)));
             }
             if ($method === 'POST' && $action === 'register') {
                 $data = self::registration()->validate($request->json());

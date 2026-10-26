@@ -63,6 +63,9 @@ Copy `.env.example` to `.env` and fill in the values — see that file for the f
 | `BACKUP_API_KEY` | Shared secret for the confidential admin-creation and database backup endpoints |
 | `CRON_SECRET` | Token protecting the scheduled-task HTTP endpoints (Calendly reminders, installments) |
 | `CALENDLY_API_TOKEN` / `CALENDLY_PHONE_URL` / `CALENDLY_VISIO_URL` | Calendly integration |
+| `CALENDLY_WEBHOOK_SIGNING_KEY` | Signing key of the Calendly webhook; without it, `calendly/webhook` rejects every call |
+| `CORS_ALLOWED_ORIGIN_SUFFIXES` | Extra allowed origin suffixes (default `.archimeuble.com`; `*.vercel.app` is no longer allowed by default) |
+| `PHP_CLI_SERVER_WORKERS` | Number of PHP server workers (default 4), so a 3D generation does not block other requests |
 | `CRISP_WEBSITE_ID` | Crisp live chat widget |
 
 ## Project Structure
@@ -231,14 +234,14 @@ Push to the `dev` branch triggers automatic deployment on Railway.
 
 ### Backup API
 
-A confidential endpoint (never linked from the admin UI) manages backups, protected by `BACKUP_API_KEY` and a 10-requests-per-hour-per-IP rate limit:
+A confidential endpoint (never linked from the admin UI) manages backups, protected by `BACKUP_API_KEY` (sent in the `X-Api-Key` header only, so the key never ends up in proxy logs or browser history) and a 10-requests-per-hour-per-IP rate limit. Dumps are made with `pg_dump --clean --if-exists`; a restore first takes a `*-pre-restore.sql` safety dump, then runs in a single transaction and stops at the first error:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/backend/api/system/db-maintenance?key=XXX` | List backups |
-| GET | `/backend/api/system/db-maintenance/download/[file]?key=XXX` | Download a backup |
-| POST | `/backend/api/system/db-maintenance/create?key=XXX` | Create a backup (`pg_dump`) |
-| POST | `/backend/api/system/db-maintenance?key=XXX` | Restore a backup (`psql`), with a JSON body `{"filename": "..."}` |
+| GET | `/backend/api/system/db-maintenance` | List backups |
+| GET | `/backend/api/system/db-maintenance/download/[file]` | Download a backup |
+| POST | `/backend/api/system/db-maintenance/create` | Create a backup (`pg_dump`) |
+| POST | `/backend/api/system/db-maintenance` | Restore a backup (`psql`), with a JSON body `{"filename": "..."}` |
 
 ## Development
 
@@ -276,12 +279,13 @@ PHP changes are reflected immediately (volume mounted). Python changes require a
 
 ## Bootstrapping the First Admin
 
-There is no default admin account. Create one via the confidential admin-creation endpoint (protected by `BACKUP_API_KEY`):
+There is no default admin account (migration `0004` locks the `admin` account seeded by older baselines if its password was never changed). Create one via the confidential admin-creation endpoint (protected by `BACKUP_API_KEY`, 5 requests per hour per IP, password of at least 10 characters):
 
 ```bash
-curl -X POST "http://localhost:8000/backend/api/system/create-admin.php?key=$BACKUP_API_KEY" \
+curl -X POST "http://localhost:8000/backend/api/system/create-admin.php" \
+  -H "X-Api-Key: $BACKUP_API_KEY" \
   -H 'Content-Type: application/json' \
-  -d '{"email": "admin@archimeuble.com", "password": "change-me", "username": "admin"}'
+  -d '{"email": "admin@archimeuble.com", "password": "a-long-unique-passphrase", "username": "admin"}'
 ```
 
 ## Troubleshooting

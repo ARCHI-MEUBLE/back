@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Cart;
 
 use App\Db\Connection;
+use App\Domain\Shared\DomainException;
+use App\Domain\Shared\NotFoundException;
 
 final class CartCatalogueRepository
 {
@@ -26,6 +28,12 @@ final class CartCatalogueRepository
 
     public function add(int $customerId, int $catalogueItemId, ?int $variationId, int $quantity): void
     {
+        if ($this->db->queryOne('SELECT id FROM catalogue_items WHERE id = ? AND is_available IS NOT FALSE', [$catalogueItemId]) === null) {
+            throw new NotFoundException('Article introuvable ou indisponible');
+        }
+        if ($variationId !== null && $this->db->queryOne('SELECT id FROM catalogue_item_variations WHERE id = ? AND catalogue_item_id = ?', [$variationId, $catalogueItemId]) === null) {
+            throw new DomainException('Variation invalide pour cet article');
+        }
         $existing = $variationId === null
             ? $this->db->queryOne(
                 'SELECT id, quantity FROM cart_catalogue_items WHERE customer_id = ? AND catalogue_item_id = ? AND variation_id IS NULL',
@@ -38,7 +46,7 @@ final class CartCatalogueRepository
         if ($existing !== null) {
             $this->db->execute(
                 'UPDATE cart_catalogue_items SET quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-                [$existing['quantity'] + $quantity, $existing['id']],
+                [CartQuantity::capped((int) $existing['quantity'] + $quantity), $existing['id']],
             );
             return;
         }

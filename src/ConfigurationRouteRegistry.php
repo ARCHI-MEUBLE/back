@@ -8,17 +8,24 @@ use App\Config\Settings;
 use App\Db\Connection;
 use App\Domain\Configuration\AdminConfigurationRoutes;
 use App\Domain\Configuration\AdminConfigurationStatusRoutes;
+use App\Domain\Configuration\ArModelRoutes;
 use App\Domain\Configuration\ConfigurationApiRoutes;
 use App\Domain\Configuration\ConfigurationDxfRoutes;
 use App\Domain\Configuration\ConfigurationRepository;
+use App\Domain\Configuration\ConfigurationRequestService;
 use App\Domain\Configuration\ConfigurationSaveRoutes;
 use App\Domain\Configuration\ConfigurationSaveService;
+use App\Domain\Configuration\ConfigurationShareRepository;
+use App\Domain\Configuration\ConfigurationShareRoutes;
+use App\Domain\Configuration\ConfigurationShareService;
 use App\Domain\Configuration\CustomerConfigurationRoutes;
 use App\Domain\Configuration\GenerateRoutes;
 use App\Domain\Customer\CustomerRepository;
 use App\Http\RouteCollection;
 use App\Infrastructure\Mail\EmailGatewayFactory;
 use App\Infrastructure\Python\ProcOpenRunner;
+use App\Infrastructure\RateLimit\RateLimiter;
+use App\Infrastructure\RateLimit\Throttle;
 use App\Lib\Logger;
 
 final class ConfigurationRouteRegistry
@@ -34,6 +41,12 @@ final class ConfigurationRouteRegistry
         $mail = EmailGatewayFactory::create($settings, $db);
         $saveService = new ConfigurationSaveService($configurations, new CustomerRepository($db), $mail);
         (new ConfigurationSaveRoutes($saveService))->register($routes);
+        $shares = new ConfigurationShareRepository($db);
+        $throttle = new Throttle(new RateLimiter($db));
+        (new ConfigurationShareRoutes(
+            new ConfigurationShareService($shares, $throttle),
+            new ConfigurationRequestService($shares, $mail, $throttle),
+        ))->register($routes);
         (new GenerateRoutes(
             new ProcOpenRunner(),
             $logger,
@@ -41,6 +54,8 @@ final class ConfigurationRouteRegistry
             $settings->python->scriptPath,
             $settings->python->binary,
             $settings->python->timeoutSeconds,
+            new Throttle(new RateLimiter($db)),
         ))->register($routes);
+        (new ArModelRoutes(new RateLimiter($db), $logger, $settings->paths->modelsDir))->register($routes);
     }
 }

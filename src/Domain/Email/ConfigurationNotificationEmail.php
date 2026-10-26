@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Email;
 
+use App\Lib\Html;
+
 final class ConfigurationNotificationEmail
 {
     public static function subject(array $config, array $customer): string
@@ -12,8 +14,9 @@ final class ConfigurationNotificationEmail
         return "Nouveau projet client : {$configName} - {$customer['first_name']} {$customer['last_name']}";
     }
 
-    public static function html(array $config, array $customer, string $frontendUrl, string $backendUrl): string
+    public static function html(array $rawConfig, array $customer, string $frontendUrl, string $backendUrl): string
     {
+        $config = Html::escapeAll(array_diff_key($rawConfig, ['config_string' => true]));
         $price = $config['price'] ?? 0;
         $priceFormatted = number_format((float) $price, 2, ',', ' ') . ' €';
         $type = self::furnitureType($config);
@@ -23,9 +26,10 @@ final class ConfigurationNotificationEmail
         $multiColorHtml = '';
         $accessoriesHtml = '';
         $accessoriesList = [];
-        if (isset($config['config_string'])) {
-            $data = json_decode((string) $config['config_string'], true);
+        if (isset($rawConfig['config_string'])) {
+            $data = json_decode((string) $rawConfig['config_string'], true);
             if (is_array($data)) {
+                $data = Html::escapeAll($data);
                 $dimensionsHtml = ConfigurationDetailSections::dimensions($data['dimensions'] ?? []);
                 $detailsHtml = ConfigurationDetailSections::materialsAndDoors($data['styling'] ?? [], $data['features'] ?? []);
                 if ((bool) ($data['useMultiColor'] ?? false) && isset($data['componentColors'])) {
@@ -39,7 +43,7 @@ final class ConfigurationNotificationEmail
         }
         $promptHtml = isset($config['prompt']) ? self::promptBlock((string) $config['prompt']) : '';
         $dxfUrl = $config['dxf_url'] ?? null;
-        $dxfDownloadUrl = $dxfUrl !== null && $dxfUrl !== '' ? "{$frontendUrl}{$dxfUrl}" : "{$backendUrl}/api/files/dxf?id={$config['id']}";
+        $dxfDownloadUrl = is_string($dxfUrl) && str_starts_with($dxfUrl, '/') ? "{$frontendUrl}{$dxfUrl}" : "{$backendUrl}/api/files/dxf?id={$config['id']}";
         $dxfLinkHtml = ConfigurationDxfPanel::html($accessoriesList, $dxfDownloadUrl);
         $configName = $config['name'] ?? 'Configuration sans nom';
         $phone = $customer['phone'] ?? '';

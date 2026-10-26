@@ -32,8 +32,13 @@ final class OrderDeleteRoutes
             if ((int) $order['customer_id'] !== (int) $s->customerId()) {
                 throw new ForbiddenException('Accès refusé');
             }
-            if ($order['payment_status'] === 'paid') {
-                throw new DomainException('Impossible de supprimer une commande payée');
+            $paid = in_array($order['payment_status'], ['paid', 'partially_paid', 'refunded', 'partially_refunded'], true)
+                || in_array('paid', [$order['deposit_payment_status'] ?? null, $order['balance_payment_status'] ?? null], true);
+            if ($paid) {
+                throw new DomainException('Impossible de supprimer une commande pour laquelle un paiement a été reçu');
+            }
+            if (!in_array($order['status'], ['pending', 'confirmed', 'cancelled'], true)) {
+                throw new DomainException('Une commande en fabrication ou expédiée ne peut plus être supprimée');
             }
             $this->orders->delete($orderId);
             return Response::json(['success' => true, 'message' => 'Commande supprimée avec succès']);

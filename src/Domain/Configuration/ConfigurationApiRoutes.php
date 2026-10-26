@@ -7,6 +7,7 @@ namespace App\Domain\Configuration;
 use App\Domain\Shared\DomainException;
 use App\Domain\Shared\NotFoundException;
 use App\Http\ErrorStyle;
+use App\Http\Guard\AdminGuard;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\RouteCollection;
@@ -17,7 +18,7 @@ final class ConfigurationApiRoutes
 
     public function register(RouteCollection $routes): void
     {
-        $script = $routes->script('configurations', errorStyle: ErrorStyle::Success);
+        $script = $routes->script('configurations', [new AdminGuard()], ErrorStyle::Success);
         $script->get(null, fn(Request $r): Response => $this->get($r));
         $script->post(null, fn(Request $r): Response => $this->post($r));
     }
@@ -50,8 +51,8 @@ final class ConfigurationApiRoutes
         if (!is_numeric($data['price']) || $data['price'] < 0) {
             throw new DomainException('Prix invalide');
         }
-        if (strlen((string) $data['prompt']) > 500) {
-            throw new DomainException('Prompt trop long (max 500 caractères)');
+        if (strlen((string) $data['prompt']) > GenerateRoutes::MAX_PROMPT_LENGTH) {
+            throw new DomainException('Prompt trop long (max ' . GenerateRoutes::MAX_PROMPT_LENGTH . ' caractères)');
         }
         $metadata = isset($data['metadata']) ? json_encode($data['metadata'], JSON_THROW_ON_ERROR) : null;
         $id = $this->configurations->create(null, null, $metadata, (float) $data['price'], $data['glb_url'] ?? null, (string) $data['prompt'], (string) $data['user_session'], 'en_attente_validation');

@@ -9,6 +9,7 @@ use App\Http\Guard\AdminGuard;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\RouteCollection;
+use App\Infrastructure\RateLimit\RateLimiter;
 
 final class ContactRequestRoutes
 {
@@ -18,7 +19,7 @@ final class ContactRequestRoutes
     {
         $script = $routes->script('contact-request/index', errorStyle: ErrorStyle::Success);
         $script->post(null, function (Request $r): Response {
-            $data = $this->service->submit($r->jsonOrEmpty());
+            $data = $this->service->submit($r->jsonOrEmpty(), RateLimiter::clientIp($_SERVER));
             return Response::json(['success' => true, 'message' => 'Votre message a été envoyé avec succès', 'data' => $data]);
         });
         $script->get(null, fn(): Response => Response::json(['success' => true, 'data' => $this->service->recent(50)]), [new AdminGuard()]);

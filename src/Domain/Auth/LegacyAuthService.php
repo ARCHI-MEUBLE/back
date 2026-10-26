@@ -8,17 +8,28 @@ use App\Domain\Shared\ConflictException;
 use App\Domain\Shared\DomainException;
 use App\Domain\Shared\UnauthorizedException;
 use App\Http\Session;
+use App\Infrastructure\RateLimit\Throttle;
 
 final class LegacyAuthService
 {
-    public function __construct(private readonly LegacyUserRepository $users) {}
+    public function __construct(
+        private readonly LegacyUserRepository $users,
+        private readonly Throttle $throttle,
+    ) {}
 
-    public function login(string $email, string $password, Session $session): LegacyUserAccount
+    public function login(string $email, string $password, string $ip, Session $session): LegacyUserAccount
     {
+        $key = strtolower(trim($email));
+        $this->throttle->assertAllowed($key, 'legacy_login_account', 5, 30, 'Trop de tentatives de connexion. Réessayez plus tard.');
+        $this->throttle->assertAllowed($ip, 'legacy_login_ip', 20, 30, 'Trop de tentatives de connexion. Réessayez plus tard.');
         $user = $this->users->verifyCredentials($email, $password);
         if ($user === null) {
+            $this->throttle->fail($key, 'legacy_login_account', 5, 30);
+            $this->throttle->fail($ip, 'legacy_login_ip', 20, 30);
             throw new UnauthorizedException('Identifiants invalides');
         }
+        $this->throttle->reset($key, 'legacy_login_account');
+        $session->regenerate();
         $session->set('user_id', $user->id);
         $session->set('user_email', $user->email);
         $session->set('user_name', $user->name);
@@ -27,11 +38,15 @@ final class LegacyAuthService
 
     public function register(string $email, string $password, ?string $name, Session $session): LegacyUserAccount
     {
+        if (mb_strlen($password) < 8) {
+            throw new DomainException('Le mot de passe doit contenir au moins 8 caractères');
+        }
         if ($this->users->emailExists($email)) {
             throw new ConflictException('Cet email est déjà utilisé');
         }
         $id = uniqid('user_', true);
         $this->users->create($id, $email, password_hash($password, PASSWORD_BCRYPT), $name);
+        $session->regenerate();
         $session->set('user_id', $id);
         $session->set('user_email', $email);
         $session->set('user_name', $name);
@@ -53,8 +68,10 @@ final class LegacyAuthService
         if ($this->users->verifyCredentials($current->email, $currentPassword) === null) {
             throw new UnauthorizedException('Mot de passe actuel incorrect');
         }
-        $affected = $this->users->applyWhitelistedUpdate($current->id, ['password' => $newPassword]);
-        if ($affected === 0) {
+        if (mb_strlen($newPassword) < 8) {
+            throw new DomainException('Le mot de passe doit contenir au moins 8 caractères');
+        }
+        if ($this->users->updatePasswordHash($current->id, password_hash($newPassword, PASSWORD_BCRYPT)) === 0) {
             throw new DomainException('Erreur lors de la mise à jour du mot de passe', 500);
         }
     }

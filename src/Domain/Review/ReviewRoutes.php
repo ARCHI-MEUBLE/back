@@ -13,10 +13,15 @@ use App\Http\Request;
 use App\Http\Response;
 use App\Http\RouteCollection;
 use App\Http\Session;
+use App\Infrastructure\RateLimit\RateLimiter;
+use App\Infrastructure\RateLimit\Throttle;
 
 final class ReviewRoutes
 {
-    public function __construct(private readonly ReviewRepository $reviews) {}
+    public function __construct(
+        private readonly ReviewRepository $reviews,
+        private readonly Throttle $throttle,
+    ) {}
 
     public function register(RouteCollection $routes): void
     {
@@ -36,7 +41,12 @@ final class ReviewRoutes
                 throw new DomainException("Le texte de l'avis ne peut pas être vide");
             }
             $authorName = trim((string) ($input['authorName'] ?? 'Utilisateur'));
-            $date = (string) ($input['date'] ?? date('Y-m-d'));
+            $authorName = $authorName === '' ? 'Utilisateur' : $authorName;
+            if (mb_strlen($text) > 2000 || mb_strlen($authorName) > 100) {
+                throw new DomainException('Avis trop long (2000 caractères maximum, nom 100 caractères maximum)');
+            }
+            $this->throttle->consume(RateLimiter::clientIp($_SERVER), 'review_ip', 5, 60);
+            $date = date('Y-m-d');
             $id = $this->reviews->create($s->string('user_id'), $authorName, $rating, $text, $date);
             return Response::json(['success' => true, 'id' => (string) $id, 'authorName' => $authorName, 'rating' => $rating, 'text' => $text, 'date' => $date], 201);
         });

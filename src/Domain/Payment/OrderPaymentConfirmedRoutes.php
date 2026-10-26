@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Domain\Payment;
 
 use App\Db\Connection;
-use App\Domain\Notification\AdminNotificationRepository;
 use App\Domain\Shared\DomainException;
 use App\Domain\Shared\ForbiddenException;
 use App\Domain\Shared\NotFoundException;
@@ -14,12 +13,15 @@ use App\Http\Request;
 use App\Http\Response;
 use App\Http\RouteCollection;
 use App\Http\Session;
+use App\Infrastructure\Stripe\StripeGateway;
+use App\Infrastructure\Stripe\StripeObjectReader;
 
 final class OrderPaymentConfirmedRoutes
 {
     public function __construct(
         private readonly Connection $db,
-        private readonly AdminNotificationRepository $adminNotifications,
+        private readonly StripeGateway $stripe,
+        private readonly PaymentConfirmationService $confirmation,
     ) {}
 
     public function register(RouteCollection $routes): void
@@ -30,21 +32,29 @@ final class OrderPaymentConfirmedRoutes
                 throw new DomainException('ID de commande manquant');
             }
             $data = $r->jsonOrEmpty();
-            if (!isset($data['payment_intent_id']) || !isset($data['payment_status'])) {
+            if (!isset($data['payment_intent_id'])) {
                 throw new DomainException('Données manquantes');
             }
-            $order = $this->db->queryOne('SELECT id, customer_id FROM orders WHERE id = ?', [$orderId]);
+            $order = $this->db->queryOne('SELECT * FROM orders WHERE id = ?', [$orderId]);
             if ($order === null) {
                 throw new NotFoundException('Commande non trouvée');
             }
             if ((int) $order['customer_id'] !== (int) $s->customerId()) {
                 throw new ForbiddenException('Accès interdit');
             }
-            $this->db->execute(
-                "UPDATE orders SET stripe_payment_intent_id = ?, payment_status = ?, status = 'confirmed', confirmed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                [$data['payment_intent_id'], $data['payment_status'], $orderId],
-            );
-            $this->adminNotifications->notifyAllAdmins('payment', "Paiement confirmé pour la commande #{$orderId}", $orderId);
+            $intentId = trim((string) $data['payment_intent_id']);
+            $bound = [$order['stripe_payment_intent_id'] ?? null, $order['deposit_stripe_intent_id'] ?? null, $order['balance_stripe_intent_id'] ?? null];
+            if ($intentId === '' || !in_array($intentId, $bound, true)) {
+                throw new ForbiddenException("Ce paiement n'est pas associé à cette commande");
+            }
+            $intent = $this->stripe->retrievePaymentIntent($intentId);
+            if ($intent->status !== 'succeeded') {
+                return Response::json(['success' => false, 'message' => 'Paiement non confirmé par Stripe', 'status' => $intent->status], 409);
+            }
+            $result = $this->confirmation->confirm($intentId, StripeObjectReader::metadataArray($intent), StripeObjectReader::amountReceived($intent), (string) $intent->currency);
+            if (!$result->isPaid()) {
+                return Response::json(['success' => false, 'message' => 'Le montant payé ne correspond pas à la commande. Notre équipe a été prévenue.'], 409);
+            }
             return Response::json(['success' => true, 'message' => 'Paiement confirmé']);
         });
     }

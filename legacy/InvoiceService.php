@@ -197,7 +197,8 @@ class InvoiceService {
         
         $pdf->SetFont('Arial', '', 10);
         foreach ($items as $item) {
-            $itemName = $this->getItemDisplayName($item);
+            $itemName = htmlspecialchars((string) $this->getItemDisplayName($item), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $item['quantity'] = (int) $item['quantity'];
             $itemPrice = $item['total_price'] ?? ($item['unit_price'] * $item['quantity']);
             $itemPriceHT = $itemPrice / 1.20;
             
@@ -216,7 +217,8 @@ class InvoiceService {
         
         // Échantillons
         foreach ($samples as $sample) {
-            $sampleName = "Échantillon: " . ($sample['sample_name'] ?? 'Échantillon') . " - " . ($sample['material'] ?? '');
+            $sampleName = htmlspecialchars("Échantillon: " . ($sample['sample_name'] ?? 'Échantillon') . " - " . ($sample['material'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $sample['quantity'] = (int) $sample['quantity'];
             
             $pdf->SetFillColor(240, 253, 244);
             $pdf->Cell(100, 8, $this->toLatin1($sampleName), 'LBR', 0, 'L', true);
@@ -300,7 +302,19 @@ class InvoiceService {
     /**
      * Génère le HTML de la facture
      */
+    private function escapeStrings($values) {
+        foreach ($values as $key => $value) {
+            if (is_string($value)) {
+                $values[$key] = htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            }
+        }
+        return $values;
+    }
+
     private function generateInvoiceHTML($order, $customer, $items, $samples, $invoiceNumber, $invoiceDate) {
+        $order = $this->escapeStrings($order);
+        $customer = $this->escapeStrings($customer);
+        $invoiceNumber = htmlspecialchars((string) $invoiceNumber, ENT_QUOTES, 'UTF-8');
         $totalHT = $order['total_amount'] / 1.20; // Montant HT (TVA 20%)
         $tva = $order['total_amount'] - $totalHT;
 
@@ -327,7 +341,8 @@ class InvoiceService {
 
         // Ajouter les configurations
         foreach ($items as $item) {
-            $itemName = $this->getItemDisplayName($item);
+            $itemName = htmlspecialchars((string) $this->getItemDisplayName($item), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $item['quantity'] = (int) $item['quantity'];
             $itemPrice = $item['total_price'] ?? ($item['unit_price'] * $item['quantity']);
             $itemPriceHT = $itemPrice / 1.20;
 
@@ -343,7 +358,8 @@ class InvoiceService {
 
         // Ajouter les échantillons gratuits
         foreach ($samples as $sample) {
-            $sampleName = "Échantillon: " . ($sample['sample_name'] ?? 'Échantillon') . " - " . ($sample['material'] ?? '');
+            $sampleName = htmlspecialchars("Échantillon: " . ($sample['sample_name'] ?? 'Échantillon') . " - " . ($sample['material'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $sample['quantity'] = (int) $sample['quantity'];
 
             $itemsHTML .= "
                 <tr style='background-color: #f0fdf4;'>

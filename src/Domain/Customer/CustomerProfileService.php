@@ -28,7 +28,7 @@ final class CustomerProfileService
             }
         }
         if (isset($input['email']) && $input['email'] !== '') {
-            $email = trim((string) $input['email']);
+            $email = strtolower(trim((string) $input['email']));
             if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
                 throw new ValidationException('Email invalide');
             }
