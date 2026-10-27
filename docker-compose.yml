@@ -58,6 +58,7 @@ services:
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
       # Resend Email API
       - RESEND_API_KEY=${RESEND_API_KEY}
+      - RESEND_FROM=${RESEND_FROM:-contact@archimeuble.com}
       # Backup / system endpoints
       - BACKUP_API_KEY=${BACKUP_API_KEY}
     working_dir: /app

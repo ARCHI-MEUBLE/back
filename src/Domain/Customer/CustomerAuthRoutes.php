@@ -47,6 +47,19 @@ final class CustomerAuthRoutes
             return Response::json(['success' => true, 'message' => 'Email vérifié avec succès. Bienvenue !', 'customer' => $this->service->verifyEmail($data['email'], $data['code'], $s)]);
         });
 
+        $routes->script('customers/email-code')->post(null, function (Request $r): Response {
+            $data = CustomerSchemas::loginCodeRequest()->validate($r->json());
+            if (!$this->service->requestLoginCode($data['email'], $data['first_name'] ?? null, $data['last_name'] ?? null, RateLimiter::clientIp($_SERVER))) {
+                return Response::json(['success' => false, 'needsName' => true, 'error' => 'Indiquez votre prénom et votre nom pour recevoir le code.'], 422);
+            }
+            return Response::json(['success' => true, 'message' => 'Un code de connexion a été envoyé à votre adresse email.']);
+        });
+
+        $routes->script('customers/email-verify')->post(null, function (Request $r, Session $s): Response {
+            $data = CustomerSchemas::verifyEmail()->validate($r->json());
+            return Response::json(Mapper::login($this->service->verifyLoginCode($data['email'], $data['code'], $s)));
+        });
+
         $routes->script('customers/resend-code')->post(null, function (Request $r): Response {
             $data = CustomerSchemas::emailOnly('Email requis')->validate($r->json());
             $this->service->resendCode($data['email']);

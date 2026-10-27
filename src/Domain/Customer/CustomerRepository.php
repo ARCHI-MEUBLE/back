@@ -28,6 +28,15 @@ final class CustomerRepository
         );
     }
 
+    // Client créé par un code email : aucun mot de passe connu, l'empreinte d'un secret aléatoire garde la colonne NOT NULL
+    public function createPasswordless(string $email, string $firstName, string $lastName): int
+    {
+        return $this->db->insertReturningId(
+            'INSERT INTO customers (email, password_hash, first_name, last_name) VALUES (?, ?, ?, ?) RETURNING id',
+            [$email, password_hash(bin2hex(random_bytes(32)), PASSWORD_BCRYPT), $firstName, $lastName],
+        );
+    }
+
     public function findFullById(int $id): ?array
     {
         return $this->db->queryOne('SELECT ' . self::FULL_COLUMNS . ' FROM customers WHERE id = ?', [$id]);

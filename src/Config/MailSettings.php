@@ -8,6 +8,7 @@ final class MailSettings
 {
     public function __construct(
         public readonly ?string $resendApiKey,
+        public readonly string $fromEmail,
         public readonly string $adminEmail,
         public readonly string $backendUrl,
         public readonly string $adminPath,
@@ -17,6 +18,8 @@ final class MailSettings
     {
         return new self(
             $env->string('RESEND_API_KEY'),
+            // En local sans domaine vérifié sur Resend : RESEND_FROM=onboarding@resend.dev
+            $env->string('RESEND_FROM', 'contact@archimeuble.com') ?? 'contact@archimeuble.com',
             $env->string('ADMIN_EMAIL', 'pro.archimeuble@gmail.com') ?? 'pro.archimeuble@gmail.com',
             rtrim($env->string('BACKEND_URL', 'http://127.0.0.1:8000') ?? 'http://127.0.0.1:8000', '/'),
             trim($env->string('ADMIN_PATH', '') ?? '', '/'),

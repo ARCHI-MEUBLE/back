@@ -15,7 +15,7 @@ final class EmailGatewayFactory
     public static function create(Settings $settings, Connection $db): EmailGateway
     {
         return new EmailGateway(
-            ($settings->mail->resendApiKey === null && !$settings->isProduction()) ? new NullMailer() : new ResendMailer($settings->mail->resendApiKey),
+            ($settings->mail->resendApiKey === null && !$settings->isProduction()) ? new NullMailer() : new ResendMailer($settings->mail->resendApiKey, $settings->mail->fromEmail),
             new ItemDisplayNameResolver(new ModelRepository($db)),
             new OrderRepository($db),
             $settings->mail,
