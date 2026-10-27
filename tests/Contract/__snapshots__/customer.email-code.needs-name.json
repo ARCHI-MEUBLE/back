@@ -1,0 +1,10 @@
+{
+    "status": 422,
+    "shape": {
+        "object": {
+            "error": "string",
+            "needsName": "bool",
+            "success": "bool"
+        }
+    }
+}
