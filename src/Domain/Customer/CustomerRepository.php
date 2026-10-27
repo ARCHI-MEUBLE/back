@@ -28,7 +28,6 @@ final class CustomerRepository
         );
     }
 
-    // Client créé par un code email : aucun mot de passe connu, l'empreinte d'un secret aléatoire garde la colonne NOT NULL
     public function createPasswordless(string $email, string $firstName, string $lastName): int
     {
         return $this->db->insertReturningId(

@@ -16,6 +16,7 @@ final class CustomerAuthRoutes
     public function __construct(
         private readonly CustomerAuthService $service,
         private readonly CustomerPasswordResetService $passwordReset,
+        private readonly CustomerLoginCodeService $loginCode,
     ) {}
 
     public function register(RouteCollection $routes): void
@@ -49,7 +50,7 @@ final class CustomerAuthRoutes
 
         $routes->script('customers/email-code')->post(null, function (Request $r): Response {
             $data = CustomerSchemas::loginCodeRequest()->validate($r->json());
-            if (!$this->service->requestLoginCode($data['email'], $data['first_name'] ?? null, $data['last_name'] ?? null, RateLimiter::clientIp($_SERVER))) {
+            if (!$this->loginCode->requestLoginCode($data['email'], $data['first_name'] ?? null, $data['last_name'] ?? null, RateLimiter::clientIp($_SERVER))) {
                 return Response::json(['success' => false, 'needsName' => true, 'error' => 'Indiquez votre prénom et votre nom pour recevoir le code.'], 422);
             }
             return Response::json(['success' => true, 'message' => 'Un code de connexion a été envoyé à votre adresse email.']);
@@ -57,7 +58,7 @@ final class CustomerAuthRoutes
 
         $routes->script('customers/email-verify')->post(null, function (Request $r, Session $s): Response {
             $data = CustomerSchemas::verifyEmail()->validate($r->json());
-            return Response::json(Mapper::login($this->service->verifyLoginCode($data['email'], $data['code'], $s)));
+            return Response::json(Mapper::login($this->loginCode->verifyLoginCode($data['email'], $data['code'], $s)));
         });
 
         $routes->script('customers/resend-code')->post(null, function (Request $r): Response {

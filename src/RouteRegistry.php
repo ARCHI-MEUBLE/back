@@ -21,6 +21,7 @@ use App\Domain\Category\CategoryRoutes;
 use App\Domain\Category\CategoryService;
 use App\Domain\Customer\CustomerAuthRoutes;
 use App\Domain\Customer\CustomerAuthService;
+use App\Domain\Customer\CustomerLoginCodeService;
 use App\Domain\Customer\CustomerPasswordResetService;
 use App\Domain\Customer\CustomerProfileRoutes;
 use App\Domain\Customer\CustomerProfileService;
@@ -69,6 +70,7 @@ final class RouteRegistry
         (new CustomerAuthRoutes(
             new CustomerAuthService($customers, $verifications, $mail, $throttle),
             new CustomerPasswordResetService($customers, $verifications, $mail, $settings->frontendUrl, $throttle),
+            new CustomerLoginCodeService($customers, $verifications, $mail, $throttle),
         ))->register($routes);
         (new CustomerProfileRoutes(new CustomerProfileService($customers)))->register($routes);
         (new CategoryRoutes(new CategoryService(new CategoryRepository($db))))->register($routes);
