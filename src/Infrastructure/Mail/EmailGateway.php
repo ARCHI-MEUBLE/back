@@ -10,6 +10,7 @@ use App\Domain\Email\ConfigurationNotificationEmail;
 use App\Domain\Email\ConfigurationRequestEmail;
 use App\Domain\Email\ContactRequestNotificationEmail;
 use App\Domain\Email\ItemDisplayNameResolver;
+use App\Domain\Email\LoginCodeEmail;
 use App\Domain\Email\OrderCancelledEmail;
 use App\Domain\Email\OrderConfirmationEmail;
 use App\Domain\Email\OrderStatusUpdateEmail;
@@ -39,6 +40,11 @@ final class EmailGateway
     public function sendVerificationCode(string $email, string $name, string $code): bool
     {
         return $this->mailer->send($email, VerificationEmail::subject(), VerificationEmail::html(Html::e($name), Html::e($code)));
+    }
+
+    public function sendLoginCode(string $email, string $name, string $code): bool
+    {
+        return $this->mailer->send($email, LoginCodeEmail::subject(), LoginCodeEmail::html(Html::e($name), Html::e($code)));
     }
 
     public function sendNewConfigurationNotification(array $configuration, array $customer): void
@@ -99,7 +105,7 @@ final class EmailGateway
 
     public function sendOrderStatusUpdate(string $email, string $name, string $orderNumber, string $status, int $orderId): void
     {
-        $this->mailer->send($email, OrderStatusUpdateEmail::subject($orderNumber), OrderStatusUpdateEmail::html(Html::e($name), Html::e($orderNumber), $status, Html::e($this->frontendUrl)));
+        $this->mailer->send($email, OrderStatusUpdateEmail::subject($orderNumber), OrderStatusUpdateEmail::html(Html::e($name), Html::e($orderNumber), $status, Html::e(rtrim($this->frontendUrl, '/') . '/order-confirmation/' . $orderId)));
     }
 
     public function sendOrderConfirmation(array $order, array $customer, array $items, string $paymentType): void
