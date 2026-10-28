@@ -8,13 +8,11 @@ final class FurniturePricing
 {
     public function __construct(private readonly PricingConfigRepository $config) {}
 
-    /** @return array{price: int, low: int, high: int, sigma: int, lines: list<array{key: string, label: string, amount: int}>} */
     public function estimate(array $configuration): array
     {
         return FurniturePriceCalculator::fromConfigRows($this->config->search(null, null, null, true))->estimate($configuration);
     }
 
-    /** Saved configurations carry their dimensions; older payloads without them keep the price they were sent with. */
     public static function canEstimate(array $configuration): bool
     {
         $dimensions = $configuration['dimensions'] ?? null;
