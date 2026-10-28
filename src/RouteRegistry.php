@@ -30,7 +30,6 @@ use App\Domain\Customer\CustomerVerificationRepository;
 use App\Domain\Model\ModelRepository;
 use App\Domain\Model\ModelRoutes;
 use App\Domain\Model\ModelService;
-use App\Domain\Model\TemplateRoutes;
 use App\Domain\System\AdminCreationRoutes;
 use App\Domain\System\BackupAccessGuard;
 use App\Domain\System\BackupService;
@@ -75,7 +74,6 @@ final class RouteRegistry
         (new CustomerProfileRoutes(new CustomerProfileService($customers)))->register($routes);
         (new CategoryRoutes(new CategoryService(new CategoryRepository($db))))->register($routes);
         (new ModelRoutes(new ModelService(new ModelRepository($db))))->register($routes);
-        (new TemplateRoutes($db))->register($routes);
         return $admins;
     }
 }

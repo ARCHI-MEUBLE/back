@@ -67,8 +67,8 @@ final class PaymentLinkRepository
             return null;
         }
         $configs = $this->db->query(
-            'SELECT oi.*, sc.name as config_name, sc.thumbnail_url FROM order_items oi
-             LEFT JOIN saved_configurations sc ON oi.configuration_id = sc.id WHERE oi.order_id = ?',
+            "SELECT oi.*, c.config_string::jsonb ->> 'name' as config_name, c.config_string::jsonb ->> 'thumbnail_url' as thumbnail_url
+             FROM order_items oi LEFT JOIN configurations c ON oi.configuration_id = c.id WHERE oi.order_id = ?",
             [$link['order_id']],
         );
         $samples = $this->db->query('SELECT * FROM order_sample_items WHERE order_id = ?', [$link['order_id']]);

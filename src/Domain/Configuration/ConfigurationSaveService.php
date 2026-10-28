@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Configuration;
 
 use App\Domain\Customer\CustomerRepository;
+use App\Domain\Pricing\FurniturePricing;
 use App\Domain\Shared\ConflictException;
 use App\Domain\Shared\DomainException;
 use App\Domain\Shared\ForbiddenException;
@@ -19,6 +20,7 @@ final class ConfigurationSaveService
         private readonly ConfigurationRepository $configurations,
         private readonly CustomerRepository $customers,
         private readonly EmailGateway $mail,
+        private readonly FurniturePricing $pricing,
     ) {}
 
     public function save(array $data, Session $session): ConfigurationSaveResult
@@ -46,6 +48,9 @@ final class ConfigurationSaveService
             }
         }
         $configData = self::configData($data);
+        if (FurniturePricing::canEstimate($configData)) {
+            $data['price'] = $this->pricing->estimate($configData)['price'];
+        }
         return $isUpdate
             ? new ConfigurationSaveResult($this->update((int) $data['id'], $data, $configData, $isAdmin, $customerId), 200)
             : new ConfigurationSaveResult($this->create($data, $configData, $isAdmin, $customerId, $session), 201);

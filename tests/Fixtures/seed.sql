@@ -46,9 +46,6 @@ INSERT INTO calendly_appointments (calendly_event_id, client_name, client_email,
 INSERT INTO quote_requests (first_name, last_name, email, phone, description, status) VALUES
 ('Jean', 'Dupont', 'jean@example.test', '0600000000', 'Un dressing', 'pending');
 
-INSERT INTO templates (name, description, prompt, config_data, image_url, category, price, is_active) VALUES
-('Template TV', 'Base', 'M1(1700,500,730)EFbV3(,T,)', '{}', NULL, 'Meubles TV', 899.00, TRUE);
-
 INSERT INTO configurations (id, user_id, user_session, template_id, config_string, prompt, price, glb_url, dxf_url, status) VALUES
 (1, '1', NULL, 1, '{"name":"Ma config","dimensions":{"width":1700}}', 'M1(1700,500,730)EFbV3(,T,)', 899.50, '/models/seed.glb', '/models/seed.dxf', 'validee'),
 (2, '1', NULL, 1, '{"name":"Brouillon"}', 'M1(1200,350,650)EFbV4(,,T,)', 699.00, '/models/seed2.glb', NULL, 'en_attente_validation'),
