@@ -10,6 +10,7 @@ final class AccessoryExtractor
         'shelf' => 'Étagère', 'drawer' => 'Tiroir', 'hanging_rod' => 'Barre de penderie', 'door' => 'Porte',
         'basket' => 'Panier', 'tray' => 'Plateau', 'divider' => 'Séparateur', 'shoe_rack' => 'Range-chaussures',
         'hanger' => 'Portant', 'dressing' => 'Aménagement penderie', 'empty' => 'Niche vide',
+        'niche' => 'Niche colorée',
     ];
 
     public static function extract(mixed $zone, string $prefix = ''): array

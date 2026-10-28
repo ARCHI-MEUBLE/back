@@ -38,6 +38,39 @@ import os
 def sectionner_par_texture(planches):
     return _sectionner_par_texture(planches, textures_dict)
 
+def etendre_face_avant(zone, decalage_mm):
+    """Avance la face "a" (avant) d'une zone de decalage_mm au-delà de sa position actuelle, sans
+    toucher au reste (fond "f" et côtés g/d/h/b fixes) : sert à faire déborder une niche au-delà
+    de la façade du meuble (voir char=="n"), ce que clip()/envelopper() ne savent pas faire seuls
+    (ils ne font que rogner une zone existante, jamais créer de volume au-delà de ses bornes).
+
+    On ne déplace que les 4 points de la face "a" (translatés le long de normala, dans le sens qui
+    les éloigne de "f" -- mesuré, pas supposé fixe), et on répercute ce changement sur les faces
+    g/d/h/b qui partagent ces mêmes points (topologie en boîte : chaque face latérale a exactement
+    2 sommets communs avec "a"). "f" n'est pas touchée : elle ne bouge pas.
+    """
+    zone2 = deepcopy(zone)
+    face_a = [f for f in zone2.listface if f.label == "a"][0]
+    face_f = [f for f in zone2.listface if f.label == "f"][0]
+    old_a_idx = list(face_a.contour)
+    old_a_pts = zone2.points[old_a_idx]
+    a_proj = float(np.mean(old_a_pts @ zone2.normala))
+    f_proj = float(np.mean(zone2.points[face_f.contour] @ zone2.normala))
+    sens = 1.0 if a_proj > f_proj else -1.0
+    new_pts = old_a_pts + sens * decalage_mm * zone2.normala
+
+    base_n = len(zone2.points)
+    zone2.points = np.vstack([zone2.points, new_pts])
+    idx_map = {old_i: base_n + k for k, old_i in enumerate(old_a_idx)}
+
+    face_a.contour = np.array([idx_map[i] for i in old_a_idx])
+    face_a.equation = plane_equation(zone2.points[face_a.contour[0]], zone2.points[face_a.contour[1]], zone2.points[face_a.contour[2]])
+
+    for f in zone2.listface:
+        if f.label in ("g", "d", "h", "b"):
+            f.contour = np.array([idx_map.get(i, i) for i in f.contour])
+    return zone2
+
 # %%
 #chargement des textures
 # L'objet texture permet d'avoir toutes les informations concernant les matériaux utilisés : nom, reference founisseur, epaisseur, largeur, longueur, et prix
@@ -796,6 +829,43 @@ def process(sequence,zone,textures=textures) : # cette fonction sert à parser u
                 zone.nom=nom
                 i=i+len(nom)
                 char=char=sequence[i]
+        elif char=="n": # n défini une niche : compartiment ouvert (pas de porte/tiroir), ses 4 bords
+            # (g,d,h,b) et son fond sont habillés de plaques colorables, comme le fond du meuble.
+            # Paramètre optionnel "n(decalage_mm)" : décalage signé du bord avant de la niche par
+            # rapport à la position par défaut (au nu de la façade, "affleurante"). Sans paramètre ou
+            # 0 : affleurante, comme avant ce paramètre. Négatif : "encastrée" (le bord avant recule,
+            # le fond ne bouge pas -> les 4 plaques de bord sont plus courtes). Positif : "débordante"
+            # (le bord avant dépasse la façade -> les 4 plaques de bord sont plus longues).
+            print("n")
+            i=i+1
+            char_next=sequence[i] if i<len(sequence) else ""
+            decalage_mm=0.0
+            if char_next=="(":
+                seq1=subsequence(sequence[i:])[0]
+                i=i+len(seq1)
+                decalage_mm=float(seq1)
+            else:
+                i=i-1
+
+            if decalage_mm<0:
+                # Encastrée : simple retrait (pas de planche posée), le fond réel ne bouge pas, seul
+                # le bord avant recule. clip()/envelopper() savent rogner une zone existante.
+                _,zone=zone.envelopper(label="a",epaisseur=-decalage_mm)
+            elif decalage_mm>0:
+                # Débordante : fait avancer la face avant de la zone de decalage_mm au-delà de sa
+                # position actuelle (voir etendre_face_avant plus haut).
+                zone=etendre_face_avant(zone,decalage_mm)
+
+            epaisseur_bord=textures["interieur"].epaisseur
+            for label in ["g","d","h","b"]:
+                planches,zone=zone.envelopper(label=label,epaisseur=epaisseur_bord,texture=textures["interieur"])
+                planche=planches[0]
+                planche.bloc="niche"
+                Listplanches.append(planche)
+            planches,zone=zone.envelopper(label="f",epaisseur=epaisseur_bord,texture=textures["interieur"])
+            planche=planches[0]
+            planche.bloc="niche"
+            Listplanches.append(planche)
         i=i+1
 
 
