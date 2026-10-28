@@ -21,6 +21,8 @@ use App\Domain\Configuration\ConfigurationShareService;
 use App\Domain\Configuration\CustomerConfigurationRoutes;
 use App\Domain\Configuration\GenerateRoutes;
 use App\Domain\Customer\CustomerRepository;
+use App\Domain\Pricing\FurniturePricing;
+use App\Domain\Pricing\PricingConfigRepository;
 use App\Http\RouteCollection;
 use App\Infrastructure\Mail\EmailGatewayFactory;
 use App\Infrastructure\Python\ProcOpenRunner;
@@ -39,7 +41,7 @@ final class ConfigurationRouteRegistry
         (new AdminConfigurationStatusRoutes($configurations))->register($routes);
         (new ConfigurationDxfRoutes($db, $settings->rootDir))->register($routes);
         $mail = EmailGatewayFactory::create($settings, $db);
-        $saveService = new ConfigurationSaveService($configurations, new CustomerRepository($db), $mail);
+        $saveService = new ConfigurationSaveService($configurations, new CustomerRepository($db), $mail, new FurniturePricing(new PricingConfigRepository($db)));
         (new ConfigurationSaveRoutes($saveService))->register($routes);
         $shares = new ConfigurationShareRepository($db);
         $throttle = new Throttle(new RateLimiter($db));
