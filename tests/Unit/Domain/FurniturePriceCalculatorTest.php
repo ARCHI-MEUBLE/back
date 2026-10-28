@@ -11,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 
 final class FurniturePriceCalculatorTest extends TestCase
 {
-    /** Reference pieces and the price band they must land in with the default grid. */
     public static function referencePieces(): array
     {
         $shelves = static fn(int $n): array => self::split('horizontal', array_map(static fn(): array => self::leaf(), range(1, $n)));
