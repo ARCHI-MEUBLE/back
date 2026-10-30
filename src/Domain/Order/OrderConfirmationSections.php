@@ -30,9 +30,9 @@ final class OrderConfirmationSections
         foreach ($facadeItems as $facade) {
             $config = is_string($facade['config_data']) ? json_decode($facade['config_data'], true) : $facade['config_data'];
             $material = $config['material']['name'] ?? 'Matériau';
-            $width = isset($config['width']) ? ($config['width'] / 10) : 0;
-            $height = isset($config['height']) ? ($config['height'] / 10) : 0;
-            $depth = $config['depth'] ?? 19;
+            $width = is_numeric($config['width'] ?? null) ? ((float) $config['width'] / 10) : 0;
+            $height = is_numeric($config['height'] ?? null) ? ((float) $config['height'] / 10) : 0;
+            $depth = is_numeric($config['depth'] ?? null) ? (float) $config['depth'] : 19;
             $total = $facade['total_price'] ?? ($facade['unit_price'] * $facade['quantity']);
             $label = 'Façade ' . $width . ' × ' . $height . ' cm · ' . $depth . ' mm';
             $html .= self::row($label, htmlspecialchars((string) $material) . ' · Qté: ' . $facade['quantity'], number_format((float) $total, 2, ',', ' ') . ' €');

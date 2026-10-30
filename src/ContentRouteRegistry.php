@@ -20,10 +20,10 @@ use App\Domain\Notification\AdminNotificationRepository;
 use App\Domain\Notification\AdminNotificationRoutes;
 use App\Domain\Notification\NotificationRepository;
 use App\Domain\Notification\NotificationRoutes;
+use App\Domain\Pricing\FurniturePriceRoutes;
+use App\Domain\Pricing\FurniturePricing;
 use App\Domain\Pricing\PricingConfigRepository;
 use App\Domain\Pricing\PricingConfigRoutes;
-use App\Domain\Pricing\PricingRepository;
-use App\Domain\Pricing\PricingRoutes;
 use App\Domain\Realisation\AdminRealisationImageRoutes;
 use App\Domain\Realisation\AdminRealisationRoutes;
 use App\Domain\Realisation\RealisationImageRepository;
@@ -40,12 +40,14 @@ use App\Domain\Sample\SampleTypeRepository;
 use App\Domain\Showroom\ShowroomRepository;
 use App\Domain\Showroom\ShowroomRoutes;
 use App\Http\RouteCollection;
+use App\Infrastructure\RateLimit\RateLimiter;
+use App\Infrastructure\RateLimit\Throttle;
 
 final class ContentRouteRegistry
 {
     public static function register(RouteCollection $routes, Settings $settings, Connection $db, AdminRepository $admins): void
     {
-        (new ReviewRoutes(new ReviewRepository($db)))->register($routes);
+        (new ReviewRoutes(new ReviewRepository($db), new Throttle(new RateLimiter($db))))->register($routes);
         (new ShowroomRoutes(new ShowroomRepository($settings->rootDir . '/backend/data/showrooms.json')))->register($routes);
         $realisations = new RealisationRepository($db);
         $realisationImages = new RealisationImageRepository($db);
@@ -55,8 +57,9 @@ final class ContentRouteRegistry
         (new NotificationRoutes(new NotificationRepository($db)))->register($routes);
         (new AdminNotificationRoutes(new AdminNotificationRepository($db), $admins))->register($routes);
         (new EmailTemplateRoutes(new EmailTemplateRepository($db)))->register($routes);
-        (new PricingRoutes(new PricingRepository($db)))->register($routes);
-        (new PricingConfigRoutes(new PricingConfigRepository($db)))->register($routes);
+        $pricingConfig = new PricingConfigRepository($db);
+        (new PricingConfigRoutes($pricingConfig))->register($routes);
+        (new FurniturePriceRoutes(new FurniturePricing($pricingConfig)))->register($routes);
         $catalogueItems = new CatalogueRepository($db);
         $catalogueVariations = new CatalogueVariationRepository($db);
         (new CatalogueRoutes($catalogueItems, $catalogueVariations))->register($routes);

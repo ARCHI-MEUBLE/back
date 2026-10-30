@@ -14,17 +14,17 @@ final class CorsSettings
         public readonly array $suffixes,
     ) {}
 
-    public static function fromEnv(Env $env, string $frontendUrl): self
+    public static function fromEnv(Env $env, string $frontendUrl, bool $allowLocalOrigins = false): self
     {
         $origins = array_merge(
-            self::LOCAL_ORIGINS,
+            $allowLocalOrigins ? self::LOCAL_ORIGINS : [],
             self::PRODUCTION_ORIGINS,
             [$frontendUrl],
             $env->list('CORS_ALLOWED_ORIGINS'),
         );
         return new self(
             array_values(array_unique($origins)),
-            $env->list('CORS_ALLOWED_ORIGIN_SUFFIXES', ['.vercel.app', '.archimeuble.com']),
+            $env->list('CORS_ALLOWED_ORIGIN_SUFFIXES', ['.archimeuble.com']),
         );
     }
 

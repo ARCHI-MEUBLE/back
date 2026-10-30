@@ -20,6 +20,18 @@ final class StripeObjectReader
         return is_string($value) ? $value : null;
     }
 
+    public static function int(object $object, string $property): int
+    {
+        $value = self::get($object, $property);
+        return is_int($value) ? $value : (is_numeric($value) ? (int) $value : 0);
+    }
+
+    public static function amountReceived(object $intent): int
+    {
+        $received = self::int($intent, 'amount_received');
+        return $received > 0 ? $received : self::int($intent, 'amount');
+    }
+
     public static function metadataArray(object $object): array
     {
         $metadata = self::get($object, 'metadata');

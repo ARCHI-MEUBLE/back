@@ -57,9 +57,14 @@ final class ConfigurationDxfRoutes
     private function findSpecific(string $dxfUrl): ?string
     {
         $cleanPath = (string) parse_url($dxfUrl, PHP_URL_PATH);
+        if (!str_ends_with(strtolower($cleanPath), '.dxf') || str_contains($cleanPath, '..')) {
+            return null;
+        }
         $parent = dirname($this->rootDir);
-        foreach (['/data' . $cleanPath, '/app' . $cleanPath, $parent . '/front/public' . $cleanPath, $this->rootDir . $cleanPath, $parent . '/public' . $cleanPath, $this->rootDir . '/backend' . $cleanPath] as $candidate) {
-            if (is_file($candidate)) {
+        foreach (['/data', '/app', $parent . '/front/public', $this->rootDir, $parent . '/public', $this->rootDir . '/backend'] as $root) {
+            $rootReal = realpath($root);
+            $candidate = realpath($root . $cleanPath);
+            if ($rootReal !== false && $candidate !== false && str_starts_with($candidate, $rootReal . DIRECTORY_SEPARATOR) && is_file($candidate)) {
                 return $candidate;
             }
         }

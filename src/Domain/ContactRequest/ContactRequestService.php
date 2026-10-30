@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace App\Domain\ContactRequest;
 
 use App\Domain\Notification\AdminNotificationRepository;
-use App\Domain\Shared\DomainException;
+use App\Domain\QuoteRequest\LeadForm;
 use App\Infrastructure\Mail\EmailGateway;
+use App\Infrastructure\RateLimit\Throttle;
 
 final class ContactRequestService
 {
@@ -14,21 +15,14 @@ final class ContactRequestService
         private readonly ContactRequestRepository $requests,
         private readonly AdminNotificationRepository $notifications,
         private readonly EmailGateway $mail,
+        private readonly Throttle $throttle,
     ) {}
 
-    public function submit(array $form): array
+    public function submit(array $form, string $ip): array
     {
-        foreach (['name', 'email', 'phone', 'message'] as $field) {
-            if (!isset($form[$field]) || $form[$field] === '') {
-                throw new DomainException('Tous les champs obligatoires doivent être remplis');
-            }
-        }
-        $name = (string) $form['name'];
-        $email = (string) $form['email'];
-        $phone = (string) $form['phone'];
-        $company = (string) ($form['company'] ?? '');
-        $subject = (string) ($form['subject'] ?? '');
-        $message = (string) $form['message'];
+        $fields = LeadForm::fields($form, ['name' => 150, 'email' => 200, 'phone' => 30, 'message' => 5000], ['company' => 150, 'subject' => 200]);
+        $this->throttle->consume($ip, 'contact_request_ip', 5, 60);
+        ['name' => $name, 'email' => $email, 'phone' => $phone, 'company' => $company, 'subject' => $subject, 'message' => $message] = $fields;
 
         $requestId = $this->requests->create($name, $email, $phone, $company, $subject, $message);
 

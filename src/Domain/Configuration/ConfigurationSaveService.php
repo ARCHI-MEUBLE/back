@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Configuration;
 
 use App\Domain\Customer\CustomerRepository;
+use App\Domain\Pricing\FurniturePricing;
+use App\Domain\Shared\ConflictException;
 use App\Domain\Shared\DomainException;
 use App\Domain\Shared\ForbiddenException;
 use App\Domain\Shared\NotFoundException;
@@ -18,6 +20,7 @@ final class ConfigurationSaveService
         private readonly ConfigurationRepository $configurations,
         private readonly CustomerRepository $customers,
         private readonly EmailGateway $mail,
+        private readonly FurniturePricing $pricing,
     ) {}
 
     public function save(array $data, Session $session): ConfigurationSaveResult
@@ -36,7 +39,18 @@ final class ConfigurationSaveService
                 throw new DomainException("Le champ $field est requis");
             }
         }
+        if (!is_numeric($data['price']) || (float) $data['price'] < 0 || (float) $data['price'] > 100000) {
+            throw new DomainException('Prix invalide');
+        }
+        foreach (['glb_url', 'dxf_url'] as $field) {
+            if (isset($data[$field]) && $data[$field] !== '' && (!is_string($data[$field]) || preg_match('#^/models/[A-Za-z0-9_.-]+\.(glb|dxf)$#', $data[$field]) !== 1)) {
+                throw new DomainException("Le champ $field est invalide");
+            }
+        }
         $configData = self::configData($data);
+        if (FurniturePricing::canEstimate($configData)) {
+            $data['price'] = $this->pricing->estimate($configData)['price'];
+        }
         return $isUpdate
             ? new ConfigurationSaveResult($this->update((int) $data['id'], $data, $configData, $isAdmin, $customerId), 200)
             : new ConfigurationSaveResult($this->create($data, $configData, $isAdmin, $customerId, $session), 201);
@@ -50,6 +64,9 @@ final class ConfigurationSaveService
         }
         if (!$isAdmin && (string) $existing['user_id'] !== (string) $customerId) {
             throw new ForbiddenException('Accès refusé');
+        }
+        if (!$isAdmin && in_array($existing['status'], ['en_commande', 'payee'], true)) {
+            throw new ConflictException('Cette configuration est liée à une commande et ne peut plus être modifiée');
         }
         $columns = ['config_string' => json_encode($configData, JSON_THROW_ON_ERROR), 'prompt' => $data['prompt'], 'price' => $data['price']];
         $columns['status'] = !$isAdmin ? 'en_attente_validation' : ($data['status'] ?? $existing['status']);
@@ -77,7 +94,7 @@ final class ConfigurationSaveService
             (float) $data['price'],
             $data['glb_url'] ?? null,
             $data['prompt'],
-            self::sessionIdOrNull(),
+            null,
             $status,
         );
         if (isset($data['dxf_url']) && $data['dxf_url'] !== '') {
@@ -102,12 +119,6 @@ final class ConfigurationSaveService
         } catch (\Throwable $notificationFailure) {
             error_log('Failed to send admin notification (create): ' . $notificationFailure->getMessage());
         }
-    }
-
-    private static function sessionIdOrNull(): ?string
-    {
-        $id = session_id();
-        return is_string($id) && $id !== '' ? $id : null;
     }
 
     private static function configData(array $data): array

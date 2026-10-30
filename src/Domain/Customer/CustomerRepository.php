@@ -28,6 +28,14 @@ final class CustomerRepository
         );
     }
 
+    public function createPasswordless(string $email, string $firstName, string $lastName): int
+    {
+        return $this->db->insertReturningId(
+            'INSERT INTO customers (email, password_hash, first_name, last_name) VALUES (?, ?, ?, ?) RETURNING id',
+            [$email, password_hash(bin2hex(random_bytes(32)), PASSWORD_BCRYPT), $firstName, $lastName],
+        );
+    }
+
     public function findFullById(int $id): ?array
     {
         return $this->db->queryOne('SELECT ' . self::FULL_COLUMNS . ' FROM customers WHERE id = ?', [$id]);
@@ -45,17 +53,29 @@ final class CustomerRepository
 
     public function findAuthRowByEmail(string $email): ?array
     {
-        return $this->db->queryOne('SELECT * FROM customers WHERE email = ?', [$email]);
+        return $this->db->queryOne('SELECT * FROM customers WHERE LOWER(email) = LOWER(?) ORDER BY email_verified DESC, id ASC LIMIT 1', [trim($email)]);
     }
 
-    public function emailExists(string $email): bool
+    public function replaceUnverified(int $id, array $data): void
     {
-        return (int) ($this->db->scalar('SELECT COUNT(*) FROM customers WHERE email = ?', [$email]) ?? 0) > 0;
+        $this->db->execute(
+            'UPDATE customers SET email = ?, password_hash = ?, first_name = ?, last_name = ?, phone = ?, address = ?, city = ?, postal_code = ?, country = ?, updated_at = CURRENT_TIMESTAMP
+             WHERE id = ? AND email_verified IS NOT TRUE',
+            [
+                $data['email'], password_hash($data['password'], PASSWORD_BCRYPT), $data['first_name'], $data['last_name'],
+                $data['phone'] ?? null, $data['address'] ?? null, $data['city'] ?? null, $data['postal_code'] ?? null, $data['country'] ?? 'France', $id,
+            ],
+        );
+    }
+
+    public function isEmailVerified(int $id): bool
+    {
+        return $this->db->scalar('SELECT email_verified FROM customers WHERE id = ?', [$id]) === true;
     }
 
     public function emailUsedByAnother(string $email, int $excludingId): bool
     {
-        return $this->db->queryOne('SELECT id FROM customers WHERE email = ? AND id != ?', [$email, $excludingId]) !== null;
+        return $this->db->queryOne('SELECT id FROM customers WHERE LOWER(email) = LOWER(?) AND id != ?', [$email, $excludingId]) !== null;
     }
 
     public function verifyCredentials(string $email, string $password): ?array
@@ -93,14 +113,14 @@ final class CustomerRepository
         $this->db->execute('UPDATE customers SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$passwordHash, $id]);
     }
 
-    public function markEmailVerified(string $email): void
+    public function markEmailVerifiedById(int $id): void
     {
-        $this->db->execute('UPDATE customers SET email_verified = TRUE WHERE email = ?', [$email]);
+        $this->db->execute('UPDATE customers SET email_verified = TRUE WHERE id = ?', [$id]);
     }
 
     public function delete(int $id): bool
     {
-        return $this->db->execute('DELETE FROM customers WHERE id = ?', [$id]) > 0;
+        return (new CustomerErasure($this->db))->erase($id);
     }
 
     public function updateStripeCustomerId(int $id, string $stripeCustomerId): void

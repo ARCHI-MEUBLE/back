@@ -16,6 +16,14 @@ final class OrderCreationRepository
         return $this->cart->items($customerId);
     }
 
+    public function unvalidatedConfigurationCount(int $customerId): int
+    {
+        return (int) ($this->db->scalar(
+            "SELECT COUNT(*) FROM cart_items ci JOIN configurations c ON ci.configuration_id = c.id WHERE ci.customer_id = ? AND c.status IS DISTINCT FROM 'validee'",
+            [$customerId],
+        ) ?? 0);
+    }
+
     public function cartSampleItems(int $customerId): array
     {
         return $this->db->query(

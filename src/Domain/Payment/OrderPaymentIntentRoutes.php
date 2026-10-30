@@ -12,10 +12,16 @@ use App\Http\Request;
 use App\Http\Response;
 use App\Http\RouteCollection;
 use App\Http\Session;
+use App\Infrastructure\Stripe\StripeGateway;
+use App\Infrastructure\Stripe\StripeObjectReader;
 
 final class OrderPaymentIntentRoutes
 {
-    public function __construct(private readonly Connection $db) {}
+    public function __construct(
+        private readonly Connection $db,
+        private readonly StripeGateway $stripe,
+        private readonly PaymentTargetResolver $targets,
+    ) {}
 
     public function register(RouteCollection $routes): void
     {
@@ -28,25 +34,27 @@ final class OrderPaymentIntentRoutes
             if (!isset($data['payment_intent_id'])) {
                 throw new DomainException('Payment intent ID manquant');
             }
-            $paymentType = $data['payment_type'] ?? 'full';
-            $order = $this->db->queryOne('SELECT id, customer_id FROM orders WHERE id = ?', [$orderId]);
+            $order = $this->db->queryOne('SELECT * FROM orders WHERE id = ?', [$orderId]);
             if ($order === null || (int) $order['customer_id'] !== (int) $s->customerId()) {
                 throw new ForbiddenException('Accès interdit');
             }
-            $column = match ($paymentType) {
-                'deposit' => 'deposit_stripe_intent_id',
-                'balance' => 'balance_stripe_intent_id',
-                default => 'stripe_payment_intent_id',
-            };
-            $statusColumn = match ($paymentType) {
-                'deposit' => 'deposit_payment_status',
-                'balance' => 'balance_payment_status',
-                default => 'payment_status',
-            };
-            $this->db->execute(
-                "UPDATE orders SET {$column} = ?, {$statusColumn} = 'pending', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                [$data['payment_intent_id'], $orderId],
-            );
+            $intentId = trim((string) $data['payment_intent_id']);
+            if (preg_match('/^pi_[A-Za-z0-9_]+$/', $intentId) !== 1) {
+                throw new DomainException('Payment intent ID invalide');
+            }
+            $intent = $this->stripe->retrievePaymentIntent($intentId);
+            $metadata = StripeObjectReader::metadataArray($intent);
+            if ((int) ($metadata['customer_id'] ?? 0) !== (int) $s->customerId() || (isset($metadata['order_id']) && (int) $metadata['order_id'] !== $orderId)) {
+                throw new ForbiddenException('Ce paiement ne vous appartient pas ou concerne une autre commande');
+            }
+            $requested = PaymentTargetResolver::validType($data['payment_type'] ?? null) ?? PaymentTargetResolver::validType($metadata['payment_type'] ?? null);
+            $type = strtolower((string) $intent->currency) === PaymentAmountPolicy::CURRENCY
+                ? $this->targets->typeFor($order, $requested, StripeObjectReader::int($intent, 'amount'))
+                : null;
+            if ($type === null) {
+                throw new DomainException('Le montant du paiement ne correspond pas au montant dû pour cette commande', 409);
+            }
+            $this->targets->bind($orderId, $type, $intentId);
             return Response::json(['success' => true]);
         });
     }

@@ -1,22 +1,10 @@
 {
-    "status": 200,
+    "status": 403,
     "shape": {
         "object": {
-            "customer": {
-                "object": {
-                    "address": "string",
-                    "city": "string",
-                    "country": "string",
-                    "created_at": "string",
-                    "email": "string",
-                    "first_name": "string",
-                    "id": "number",
-                    "last_name": "string",
-                    "phone": "string",
-                    "postal_code": "string"
-                }
-            },
-            "message": "string",
+            "email": "string",
+            "error": "string",
+            "requiresVerification": "bool",
             "success": "bool"
         }
     }

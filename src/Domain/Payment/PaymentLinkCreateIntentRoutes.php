@@ -42,8 +42,11 @@ final class PaymentLinkCreateIntentRoutes
             throw new NotFoundException('Commande introuvable');
         }
         $order = $orderData['order'];
-        $amount = (float) $order['amount'];
-        $paymentType = $order['payment_type'] ?? 'full';
+        $paymentType = (string) ($order['payment_type'] ?? 'full');
+        $amount = (float) ($order['amount'] ?? 0) > 0 ? (float) $order['amount'] : PaymentAmountPolicy::dueAmount($order, $paymentType);
+        if ($amount <= 0) {
+            throw new DomainException('Montant du lien de paiement invalide');
+        }
         $this->stripe->ensureConfigured();
         $customer = $this->db->queryOne('SELECT c.*, o.customer_id FROM orders o JOIN customers c ON o.customer_id = c.id WHERE o.id = ?', [$order['order_id']]);
         if ($customer === null) {
@@ -61,7 +64,7 @@ final class PaymentLinkCreateIntentRoutes
             $this->db->execute('UPDATE customers SET stripe_customer_id = ? WHERE id = ?', [$stripeCustomerId, $customer['customer_id']]);
         }
         $intent = $this->stripe->createPaymentIntent([
-            'amount' => (int) ($amount * 100),
+            'amount' => PaymentAmountPolicy::cents($amount),
             'currency' => 'eur',
             'customer' => $stripeCustomerId,
             'automatic_payment_methods' => ['enabled' => true],

@@ -40,7 +40,7 @@ final class OrderStatusUpdateEmail
         return self::LABELS[$status] ?? $status;
     }
 
-    public static function html(string $name, string $orderNumber, string $status, string $frontendUrl): string
+    public static function html(string $name, string $orderNumber, string $status, string $orderUrl): string
     {
         $year = date('Y');
         $statusLabel = self::label($status);
@@ -48,9 +48,9 @@ final class OrderStatusUpdateEmail
         $message = self::MESSAGES[$status] ?? 'Le statut de votre commande a été mis à jour.';
         $actionButton = '';
         if ($status === 'confirmed') {
-            $actionButton = self::actionButton($frontendUrl, 'Voir ma commande');
+            $actionButton = self::actionButton($orderUrl, 'Voir ma commande');
         } elseif (in_array($status, ['paid', 'in_production', 'shipped', 'delivered'], true)) {
-            $actionButton = self::actionButton($frontendUrl, 'Suivre ma commande');
+            $actionButton = self::actionButton($orderUrl, 'Suivre ma commande');
         }
         return "
         <!DOCTYPE html>
@@ -96,11 +96,11 @@ final class OrderStatusUpdateEmail
         ";
     }
 
-    private static function actionButton(string $frontendUrl, string $label): string
+    private static function actionButton(string $orderUrl, string $label): string
     {
         return "
                 <div style='text-align: center; margin: 30px 0;'>
-                    <a href='{$frontendUrl}/account?section=orders' style='display: inline-block; padding: 14px 32px; background-color: #1A1917; color: #ffffff; text-decoration: none; font-weight: bold;'>
+                    <a href='{$orderUrl}' style='display: inline-block; padding: 14px 32px; background-color: #1A1917; color: #ffffff; text-decoration: none; font-weight: bold;'>
                         {$label}
                     </a>
                 </div>

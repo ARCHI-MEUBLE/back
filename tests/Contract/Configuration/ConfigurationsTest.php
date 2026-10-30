@@ -67,11 +67,15 @@ final class ConfigurationsTest extends ContractTestCase
 
     public function testApiClientConfigurations(): void
     {
-        $this->assertSnapshot('configurations.api.list', $this->client()->get('/api/configurations'));
-        $this->assertSnapshot('configurations.api.one', $this->client()->get('/api/configurations?id=1'));
-        $created = $this->client()->post('/api/configurations', ['user_session' => 'sess-1', 'prompt' => 'M1(1000,400,600)EFb', 'price' => 500, 'glb_url' => '/models/x.glb', 'metadata' => ['a' => 1]]);
+        $this->assertSnapshot('configurations.api.unauthorized', $this->client()->get('/api/configurations'));
+        self::assertSame(401, $this->client()->get('/api/configurations?id=1')->status);
+        self::assertSame(401, $this->client()->post('/api/configurations', ['user_session' => 'sess-1', 'prompt' => 'M1(1000,400,600)EFb', 'price' => 500])->status);
+        $admin = $this->admin();
+        $this->assertSnapshot('configurations.api.list', $admin->get('/api/configurations'));
+        $this->assertSnapshot('configurations.api.one', $admin->get('/api/configurations?id=1'));
+        $created = $admin->post('/api/configurations', ['user_session' => 'sess-1', 'prompt' => 'M1(1000,400,600)EFb', 'price' => 500, 'glb_url' => '/models/x.glb', 'metadata' => ['a' => 1]]);
         $this->assertSnapshot('configurations.api.create', $created);
-        $this->assertSnapshot('configurations.api.by-session', $this->client()->get('/api/configurations?session=sess-1'));
-        $this->assertSnapshot('configurations.api.create.invalid', $this->client()->post('/api/configurations', ['price' => 5]));
+        $this->assertSnapshot('configurations.api.by-session', $admin->get('/api/configurations?session=sess-1'));
+        $this->assertSnapshot('configurations.api.create.invalid', $admin->post('/api/configurations', ['price' => 5]));
     }
 }

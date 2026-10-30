@@ -13,7 +13,8 @@ use App\Http\RouteCollection;
 
 final class TextureUploadRoutes
 {
-    private const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    private const EXTENSIONS = ['image/png' => 'png', 'image/jpeg' => 'jpg', 'image/webp' => 'webp'];
+    private const MAX_SIZE = 10 * 1024 * 1024;
 
     public function __construct(private readonly string $texturesDir) {}
 
@@ -24,18 +25,28 @@ final class TextureUploadRoutes
             if (!is_array($file)) {
                 throw new DomainException('Aucun fichier reçu');
             }
-            if (!in_array((string) $file['type'], self::ALLOWED_TYPES, true)) {
-                throw new DomainException('Type de fichier non supporté');
+            if ((int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || (int) ($file['size'] ?? 0) > self::MAX_SIZE) {
+                throw new DomainException('Fichier invalide ou trop volumineux (max 10 Mo)');
             }
+            $extension = self::extension((string) $file['tmp_name']);
             if (!is_dir($this->texturesDir)) {
-                @mkdir($this->texturesDir, 0o777, true);
+                @mkdir($this->texturesDir, 0o755, true);
             }
-            $extension = strtolower(pathinfo((string) $file['name'], PATHINFO_EXTENSION));
             $fileName = 'texture_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $extension;
             if (!move_uploaded_file((string) $file['tmp_name'], $this->texturesDir . '/' . $fileName)) {
                 throw new DomainException("Échec de l'upload", 500);
             }
             return Response::json(['success' => true, 'url' => '/textures/' . $fileName]);
         });
+    }
+
+    private static function extension(string $tmpName): string
+    {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = $finfo === false ? false : finfo_file($finfo, $tmpName);
+        if (!is_string($mime) || !isset(self::EXTENSIONS[$mime]) || @getimagesize($tmpName) === false) {
+            throw new DomainException('Type de fichier non supporté');
+        }
+        return self::EXTENSIONS[$mime];
     }
 }

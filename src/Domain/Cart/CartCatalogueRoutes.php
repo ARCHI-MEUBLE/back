@@ -30,7 +30,7 @@ final class CartCatalogueRoutes
                 throw new DomainException('catalogue_item_id requis');
             }
             $variationId = isset($data['variation_id']) ? (int) $data['variation_id'] : null;
-            $quantity = isset($data['quantity']) ? (int) $data['quantity'] : 1;
+            $quantity = CartQuantity::forAdd($data['quantity'] ?? 1);
             $this->catalogue->add((int) $s->customerId(), (int) $data['catalogue_item_id'], $variationId, $quantity);
             return Response::json(['success' => true, 'message' => 'Article ajouté au panier']);
         });
@@ -40,7 +40,7 @@ final class CartCatalogueRoutes
             if (!isset($data['id']) || !isset($data['quantity'])) {
                 throw new DomainException('id et quantity requis');
             }
-            $this->catalogue->applyQuantity((int) $s->customerId(), (int) $data['id'], (int) $data['quantity']);
+            $this->catalogue->applyQuantity((int) $s->customerId(), (int) $data['id'], CartQuantity::forUpdate($data['quantity']));
             return Response::json(['success' => true, 'message' => 'Quantité mise à jour']);
         });
 

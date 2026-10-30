@@ -55,6 +55,15 @@ final class CustomerSchemas
         ]);
     }
 
+    public static function loginCodeRequest(): Schema
+    {
+        return Schema::object([
+            'email' => Field::string()->required('Email requis')->email('Email invalide'),
+            'first_name' => Field::string()->nullable(),
+            'last_name' => Field::string()->nullable(),
+        ]);
+    }
+
     public static function emailOnly(string $message): Schema
     {
         return Schema::object(['email' => Field::string()->required($message)->email('Email invalide')]);
@@ -88,7 +97,7 @@ final class CustomerSchemas
     {
         return Schema::object([
             $currentKey => Field::string()->required('Mot de passe actuel et nouveau mot de passe requis'),
-            $newKey => Field::string()->required('Mot de passe actuel et nouveau mot de passe requis')->minLength(6, 'Le nouveau mot de passe doit contenir au moins 6 caractères'),
+            $newKey => Field::string()->required('Mot de passe actuel et nouveau mot de passe requis')->minLength(8, 'Le nouveau mot de passe doit contenir au moins 8 caractères'),
         ]);
     }
 

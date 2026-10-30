@@ -110,7 +110,7 @@ final class OrderConfirmationEmail
                     </div>
 
                     <div style='text-align: center; margin-top: 32px;'>
-                        <a href='{$siteUrl}/account?section=orders' style='display: inline-block; padding: 14px 32px; background-color: #1A1917; color: #FFFFFF; text-decoration: none; font-weight: 600;'>
+                        <a href='{$siteUrl}/order-confirmation/{$order['id']}' style='display: inline-block; padding: 14px 32px; background-color: #1A1917; color: #FFFFFF; text-decoration: none; font-weight: 600;'>
                             Suivre ma commande
                         </a>
                     </div>

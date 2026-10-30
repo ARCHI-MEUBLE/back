@@ -64,7 +64,7 @@ final class OrderConfirmationEmailBuilder
             <p style="color: #706F6C; margin: 0;">' . nl2br(htmlspecialchars($order['shipping_address'])) . '</p>
         </div>
         <div style="text-align: center; margin-top: 40px;">
-            <a href="' . $frontendUrl . '/account?section=orders" style="display: inline-block; background: #1A1917; color: white; padding: 15px 30px; text-decoration: none; font-weight: bold;">
+            <a href="' . $frontendUrl . '/order-confirmation/' . (int) $order['id'] . '" style="display: inline-block; background: #1A1917; color: white; padding: 15px 30px; text-decoration: none; font-weight: bold;">
                 Suivre ma commande
             </a>
         </div>
