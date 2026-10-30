@@ -18,6 +18,11 @@ BACKUP_FILE="$BACKUP_DIR/database-backup-$BACKUP_DATE.sql"
 
 echo "[$(date)] Starting PostgreSQL database backup..."
 
+if [ -z "$DATABASE_URL" ]; then
+    echo "[ERROR] DATABASE_URL is not set"
+    exit 1
+fi
+
 # Vérifier la connexion à PostgreSQL
 if ! pg_isready -d "$DATABASE_URL" -q 2>/dev/null; then
     echo "[ERROR] Cannot connect to PostgreSQL"
@@ -25,7 +30,8 @@ if ! pg_isready -d "$DATABASE_URL" -q 2>/dev/null; then
 fi
 
 # Créer le backup avec pg_dump
-pg_dump "$DATABASE_URL" > "$BACKUP_FILE"
+umask 077
+pg_dump --clean --if-exists --no-owner "$DATABASE_URL" -f "$BACKUP_FILE"
 
 # Vérifier que le backup a réussi
 if [ -f "$BACKUP_FILE" ] && [ -s "$BACKUP_FILE" ]; then

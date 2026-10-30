@@ -1,0 +1,51 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "data": {
+                "list": {
+                    "object": {
+                        "category": "string",
+                        "created_at": "string",
+                        "description": {
+                            "union": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        "dimensions": {
+                            "union": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        "id": "number",
+                        "image_url": {
+                            "union": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        "is_available": "bool",
+                        "material": "string",
+                        "min_order_quantity": "number",
+                        "name": "string",
+                        "stock_quantity": "number",
+                        "tags": {
+                            "union": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        "unit": "string",
+                        "unit_price": "string",
+                        "updated_at": "string",
+                        "variation_label": "string",
+                        "weight": "null"
+                    }
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

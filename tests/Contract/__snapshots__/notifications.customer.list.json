@@ -1,0 +1,11 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "notifications": {
+                "list": "empty"
+            },
+            "unread_count": "number"
+        }
+    }
+}

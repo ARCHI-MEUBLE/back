@@ -1,0 +1,64 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "charts": {
+                "object": {
+                    "monthly": {
+                        "list": {
+                            "object": {
+                                "count": "number",
+                                "month": "string",
+                                "month_num": "string",
+                                "year": "string"
+                            }
+                        }
+                    },
+                    "status_distribution": {
+                        "list": {
+                            "object": {
+                                "count": "number",
+                                "label": "string",
+                                "status": "string"
+                            }
+                        }
+                    },
+                    "type_distribution": {
+                        "list": {
+                            "object": {
+                                "count": "number",
+                                "label": "string",
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "weekly": {
+                        "list": {
+                            "object": {
+                                "count": "number",
+                                "week": "string",
+                                "week_num": "string",
+                                "year": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "stats": {
+                "object": {
+                    "cancellation_rate": "number",
+                    "cancelled": "number",
+                    "completed": "number",
+                    "last_month_count": "number",
+                    "monthly_trend": "number",
+                    "phone_count": "number",
+                    "scheduled": "number",
+                    "this_month_count": "number",
+                    "total": "number",
+                    "visio_count": "number"
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

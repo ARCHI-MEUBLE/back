@@ -1,0 +1,24 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "customer": {
+                "object": {
+                    "address": "null",
+                    "city": "null",
+                    "country": "string",
+                    "created_at": "string",
+                    "email": "string",
+                    "first_name": "string",
+                    "id": "number",
+                    "last_name": "string",
+                    "phone": "null",
+                    "postal_code": "null",
+                    "stripe_customer_id": "null"
+                }
+            },
+            "message": "string",
+            "success": "bool"
+        }
+    }
+}

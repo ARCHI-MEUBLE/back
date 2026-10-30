@@ -1,0 +1,14 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "user": {
+                "object": {
+                    "email": "string",
+                    "id": "string",
+                    "name": "string"
+                }
+            }
+        }
+    }
+}

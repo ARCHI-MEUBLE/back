@@ -1,0 +1,11 @@
+{
+    "status": 201,
+    "shape": {
+        "object": {
+            "email": "string",
+            "message": "string",
+            "requiresVerification": "bool",
+            "success": "bool"
+        }
+    }
+}

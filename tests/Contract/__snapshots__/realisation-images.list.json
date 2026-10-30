@@ -1,0 +1,20 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "images": {
+                "list": {
+                    "object": {
+                        "created_at": "string",
+                        "id": "number",
+                        "image_url": "string",
+                        "legende": "null",
+                        "ordre": "number",
+                        "realisation_id": "number"
+                    }
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

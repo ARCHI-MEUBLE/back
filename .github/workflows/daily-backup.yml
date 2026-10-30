@@ -15,7 +15,8 @@ jobs:
       - name: Backup DEV database
         run: |
           response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
-            "${{ secrets.DEV_BACKEND_URL }}/backend/api/system/db-maintenance/create?key=${{ secrets.BACKUP_API_KEY }}")
+            -H "X-Api-Key: ${{ secrets.BACKUP_API_KEY }}" \
+            "${{ secrets.DEV_BACKEND_URL }}/backend/api/system/db-maintenance/create")
           if [ "$response" = "200" ]; then
             echo "DEV backup OK"
           else
@@ -26,7 +27,8 @@ jobs:
       - name: Backup STAGING database
         run: |
           response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
-            "${{ secrets.STAGING_BACKEND_URL }}/backend/api/system/db-maintenance/create?key=${{ secrets.BACKUP_API_KEY }}")
+            -H "X-Api-Key: ${{ secrets.BACKUP_API_KEY }}" \
+            "${{ secrets.STAGING_BACKEND_URL }}/backend/api/system/db-maintenance/create")
           if [ "$response" = "200" ]; then
             echo "STAGING backup OK"
           else

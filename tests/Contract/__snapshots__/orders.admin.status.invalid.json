@@ -1,0 +1,11 @@
+{
+    "status": 400,
+    "shape": {
+        "object": {
+            "error": "string",
+            "valid_statuses": {
+                "list": "string"
+            }
+        }
+    }
+}

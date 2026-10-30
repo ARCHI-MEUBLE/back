@@ -1,0 +1,44 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "share": {
+                "object": {
+                    "code": "string",
+                    "config_data": {
+                        "object": {
+                            "advancedZones": {
+                                "object": {
+                                    "content": "string",
+                                    "id": "string",
+                                    "type": "string"
+                                }
+                            },
+                            "dimensions": {
+                                "object": {
+                                    "depth": "number",
+                                    "height": "number",
+                                    "width": "number"
+                                }
+                            },
+                            "features": {
+                                "object": {
+                                    "doorType": "string"
+                                }
+                            },
+                            "styling": {
+                                "object": {
+                                    "colorLabel": "string",
+                                    "finish": "string"
+                                }
+                            }
+                        }
+                    },
+                    "configurator_id": "string",
+                    "prompt": "string"
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

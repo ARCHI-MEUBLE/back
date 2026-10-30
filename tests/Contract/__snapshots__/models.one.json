@@ -1,0 +1,18 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "category": "null",
+            "config_data": "null",
+            "created_at": "string",
+            "description": "string",
+            "hover_image_url": "null",
+            "id": "number",
+            "image_url": "string",
+            "name": "string",
+            "price": "string",
+            "prompt": "string",
+            "updated_at": "string"
+        }
+    }
+}

@@ -1,0 +1,27 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "categories": {
+                "list": {
+                    "object": {
+                        "created_at": "string",
+                        "description": "string",
+                        "display_order": "number",
+                        "id": "number",
+                        "image_url": {
+                            "union": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        "is_active": "bool",
+                        "name": "string",
+                        "slug": "string",
+                        "updated_at": "string"
+                    }
+                }
+            }
+        }
+    }
+}

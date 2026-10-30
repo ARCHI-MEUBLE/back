@@ -1,0 +1,24 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "data": {
+                "list": {
+                    "object": {
+                        "category": "string",
+                        "created_at": "string",
+                        "description": "string",
+                        "id": "number",
+                        "is_active": "bool",
+                        "item_type": "string",
+                        "param_name": "string",
+                        "param_value": "string",
+                        "unit": "string",
+                        "updated_at": "string"
+                    }
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

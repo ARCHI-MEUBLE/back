@@ -1,0 +1,71 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "data": {
+                "object": {
+                    "customer": {
+                        "object": {
+                            "email": "string",
+                            "first_name": "string",
+                            "last_name": "string",
+                            "phone": "string"
+                        }
+                    },
+                    "items": {
+                        "object": {
+                            "configurations": {
+                                "list": {
+                                    "object": {
+                                        "config_data": {
+                                            "object": {
+                                                "dimensions": {
+                                                    "object": {
+                                                        "width": "number"
+                                                    }
+                                                },
+                                                "name": "string"
+                                            }
+                                        },
+                                        "id": "number",
+                                        "name": "string",
+                                        "prompt": "string",
+                                        "quantity": "number",
+                                        "thumbnail_url": "null",
+                                        "total_price": "number",
+                                        "unit_price": "number"
+                                    }
+                                }
+                            },
+                            "samples": {
+                                "list": "empty"
+                            }
+                        }
+                    },
+                    "order": {
+                        "object": {
+                            "amount": "number",
+                            "billing_address": "string",
+                            "created_at": "string",
+                            "deposit_percentage": "number",
+                            "order_number": "string",
+                            "payment_status": "string",
+                            "payment_type": "string",
+                            "shipping_address": "string",
+                            "status": "string",
+                            "total_amount": "number"
+                        }
+                    },
+                    "payment_link": {
+                        "object": {
+                            "expires_at": "string",
+                            "status": "string",
+                            "token": "string"
+                        }
+                    }
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

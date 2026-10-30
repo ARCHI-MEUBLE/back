@@ -1,0 +1,27 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "links": {
+                "list": {
+                    "object": {
+                        "accessed_at": "null",
+                        "amount": "string",
+                        "created_at": "string",
+                        "created_by_admin": "string",
+                        "expires_at": "string",
+                        "id": "number",
+                        "order_id": "number",
+                        "order_number": "string",
+                        "paid_at": "null",
+                        "payment_type": "string",
+                        "status": "string",
+                        "token": "string",
+                        "url": "string"
+                    }
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

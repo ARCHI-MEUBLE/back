@@ -1,0 +1,13 @@
+{
+    "status": 201,
+    "shape": {
+        "object": {
+            "authorName": "string",
+            "date": "string",
+            "id": "string",
+            "rating": "number",
+            "success": "bool",
+            "text": "string"
+        }
+    }
+}

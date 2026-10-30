@@ -1,0 +1,26 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "data": {
+                "list": {
+                    "object": {
+                        "created_at": "string",
+                        "description": "string",
+                        "icon_svg": {
+                            "union": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        "id": "number",
+                        "is_active": "bool",
+                        "name": "string",
+                        "price": "string"
+                    }
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

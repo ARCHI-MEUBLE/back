@@ -1,0 +1,38 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "configurations": {
+                "list": {
+                    "object": {
+                        "config_string": "string",
+                        "created_at": "string",
+                        "customer_email": "string",
+                        "customer_first_name": "string",
+                        "customer_last_name": "string",
+                        "customer_name": "string",
+                        "customer_phone": "string",
+                        "dxf_url": {
+                            "union": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        "glb_url": "string",
+                        "id": "number",
+                        "model_id": "number",
+                        "model_name": "string",
+                        "name": "string",
+                        "price": "string",
+                        "prompt": "string",
+                        "status": "string",
+                        "user_id": "string"
+                    }
+                }
+            },
+            "limit": "number",
+            "offset": "number",
+            "total": "number"
+        }
+    }
+}

@@ -1,0 +1,10 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "action": "string",
+            "email": "string",
+            "success": "bool"
+        }
+    }
+}

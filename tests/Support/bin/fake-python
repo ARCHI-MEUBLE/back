@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+if [ "${FAKE_PYTHON_FAIL:-0}" = "1" ]; then
+  echo "fake python failure" >&2
+  exit 1
+fi
+output="$3"
+printf 'glTF\x02\x00\x00\x00\x0c\x00\x00\x00' > "$output"
+printf '0\nSECTION\n2\nENTITIES\n0\nENDSEC\n0\nEOF\n' > "${output%.glb}.dxf"
+echo "fake python generated $output"

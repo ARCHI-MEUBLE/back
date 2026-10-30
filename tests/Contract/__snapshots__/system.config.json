@@ -1,0 +1,18 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "calendly": {
+                "object": {
+                    "phoneUrl": "string",
+                    "visioUrl": "string"
+                }
+            },
+            "crisp": {
+                "object": {
+                    "websiteId": "string"
+                }
+            }
+        }
+    }
+}

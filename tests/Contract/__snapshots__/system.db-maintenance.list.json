@@ -1,0 +1,12 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "backups": {
+                "list": "empty"
+            },
+            "count": "number",
+            "success": "bool"
+        }
+    }
+}

@@ -1,0 +1,11 @@
+{
+    "status": 403,
+    "shape": {
+        "object": {
+            "email": "string",
+            "error": "string",
+            "requiresVerification": "bool",
+            "success": "bool"
+        }
+    }
+}

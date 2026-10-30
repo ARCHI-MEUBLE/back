@@ -6,20 +6,12 @@
 .env.production.local
 .env.*.local
 
-# Base de données (SQLite) - uniquement dans le dossier database
-database/*.db
-database/*.db-journal
-database/*.db-shm
-database/*.db-wal
-
 # Fichiers uploadés et générés (à la racine uniquement)
 /uploads/
 /models/
-/pieces/
-/textures/
 /output/
-
-# IMPORTANT: Ne pas ignorer backend/models/ qui contient le code PHP!
+/invoices/*
+!/invoices/.gitkeep
 
 # Environnement virtuel Python
 .archimeuble/
@@ -68,6 +60,16 @@ pnpm-lock.yaml
 *.key
 *.cert
 
-# Dépendances PHP - COMMITÉ DANS GIT pour simplifier le déploiement
-# /vendor/  ← Commenté pour inclure vendor/ dans Git
+/vendor/
 .backup-config.json
+
+# Outils PHP
+.phpunit.cache/
+.phpstan.cache/
+.php-cs-fixer.cache
+
+# Fichiers générés en local
+/storage/*
+!/storage/*/
+/storage/*/*
+!/storage/**/.gitkeep

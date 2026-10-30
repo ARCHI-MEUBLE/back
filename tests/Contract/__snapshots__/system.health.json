@@ -1,0 +1,12 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "service": "string",
+            "status": "string",
+            "success": "bool",
+            "timestamp": "string",
+            "version": "string"
+        }
+    }
+}

@@ -1,0 +1,79 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App;
+
+use App\Config\Settings;
+use App\Db\Connection;
+use App\Domain\Admin\AdminAccountsRoutes;
+use App\Domain\Admin\AdminAccountsService;
+use App\Domain\Admin\AdminAuthRoutes;
+use App\Domain\Admin\AdminAuthService;
+use App\Domain\Admin\AdminRepository;
+use App\Domain\Auth\LegacyAuthRoutes;
+use App\Domain\Auth\LegacyAuthService;
+use App\Domain\Auth\LegacyUserRepository;
+use App\Domain\Auth\LegacyUsersAdminRoutes;
+use App\Domain\Auth\LegacyUsersAdminService;
+use App\Domain\Category\CategoryRepository;
+use App\Domain\Category\CategoryRoutes;
+use App\Domain\Category\CategoryService;
+use App\Domain\Customer\CustomerAuthRoutes;
+use App\Domain\Customer\CustomerAuthService;
+use App\Domain\Customer\CustomerLoginCodeService;
+use App\Domain\Customer\CustomerPasswordResetService;
+use App\Domain\Customer\CustomerProfileRoutes;
+use App\Domain\Customer\CustomerProfileService;
+use App\Domain\Customer\CustomerRepository;
+use App\Domain\Customer\CustomerVerificationRepository;
+use App\Domain\Model\ModelRepository;
+use App\Domain\Model\ModelRoutes;
+use App\Domain\Model\ModelService;
+use App\Domain\System\AdminCreationRoutes;
+use App\Domain\System\BackupAccessGuard;
+use App\Domain\System\BackupService;
+use App\Domain\System\DbMaintenanceRoutes;
+use App\Domain\System\SystemRoutes;
+use App\Http\RouteCollection;
+use App\Infrastructure\Mail\EmailGatewayFactory;
+use App\Infrastructure\RateLimit\RateLimiter;
+use App\Infrastructure\RateLimit\Throttle;
+use App\Lib\SystemClock;
+
+final class RouteRegistry
+{
+    public static function register(RouteCollection $routes, Settings $settings, Connection $db): AdminRepository
+    {
+        $admins = new AdminRepository($db);
+        $legacyUsers = new LegacyUserRepository($db);
+        $rateLimiter = new RateLimiter($db);
+        $throttle = new Throttle($rateLimiter);
+        (new SystemRoutes(new SystemClock()))->register($routes);
+        $backupsDataDir = dirname($settings->paths->backupsDir);
+        (new AdminCreationRoutes(
+            $admins,
+            new BackupAccessGuard($settings->backupApiKey, $backupsDataDir . '/backup-access.log', $backupsDataDir . '/admin-creation-rate-limit.json', 5),
+        ))->register($routes);
+        (new DbMaintenanceRoutes(
+            new BackupService($settings->paths->backupsDir, $settings->databaseUrl),
+            new BackupAccessGuard($settings->backupApiKey, $backupsDataDir . '/backup-access.log', $backupsDataDir . '/backup-rate-limit.json'),
+        ))->register($routes);
+        (new AdminAuthRoutes(new AdminAuthService($admins, $rateLimiter)))->register($routes);
+        (new AdminAccountsRoutes(new AdminAccountsService($db, $admins)))->register($routes);
+        (new LegacyAuthRoutes(new LegacyAuthService($legacyUsers, $throttle)))->register($routes);
+        (new LegacyUsersAdminRoutes(new LegacyUsersAdminService($legacyUsers, $admins)))->register($routes);
+        $customers = new CustomerRepository($db);
+        $verifications = new CustomerVerificationRepository($db);
+        $mail = EmailGatewayFactory::create($settings, $db);
+        (new CustomerAuthRoutes(
+            new CustomerAuthService($customers, $verifications, $mail, $throttle),
+            new CustomerPasswordResetService($customers, $verifications, $mail, $settings->frontendUrl, $throttle),
+            new CustomerLoginCodeService($customers, $verifications, $mail, $throttle),
+        ))->register($routes);
+        (new CustomerProfileRoutes(new CustomerProfileService($customers)))->register($routes);
+        (new CategoryRoutes(new CategoryService(new CategoryRepository($db))))->register($routes);
+        (new ModelRoutes(new ModelService(new ModelRepository($db))))->register($routes);
+        return $admins;
+    }
+}

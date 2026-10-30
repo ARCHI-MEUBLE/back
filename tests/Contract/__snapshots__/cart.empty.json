@@ -1,0 +1,13 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "count": "number",
+            "item_count": "number",
+            "items": {
+                "list": "empty"
+            },
+            "total": "number"
+        }
+    }
+}

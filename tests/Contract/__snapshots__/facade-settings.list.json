@@ -1,0 +1,19 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "data": {
+                "list": {
+                    "object": {
+                        "description": "string",
+                        "id": "number",
+                        "setting_key": "string",
+                        "setting_value": "string",
+                        "updated_at": "string"
+                    }
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

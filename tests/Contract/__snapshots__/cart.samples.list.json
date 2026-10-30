@@ -1,0 +1,27 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "count": "number",
+            "items": {
+                "list": {
+                    "object": {
+                        "color_name": "string",
+                        "created_at": "string",
+                        "hex": "string",
+                        "id": "number",
+                        "image_url": "null",
+                        "material": "string",
+                        "price_per_m2": "string",
+                        "quantity": "number",
+                        "sample_color_id": "number",
+                        "type_description": "string",
+                        "type_name": "string",
+                        "unit_price": "string"
+                    }
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

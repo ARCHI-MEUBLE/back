@@ -1,0 +1,18 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "data": {
+                "list": {
+                    "object": {
+                        "color_name": "string",
+                        "id": "number",
+                        "image_url": "string",
+                        "is_default": "bool"
+                    }
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

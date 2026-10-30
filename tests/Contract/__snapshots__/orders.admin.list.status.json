@@ -1,0 +1,64 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "orders": {
+                "list": {
+                    "object": {
+                        "admin_notes": "string",
+                        "amount": "string",
+                        "balance_payment_status": "string",
+                        "billing_address": "string",
+                        "created_at": "string",
+                        "customer": {
+                            "object": {
+                                "address": "string",
+                                "city": "string",
+                                "country": "string",
+                                "created_at": "string",
+                                "email": "string",
+                                "email_verified": "bool",
+                                "first_name": "string",
+                                "id": "number",
+                                "last_name": "string",
+                                "password_hash": "string",
+                                "phone": "string",
+                                "postal_code": "string",
+                                "stripe_customer_id": "null",
+                                "updated_at": "string"
+                            }
+                        },
+                        "customer_email": "string",
+                        "customer_name": "string",
+                        "customer_phone": "string",
+                        "deposit_amount": "number",
+                        "deposit_payment_status": "string",
+                        "deposit_percentage": "string",
+                        "id": "number",
+                        "notes": "string",
+                        "order_number": "string",
+                        "payment_method": "string",
+                        "payment_status": "string",
+                        "payment_strategy": "string",
+                        "remaining_amount": "number",
+                        "shipping_address": "string",
+                        "status": "string",
+                        "total": "string",
+                        "updated_at": "string"
+                    }
+                }
+            },
+            "stats": {
+                "object": {
+                    "cancelled": "number",
+                    "confirmed": "number",
+                    "delivered": "number",
+                    "in_production": "number",
+                    "pending": "number",
+                    "shipped": "number"
+                }
+            },
+            "total": "number"
+        }
+    }
+}

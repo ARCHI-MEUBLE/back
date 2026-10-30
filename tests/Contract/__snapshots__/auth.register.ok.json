@@ -1,0 +1,15 @@
+{
+    "status": 201,
+    "shape": {
+        "object": {
+            "success": "bool",
+            "user": {
+                "object": {
+                    "email": "string",
+                    "id": "string",
+                    "name": "string"
+                }
+            }
+        }
+    }
+}

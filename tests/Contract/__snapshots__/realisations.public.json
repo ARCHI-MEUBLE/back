@@ -1,0 +1,40 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "realisations": {
+                "list": {
+                    "object": {
+                        "categorie": "string",
+                        "created_at": "string",
+                        "date_projet": "string",
+                        "description": "string",
+                        "dimensions": "string",
+                        "id": "number",
+                        "image_url": "string",
+                        "images": {
+                            "list": {
+                                "object": {
+                                    "created_at": {
+                                        "union": [
+                                            "absent",
+                                            "string"
+                                        ]
+                                    },
+                                    "id": "number",
+                                    "image_url": "string",
+                                    "legende": "null",
+                                    "ordre": "number",
+                                    "realisation_id": "number"
+                                }
+                            }
+                        },
+                        "lieu": "string",
+                        "titre": "string"
+                    }
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

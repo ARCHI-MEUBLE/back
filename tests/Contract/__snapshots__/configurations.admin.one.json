@@ -1,0 +1,28 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "configuration": {
+                "object": {
+                    "config_string": "string",
+                    "created_at": "string",
+                    "customer_email": "string",
+                    "customer_first_name": "string",
+                    "customer_last_name": "string",
+                    "customer_name": "string",
+                    "customer_phone": "string",
+                    "dxf_url": "string",
+                    "glb_url": "string",
+                    "id": "number",
+                    "model_name": "string",
+                    "price": "string",
+                    "prompt": "string",
+                    "status": "string",
+                    "template_id": "number",
+                    "user_id": "string",
+                    "user_session": "null"
+                }
+            }
+        }
+    }
+}
