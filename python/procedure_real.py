@@ -71,6 +71,61 @@ def etendre_face_avant(zone, decalage_mm):
             f.contour = np.array([idx_map.get(i, i) for i in f.contour])
     return zone2
 
+def construire_bord_arrondi(v_outer, v_centre, a_avant, a_fond, h_bas, h_haut, largeur, profondeur_arrondi, normalv, normalh, normala, n_arc=16):
+    """Construit le solide d'un bord avant arrondi plein (voir char=="Z") : un bloc qui court sur
+    toute la hauteur, plein (largeur) à l'avant du meuble, dont le bord extérieur se rapproche
+    ensuite en courbe de la planche latérale qu'il recouvre pour arriver flush avec elle à l'arrière
+    (profondeur_arrondi = la portion de la profondeur, côté arrière, sur laquelle se fait cette
+    courbe ; le reste, côté avant, est un bloc droit plein). Construit en dehors du noyau Zone/Face/
+    clip() (qui ne sait faire que des faces planes) : même principe que le rail de penderie
+    (char=="D"), un maillage trimesh brut ajouté directement à Listplanches, jamais redécoupé ensuite.
+
+    v_outer : position (sur normalv) du bord extérieur du meuble à ce niveau (le côté qu'on arrondit).
+    v_centre : un point quelconque du côté "intérieur" du meuble (sert seulement à déterminer de quel
+    côté se trouve l'intérieur, pour le sens du rayon) -- le milieu du meuble convient.
+    a_avant/a_fond, h_bas/h_haut : étendue réelle de la zone sur la profondeur et la hauteur (mesurées
+    depuis les faces "a"/"f"/"h"/"b" existantes, pas supposées -- voir etendre_face_avant plus haut
+    pour pourquoi ça compte).
+    """
+    sign_v = 1.0 if v_centre > v_outer else -1.0
+    sign_a = 1.0 if a_avant > a_fond else -1.0
+    v_inner = v_outer + sign_v * largeur
+    a_courbe_start = a_fond + sign_a * profondeur_arrondi
+    centre_v, centre_a = v_inner, a_courbe_start
+
+    # Bord intérieur (flush, toute la profondeur) -> bord avant (plein) -> bord extérieur droit
+    # (plein, côté avant) -> courbe (quart d'ellipse, largeur x profondeur_arrondi) qui ramène au
+    # bord intérieur, flush, à l'arrière (referme le contour, pas besoin du dernier point de l'arc).
+    profil = [(v_inner, a_fond), (v_inner, a_avant), (v_outer, a_avant), (v_outer, a_courbe_start)]
+    for k in range(1, n_arc):
+        theta = np.pi + (np.pi / 2) * (k / n_arc)
+        u = largeur * np.cos(theta)
+        w = profondeur_arrondi * np.sin(theta)
+        profil.append((centre_v + sign_v * u, centre_a + sign_a * w))
+
+    def P(v, a, h):
+        return v * normalv + h * normalh + a * normala
+
+    bas = [P(v, a, h_bas) for v, a in profil]
+    haut = [P(v, a, h_haut) for v, a in profil]
+    n = len(profil)
+    points = np.array(bas + haut)
+
+    faces = []
+    for i in range(1, n - 1):
+        faces.append([0, i + 1, i])
+    for i in range(1, n - 1):
+        faces.append([n, n + i, n + i + 1])
+    for i in range(n):
+        j = (i + 1) % n
+        faces.append([i, j, n + j])
+        faces.append([i, n + j, n + i])
+
+    mesh = trimesh.Trimesh(vertices=points, faces=np.array(faces), process=False)
+    if mesh.volume < 0:
+        mesh.invert()
+    return mesh
+
 # %%
 #chargement des textures
 # L'objet texture permet d'avoir toutes les informations concernant les matériaux utilisés : nom, reference founisseur, epaisseur, largeur, longueur, et prix
@@ -163,6 +218,61 @@ def process(sequence,zone,textures=textures) : # cette fonction sert à parser u
                 Listplanches = Listplanches + process(reste, zone_gauche, textures)
                 Listplanches = Listplanches + process(reste, zone_droite, textures)
                 return Listplanches
+        elif char=="Z": # Z ajoute un bord avant arrondi plein sur toute la hauteur, compté dans la
+            # largeur totale du meuble (voir construire_bord_arrondi plus haut). "Zg"/"Zd" = gauche
+            # ou droite seulement ; "Z" seul (rétrocompatible) = les deux côtés. Paramètres optionnels
+            # entre parenthèses "(largeur_mm,profondeur_arrondi_mm)" : largeur = de combien il dépasse
+            # la planche latérale ; profondeur_arrondi = sur quelle profondeur, côté arrière, se fait
+            # la courbe (le reste, côté avant, est un bloc droit plein). Sans paramètres : 60/60mm.
+            # Doit venir AVANT "E" dans le prompt : "E" pose les planches latérales derrière le(s)
+            # bord(s) arrondi(s), dans la largeur restante une fois la largeur retirée du (des)
+            # côté(s) concerné(s).
+            print("Z")
+            RAYON_ARRONDI_MM=60.0 # Valeur de départ si aucun paramètre n'est donné
+            i=i+1
+            char_next=sequence[i] if i<len(sequence) else ""
+            if char_next=="g":
+                cotes=["g"]
+                i=i+1
+            elif char_next=="d":
+                cotes=["d"]
+                i=i+1
+            else:
+                cotes=["g","d"]
+
+            char_next=sequence[i] if i<len(sequence) else ""
+            largeur_mm=RAYON_ARRONDI_MM
+            profondeur_arrondi_mm=RAYON_ARRONDI_MM
+            if char_next=="(":
+                seq1,seq2=subsequence(sequence[i:])
+                i=i+len(seq1)+len(seq2)+1
+                largeur_mm=float(seq1)
+                profondeur_arrondi_mm=float(seq2)
+            else:
+                i=i-1
+
+            face_g=[f for f in zone.listface if f.label=="g"][0]
+            face_d=[f for f in zone.listface if f.label=="d"][0]
+            face_a=[f for f in zone.listface if f.label=="a"][0]
+            face_f=[f for f in zone.listface if f.label=="f"][0]
+            face_h=[f for f in zone.listface if f.label=="h"][0]
+            face_b=[f for f in zone.listface if f.label=="b"][0]
+            v_g=float(np.mean(zone.points[face_g.contour]@zone.normalv))
+            v_d=float(np.mean(zone.points[face_d.contour]@zone.normalv))
+            a_avant=float(np.mean(zone.points[face_a.contour]@zone.normala))
+            a_fond=float(np.mean(zone.points[face_f.contour]@zone.normala))
+            h_haut=float(np.mean(zone.points[face_h.contour]@zone.normalh))
+            h_bas=float(np.mean(zone.points[face_b.contour]@zone.normalh))
+            v_centre=(v_g+v_d)/2
+
+            for cote in cotes:
+                v_outer=v_g if cote=="g" else v_d
+                cap=construire_bord_arrondi(v_outer,v_centre,a_avant,a_fond,h_bas,h_haut,largeur_mm,profondeur_arrondi_mm,zone.normalv,zone.normalh,zone.normala)
+                piece=Zone(None,None,None,None,None,type="bord_arrondi",bloc="bord_arrondi",mesh=cap)
+                Listplanches.append(piece)
+                # Les planches qui suivent (E, portes, ...) doivent se poser à l'intérieur du bord
+                # arrondi, pas border l'extérieur du meuble : simple retrait, pas de planche posée.
+                _,zone=zone.envelopper(label=cote,epaisseur=largeur_mm)
         elif char=="E" : # E comme enveloppe : créer une enveloppe externe au meuble
             print("E")
             planches,zone=zone.envelopper(label="d",epaisseur=textures["exterieur"].epaisseur,texture=textures["exterieur"])
