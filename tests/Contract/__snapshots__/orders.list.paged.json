@@ -21,6 +21,7 @@
                         "payment_strategy": "string",
                         "remaining_amount": "number",
                         "shipping_address": "string",
+                        "shipping_amount": "number",
                         "status": "string",
                         "total": "string",
                         "updated_at": "string"

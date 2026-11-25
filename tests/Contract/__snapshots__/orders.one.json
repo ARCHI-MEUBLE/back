@@ -38,18 +38,33 @@
                                     "object": {
                                         "depth": "number",
                                         "drillings": {
-                                            "list": "empty"
+                                            "list": {
+                                                "object": {
+                                                    "diameter": "number",
+                                                    "id": "string",
+                                                    "price": "number",
+                                                    "type": "string",
+                                                    "typeName": "string",
+                                                    "x": "number",
+                                                    "y": "number"
+                                                }
+                                            }
                                         },
                                         "height": "number",
                                         "hinges": {
                                             "object": {
                                                 "count": "number",
+                                                "direction": "string",
                                                 "type": "string"
                                             }
                                         },
                                         "material": {
                                             "object": {
-                                                "id": "number"
+                                                "color_hex": "string",
+                                                "id": "number",
+                                                "name": "string",
+                                                "price_per_m2": "number",
+                                                "texture_url": "string"
                                             }
                                         },
                                         "width": "number"
@@ -73,6 +88,8 @@
                                     "object": {
                                         "dimensions": {
                                             "object": {
+                                                "depth": "number",
+                                                "height": "number",
                                                 "width": "number"
                                             }
                                         },
@@ -119,6 +136,7 @@
                         }
                     },
                     "shipping_address": "string",
+                    "shipping_amount": "number",
                     "status": "string",
                     "total": "string",
                     "updated_at": "string"

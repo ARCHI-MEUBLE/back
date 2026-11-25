@@ -10,11 +10,11 @@ use App\Domain\Cart\CartRepository;
 use App\Domain\Customer\CustomerRepository;
 use App\Domain\Notification\AdminNotificationRepository;
 use App\Domain\Notification\NotificationRepository;
+use App\Domain\Order\OrderLines;
 use App\Domain\Order\OrderRepository;
 use App\Domain\Payment\AdminGeneratePaymentLinkRoutes;
 use App\Domain\Payment\AdminPaymentLinksRoutes;
 use App\Domain\Payment\ExportPaymentsRoutes;
-use App\Domain\Payment\InstallmentRepository;
 use App\Domain\Payment\OrderInvoiceRoutes;
 use App\Domain\Payment\OrderPaymentConfirmedRoutes;
 use App\Domain\Payment\OrderPaymentIntentRoutes;
@@ -50,16 +50,12 @@ final class PaymentRouteRegistry
         $stripe = new StripeGateway($settings->stripe);
         $customers = new CustomerRepository($db);
         $orders = new OrderRepository($db);
+        $lines = new OrderLines($orders);
         $mail = EmailGatewayFactory::create($settings, $db);
         $links = new PaymentLinkRepository($db);
         $amounts = new PaymentAmountPolicy($links);
         $targets = new PaymentTargetResolver($db);
         $adminNotifications = new AdminNotificationRepository($db);
-        (new PaymentStrategyRoutes(new PaymentStrategyRepository($db)))->register($routes);
-        (new PaymentAnalyticsRoutes(new PaymentAnalyticsRepository($db)))->register($routes);
-        (new RecentTransactionsRoutes($db))->register($routes);
-        (new ExportPaymentsRoutes($db))->register($routes);
-        (new SyncPaymentStatusRoutes($db, $stripe))->register($routes);
         $confirmation = new PaymentConfirmationService(
             $db,
             $orders,
@@ -70,7 +66,13 @@ final class PaymentRouteRegistry
             new LegacyInvoiceGateway($settings->rootDir),
             $links,
             $amounts,
+            $lines,
         );
+        (new PaymentStrategyRoutes(new PaymentStrategyRepository($db)))->register($routes);
+        (new PaymentAnalyticsRoutes(new PaymentAnalyticsRepository($db)))->register($routes);
+        (new RecentTransactionsRoutes($db))->register($routes);
+        (new ExportPaymentsRoutes($db))->register($routes);
+        (new SyncPaymentStatusRoutes($db, $stripe, $confirmation))->register($routes);
         (new OrderPaymentIntentRoutes($db, $stripe, $targets))->register($routes);
         (new OrderPaymentConfirmedRoutes($db, $stripe, $confirmation))->register($routes);
         (new StripeCreatePaymentIntentRoutes($stripe, $customers, $db, $targets))->register($routes);
@@ -78,11 +80,10 @@ final class PaymentRouteRegistry
         (new PaymentLinkCreateIntentRoutes($links, $stripe, $db))->register($routes);
         (new PaymentLinkDownloadInvoiceRoutes($orders, $customers, new LegacyInvoiceGateway($settings->rootDir), $stripe))->register($routes);
         (new OrderInvoiceRoutes($orders, $customers, new LegacyInvoiceGateway($settings->rootDir)))->register($routes);
-        (new AdminGeneratePaymentLinkRoutes($links, $db, new NotificationRepository($db), $mail, $settings->frontendUrl))->register($routes);
+        (new AdminGeneratePaymentLinkRoutes($links, $db, new NotificationRepository($db), $mail, $lines, $settings->frontendUrl))->register($routes);
         (new AdminPaymentLinksRoutes($links, $settings->frontendUrl))->register($routes);
         (new PaymentLinkVerifyRoutes($db, $stripe, $confirmation))->register($routes);
-        $succeeded = new PaymentSucceededHandler($confirmation, new InstallmentRepository($db));
         $failed = new PaymentFailedHandler($db, $orders, $customers, $adminNotifications, $mail);
-        (new StripeWebhookRoutes($stripe, $logger, $succeeded, $failed, new PaymentRefundHandler($db, $adminNotifications)))->register($routes);
+        (new StripeWebhookRoutes($stripe, $logger, new PaymentSucceededHandler($confirmation), $failed, new PaymentRefundHandler($db, $adminNotifications)))->register($routes);
     }
 }

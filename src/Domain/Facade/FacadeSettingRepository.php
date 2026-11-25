@@ -22,6 +22,10 @@ final class FacadeSettingRepository
 
     public function updateValue(string $key, string $value): void
     {
-        $this->db->execute('UPDATE facade_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE setting_key = ?', [$value, $key]);
+        $this->db->execute(
+            'INSERT INTO facade_settings (setting_key, setting_value) VALUES (?, ?)
+             ON CONFLICT (setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = CURRENT_TIMESTAMP',
+            [$key, $value],
+        );
     }
 }

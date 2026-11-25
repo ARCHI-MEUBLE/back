@@ -14,6 +14,9 @@
                     },
                     "items": {
                         "object": {
+                            "catalogue": {
+                                "list": "empty"
+                            },
                             "configurations": {
                                 "list": {
                                     "object": {
@@ -21,6 +24,8 @@
                                             "object": {
                                                 "dimensions": {
                                                     "object": {
+                                                        "depth": "number",
+                                                        "height": "number",
                                                         "width": "number"
                                                     }
                                                 },
@@ -37,6 +42,9 @@
                                     }
                                 }
                             },
+                            "facades": {
+                                "list": "empty"
+                            },
                             "samples": {
                                 "list": "empty"
                             }
@@ -52,6 +60,7 @@
                             "payment_status": "string",
                             "payment_type": "string",
                             "shipping_address": "string",
+                            "shipping_amount": "number",
                             "status": "string",
                             "total_amount": "number"
                         }

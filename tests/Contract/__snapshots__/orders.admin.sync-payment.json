@@ -1,8 +1,21 @@
 {
-    "status": 500,
+    "status": 200,
     "shape": {
         "object": {
-            "error": "string",
+            "logs": {
+                "list": "string"
+            },
+            "message": "string",
+            "order": {
+                "object": {
+                    "balance_payment_status": "string",
+                    "deposit_payment_status": "string",
+                    "id": "number",
+                    "order_number": "string",
+                    "payment_status": "string",
+                    "status": "string"
+                }
+            },
             "success": "bool"
         }
     }

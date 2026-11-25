@@ -60,6 +60,7 @@ final class CustomerLoginCodeService
         }
         $this->verifications->markCodeUsed((int) $verification['id']);
         $this->customers->markEmailVerifiedById((int) $customer['id']);
+        $this->customers->recordActivity((int) $customer['id']);
         $this->throttle->reset($email, 'email_verify');
         $full = (array) $this->customers->findFullById((int) $customer['id']);
         CustomerAuthService::openSession($full, $session);

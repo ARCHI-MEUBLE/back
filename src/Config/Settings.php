@@ -21,6 +21,7 @@ final class Settings
         public readonly ?string $cronSecret,
         public readonly MailSettings $mail,
         public readonly ?string $calendlyWebhookSigningKey = null,
+        public readonly ?string $frontProxySecret = null,
     ) {}
 
     public static function fromEnv(Env $env, string $rootDir): self
@@ -42,6 +43,7 @@ final class Settings
             $env->string('CRON_SECRET'),
             MailSettings::fromEnv($env),
             $env->string('CALENDLY_WEBHOOK_SIGNING_KEY'),
+            $env->string('FRONT_PROXY_SECRET'),
         );
     }
 

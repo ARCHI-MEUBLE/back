@@ -10,21 +10,6 @@ final class InstallmentRepository
 {
     public function __construct(private readonly Connection $db) {}
 
-    public function create(int $orderId, int $customerId, float $totalAmount): void
-    {
-        $amount = $totalAmount / 3;
-        $today = strtotime('today');
-        for ($number = 1; $number <= 3; $number++) {
-            $dueDate = date('Y-m-d', strtotime("+{$number} month", $today === false ? time() : $today));
-            $status = $number === 1 ? 'paid' : 'pending';
-            $this->db->execute(
-                'INSERT INTO payment_installments (order_id, customer_id, installment_number, amount, due_date, status, created_at, updated_at)
-                 VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
-                [$orderId, $customerId, $number, $amount, $dueDate, $status],
-            );
-        }
-    }
-
     public function pending(): array
     {
         return $this->db->query(

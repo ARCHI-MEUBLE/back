@@ -24,7 +24,9 @@ final class OrderConfirmationEmail
         $paidFormatted = number_format($amountPaid, 2, ',', ' ') . ' €';
         $createdTimestamp = strtotime((string) $order['created_at']);
         $orderDate = date('d/m/Y à H:i', $createdTimestamp === false ? time() : $createdTimestamp);
-        $itemsHtml = OrderConfirmationEmailParts::itemsRows($itemRows) . OrderConfirmationEmailParts::sampleRows($sampleRows);
+        $itemsHtml = OrderConfirmationEmailParts::itemsRows($itemRows)
+            . OrderConfirmationEmailParts::sampleRows($sampleRows)
+            . OrderConfirmationEmailParts::shippingRow((float) ($order['shipping_amount'] ?? 0));
         $statusText = match ($paymentType) {
             'deposit' => 'Nous avons bien reçu le paiement de votre acompte. Votre commande est maintenant confirmée et entrera prochainement en production.',
             'balance' => 'Nous avons bien reçu le paiement du solde de votre commande. Votre commande est maintenant intégralement payée.',

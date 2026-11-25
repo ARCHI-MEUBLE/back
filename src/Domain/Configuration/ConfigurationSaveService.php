@@ -16,6 +16,8 @@ use App\Infrastructure\Mail\EmailGateway;
 
 final class ConfigurationSaveService
 {
+    public const NOT_ESTIMABLE = 'Configuration invalide : dimensions manquantes';
+
     public function __construct(
         private readonly ConfigurationRepository $configurations,
         private readonly CustomerRepository $customers,
@@ -34,13 +36,8 @@ final class ConfigurationSaveService
         if ($isUpdate && !$isAdmin && $customerId === null) {
             throw new UnauthorizedException('Vous devez être connecté pour modifier cette configuration');
         }
-        foreach (['prompt', 'price'] as $field) {
-            if (!isset($data[$field]) || $data[$field] === '') {
-                throw new DomainException("Le champ $field est requis");
-            }
-        }
-        if (!is_numeric($data['price']) || (float) $data['price'] < 0 || (float) $data['price'] > 100000) {
-            throw new DomainException('Prix invalide');
+        if (!isset($data['prompt']) || $data['prompt'] === '') {
+            throw new DomainException('Le champ prompt est requis');
         }
         foreach (['glb_url', 'dxf_url'] as $field) {
             if (isset($data[$field]) && $data[$field] !== '' && (!is_string($data[$field]) || preg_match('#^/models/[A-Za-z0-9_.-]+\.(glb|dxf)$#', $data[$field]) !== 1)) {
@@ -68,7 +65,11 @@ final class ConfigurationSaveService
         if (!$isAdmin && in_array($existing['status'], ['en_commande', 'payee'], true)) {
             throw new ConflictException('Cette configuration est liée à une commande et ne peut plus être modifiée');
         }
-        $columns = ['config_string' => json_encode($configData, JSON_THROW_ON_ERROR), 'prompt' => $data['prompt'], 'price' => $data['price']];
+        $keepAdjustedPrice = $isAdmin && ($existing['price_adjusted'] ?? false) === true;
+        $columns = ['config_string' => json_encode($configData, JSON_THROW_ON_ERROR), 'prompt' => $data['prompt']];
+        if (!$keepAdjustedPrice) {
+            $columns += ['price' => $this->estimate($configData), 'price_adjusted' => false, 'price_note' => null, 'price_includes_delivery' => false];
+        }
         $columns['status'] = !$isAdmin ? 'en_attente_validation' : ($data['status'] ?? $existing['status']);
         if (array_key_exists('glb_url', $data)) {
             $columns['glb_url'] = $data['glb_url'] !== '' ? $data['glb_url'] : null;
@@ -91,7 +92,7 @@ final class ConfigurationSaveService
             $customerId === null ? null : (string) $customerId,
             isset($data['model_id']) ? (int) $data['model_id'] : null,
             json_encode($configData, JSON_THROW_ON_ERROR),
-            (float) $data['price'],
+            $this->estimate($configData),
             $data['glb_url'] ?? null,
             $data['prompt'],
             null,
@@ -103,6 +104,14 @@ final class ConfigurationSaveService
         $configuration = $this->configurations->findWithOrderId($id);
         $this->notifyAdmin((array) $configuration, $customerId, $isAdmin, $session);
         return ['success' => true, 'message' => 'Configuration sauvegardée avec succès', 'configuration' => $configuration];
+    }
+
+    private function estimate(array $configData): float
+    {
+        if (!FurniturePricing::canEstimate($configData)) {
+            throw new DomainException(self::NOT_ESTIMABLE);
+        }
+        return (float) $this->pricing->estimate($configData)['price'];
     }
 
     private function notifyAdmin(array $configuration, ?int $customerId, bool $isAdmin, Session $session): void
@@ -123,7 +132,7 @@ final class ConfigurationSaveService
 
     private static function configData(array $data): array
     {
-        $configData = $data['config_data'] ?? [];
+        $configData = is_array($data['config_data'] ?? null) ? $data['config_data'] : [];
         if (isset($data['name'])) {
             $configData['name'] = $data['name'];
         }

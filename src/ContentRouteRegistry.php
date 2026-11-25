@@ -16,12 +16,18 @@ use App\Domain\Catalogue\CatalogueVariationRepository;
 use App\Domain\Config\PublicConfigRoutes;
 use App\Domain\EmailTemplate\EmailTemplateRepository;
 use App\Domain\EmailTemplate\EmailTemplateRoutes;
+use App\Domain\Handle\AdminHandleModelRoutes;
+use App\Domain\Handle\HandleModelRepository;
+use App\Domain\Handle\HandleModelRoutes;
+use App\Domain\Handle\HandleModelService;
 use App\Domain\Notification\AdminNotificationRepository;
 use App\Domain\Notification\AdminNotificationRoutes;
 use App\Domain\Notification\NotificationRepository;
 use App\Domain\Notification\NotificationRoutes;
 use App\Domain\Pricing\FurniturePriceRoutes;
 use App\Domain\Pricing\FurniturePricing;
+use App\Domain\Pricing\MaterialPriceRepository;
+use App\Domain\Pricing\MaterialPriceRoutes;
 use App\Domain\Pricing\PricingConfigRepository;
 use App\Domain\Pricing\PricingConfigRoutes;
 use App\Domain\Realisation\AdminRealisationImageRoutes;
@@ -58,8 +64,11 @@ final class ContentRouteRegistry
         (new AdminNotificationRoutes(new AdminNotificationRepository($db), $admins))->register($routes);
         (new EmailTemplateRoutes(new EmailTemplateRepository($db)))->register($routes);
         $pricingConfig = new PricingConfigRepository($db);
+        $handleModels = new HandleModelRepository($db);
+        $materialPrices = new MaterialPriceRepository($db);
         (new PricingConfigRoutes($pricingConfig))->register($routes);
-        (new FurniturePriceRoutes(new FurniturePricing($pricingConfig)))->register($routes);
+        (new MaterialPriceRoutes($materialPrices, $pricingConfig))->register($routes);
+        (new FurniturePriceRoutes(new FurniturePricing($pricingConfig, $handleModels, $materialPrices)))->register($routes);
         $catalogueItems = new CatalogueRepository($db);
         $catalogueVariations = new CatalogueVariationRepository($db);
         (new CatalogueRoutes($catalogueItems, $catalogueVariations))->register($routes);
@@ -71,6 +80,8 @@ final class ContentRouteRegistry
         (new SampleRoutes($sampleService))->register($routes);
         (new AdminSampleRoutes($sampleService, $sampleTypes, $sampleColors))->register($routes);
         (new SampleAnalyticsRoutes($db))->register($routes);
+        (new HandleModelRoutes($handleModels))->register($routes);
+        (new AdminHandleModelRoutes(new HandleModelService($handleModels), $handleModels))->register($routes);
         (new PublicConfigRoutes(Env::load($settings->rootDir . '/.env')))->register($routes);
     }
 }

@@ -16,12 +16,13 @@ final class FurniturePriceRoutes
 
     public function register(RouteCollection $routes): void
     {
-        $routes->script('pricing/estimate', errorStyle: ErrorStyle::Success)->post(null, function (Request $r): Response {
-            $configuration = $r->json()['config_data'] ?? null;
-            if (!is_array($configuration) || !FurniturePricing::canEstimate($configuration)) {
-                throw new DomainException('Configuration invalide');
-            }
-            return Response::json(['success' => true, 'data' => $this->pricing->estimate($configuration)]);
-        });
+        $routes->script('pricing/estimate', errorStyle: ErrorStyle::Success)
+            ->post(null, function (Request $request): Response {
+                $config = $request->json()['config_data'] ?? null;
+                if (!is_array($config) || !FurniturePricing::canEstimate($config)) {
+                    throw new DomainException('Configuration invalide');
+                }
+                return Response::json(['success' => true, 'data' => $this->pricing->estimate($config)]);
+            });
     }
 }

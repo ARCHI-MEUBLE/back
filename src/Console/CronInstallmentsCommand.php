@@ -45,7 +45,7 @@ final class CronInstallmentsCommand
         try {
             $intent = $stripe->createPaymentIntent([
                 'amount' => PaymentAmountPolicy::cents($installment['amount']),
-                'currency' => 'eur',
+                'currency' => PaymentAmountPolicy::CURRENCY,
                 'customer' => $installment['stripe_customer_id'],
                 'payment_method_types' => ['card'],
                 'off_session' => true,

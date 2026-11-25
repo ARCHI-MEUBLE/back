@@ -13,6 +13,9 @@ final class ItemDisplayNameResolver
 
     public function resolve(array $item): string
     {
+        if (is_string($item['display_name'] ?? null) && $item['display_name'] !== '') {
+            return $item['display_name'];
+        }
         $modelName = $this->modelNameFromPrompt((string) ($item['prompt'] ?? ''));
         if ($modelName !== null) {
             return $modelName;

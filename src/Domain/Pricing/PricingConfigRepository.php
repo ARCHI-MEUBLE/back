@@ -8,6 +8,8 @@ use App\Db\Connection;
 
 final class PricingConfigRepository
 {
+    private const COLUMNS = 'id, category, item_type, param_name, param_value, unit, description, is_active, updated_at';
+
     public function __construct(private readonly Connection $db) {}
 
     public function search(?int $id, ?string $category, ?string $itemType, bool $activeOnly): array
@@ -31,17 +33,32 @@ final class PricingConfigRepository
         return $this->db->query($sql . ' ORDER BY category, item_type, param_name', $params);
     }
 
-    public function exists(int $id): bool
+    public function all(): array
     {
-        return $this->db->queryOne('SELECT id FROM pricing_config WHERE id = ?', [$id]) !== null;
+        return $this->db->query('SELECT ' . self::COLUMNS . ' FROM pricing_config ORDER BY category, item_type, param_name');
+    }
+
+    public function find(int $id): ?array
+    {
+        return $this->db->queryOne('SELECT ' . self::COLUMNS . ' FROM pricing_config WHERE id = ?', [$id]);
+    }
+
+    public function grid(): FurniturePricingGrid
+    {
+        return FurniturePricingGrid::fromConfigRows($this->db->query('SELECT category, item_type, param_name, param_value FROM pricing_config'));
+    }
+
+    public function materialPrices(): MaterialPriceRepository
+    {
+        return new MaterialPriceRepository($this->db);
     }
 
     public function create(array $data): int
     {
         return $this->db->insertReturningId(
             'INSERT INTO pricing_config (category, item_type, param_name, param_value, unit, description, is_active)
-             VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id',
-            [$data['category'], $data['item_type'], $data['param_name'], $data['param_value'], $data['unit'], $data['description'], $data['is_active']],
+             VALUES (?, ?, ?, ?, ?, ?, TRUE) RETURNING id',
+            [$data['category'], $data['item_type'], $data['param_name'], $data['param_value'], $data['unit'], $data['description']],
         );
     }
 
@@ -53,20 +70,8 @@ final class PricingConfigRepository
         ) !== null;
     }
 
-    public function update(int $id, array $columns): void
+    public function updateValue(int $id, float $value): void
     {
-        $set = [];
-        $params = [];
-        foreach ($columns as $column => $value) {
-            $set[] = $column . ' = ?';
-            $params[] = $value;
-        }
-        $params[] = $id;
-        $this->db->execute('UPDATE pricing_config SET ' . implode(', ', $set) . ' WHERE id = ?', $params);
-    }
-
-    public function deactivate(int $id): bool
-    {
-        return $this->db->execute('UPDATE pricing_config SET is_active = FALSE WHERE id = ?', [$id]) > 0;
+        $this->db->execute('UPDATE pricing_config SET param_value = ?, is_active = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$value, $id]);
     }
 }

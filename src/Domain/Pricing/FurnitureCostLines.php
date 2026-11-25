@@ -9,6 +9,7 @@ use App\Domain\Shared\DomainException;
 final class FurnitureCostLines
 {
     private const DOORS = ['door', 'door_right', 'door_double', 'mirror_door', 'mirror_door_right', 'push_door', 'push_door_right'];
+    private const GLASS_DOORS = ['mirror_door', 'mirror_door_right'];
     private const DRAWERS = ['drawer', 'push_drawer'];
     private const MAX_DEPTH = 12;
     private const MAX_ZONES = 400;
@@ -18,8 +19,9 @@ final class FurnitureCostLines
 
     public function __construct(
         private readonly FurniturePricingGrid $grid,
-        private readonly float $materialPrice,
+        private readonly FurnitureMaterials $materials,
         private readonly float $depth,
+        private readonly HandlePrices $handles = new HandlePrices(),
     ) {}
 
     public function add(string $line, float $amount): void
@@ -32,6 +34,12 @@ final class FurnitureCostLines
         return $this->amounts[$line] ?? 0.0;
     }
 
+    public function carcass(float $width, float $height): void
+    {
+        $structure = 2 * $height * $this->depth + 2 * $width * $this->depth;
+        $this->add('panels', $structure / 1_000_000 * $this->materials->part('structure') + $this->back($width, $height));
+    }
+
     public function zone(array $zone, float $width, float $height, int $level = 0): void
     {
         if ($level > self::MAX_DEPTH || ++$this->zoneCount > self::MAX_ZONES) {
@@ -39,14 +47,17 @@ final class FurnitureCostLines
         }
         $content = is_string($zone['content'] ?? null) ? $zone['content'] : null;
         $isLeaf = ($zone['type'] ?? 'leaf') === 'leaf';
-        $doorContent = is_string($zone['doorContent'] ?? null) ? $zone['doorContent'] : ($isLeaf ? $content : null);
-        $handle = is_string($zone['handleType'] ?? null) ? $zone['handleType'] : null;
+        if ($isLeaf && ($zone['isOpenSpace'] ?? false) === true) {
+            $this->add('panels', -$this->back($width, $height));
+            return;
+        }
+        $doorContent = is_string($zone['doorContent'] ?? null) ? $zone['doorContent'] : $content;
         if ($doorContent !== null && in_array($doorContent, self::DOORS, true)) {
-            $this->door($doorContent, $handle, $width, $height);
+            $this->door($doorContent, $this->handles->price($this->grid, $zone), $width, $height, $this->materials->facade($zone, 'doors'));
         }
         $children = is_array($zone['children'] ?? null) ? array_values(array_filter($zone['children'], 'is_array')) : [];
         if ($isLeaf || $children === []) {
-            $this->leaf($zone, $content, $handle, $width, $height);
+            $this->leaf($zone, $content, $width, $height);
             return;
         }
         $horizontal = $zone['type'] === 'horizontal';
@@ -54,41 +65,58 @@ final class FurnitureCostLines
         $drawerStack = $horizontal && $count >= 2 && array_reduce($children, fn(bool $all, array $c): bool => $all && in_array($c['content'] ?? null, self::DRAWERS, true), true);
         if (!$drawerStack) {
             $separator = $horizontal ? $width * $this->depth : $height * $this->depth;
-            $this->add('panels', ($count - 1) * $separator / 1_000_000 * $this->materialPrice);
+            $this->add('panels', ($count - 1) * $separator / 1_000_000 * $this->materials->part('shelves'));
         }
-        foreach ($children as $index => $child) {
-            $ratio = self::ratio($zone, $index, $count);
-            $this->zone($child, $horizontal ? $width : $width * $ratio, $horizontal ? $height * $ratio : $height, $level + 1);
+        foreach (ZoneRatios::of($zone, $count) as $index => $ratio) {
+            $this->zone($children[$index], $horizontal ? $width : $width * $ratio, $horizontal ? $height * $ratio : $height, $level + 1);
         }
     }
 
-    public function door(string $type, ?string $handle, float $width, float $height): void
+    public function door(string $type, float $handle, float $width, float $height, float $materialPrice): void
     {
         $leaves = $type === 'door_double' ? 2 : 1;
-        $this->add('fronts', $leaves * $this->grid->get('fronts', 'door', 'fixed_price') + $this->facade($width, $height));
-        $this->add('hardware', str_starts_with($type, 'push_')
-            ? $leaves * $this->grid->get('fronts', 'push', 'supplement')
-            : $leaves * $this->handle($handle));
+        $surface = $width * $height / 1_000_000;
+        $glass = in_array($type, self::GLASS_DOORS, true) ? $surface * $this->grid->get('fronts', 'glass', 'supplement_per_m2') : 0.0;
+        $this->add('fronts', $leaves * $this->grid->get('fronts', 'door', 'fixed_price') + $this->facade($surface, $materialPrice) + $glass);
+        $this->add('hardware', $leaves * (str_starts_with($type, 'push_') ? $this->grid->get('fronts', 'push', 'supplement') : $handle));
     }
 
     public function base(string $socle, float $width): void
     {
         if ($socle === 'metal') {
-            $pairs = max(2, (int) ceil($width / $this->grid->get('bases', 'metal', 'foot_spacing_mm')) + 1);
+            $spacing = max(100.0, $this->grid->get('bases', 'metal', 'foot_spacing_mm'));
+            $pairs = max((int) $this->grid->get('bases', 'metal', 'min_pairs'), (int) ceil($width / $spacing) + 1);
             $this->add('hardware', 2 * $pairs * $this->grid->get('bases', 'metal', 'price_per_foot'));
         } elseif ($socle === 'wood') {
             $this->add('hardware', $width / 1000 * $this->grid->get('bases', 'wood', 'price_per_linear_meter'));
         }
     }
 
-    private function leaf(array $zone, ?string $content, ?string $handle, float $width, float $height): void
+    public static function hasLeafDoor(array $zone, int $level = 0): bool
     {
+        if (($zone['type'] ?? 'leaf') === 'leaf' && in_array($zone['content'] ?? null, self::DOORS, true)) {
+            return true;
+        }
+        foreach ($level < self::MAX_DEPTH && is_array($zone['children'] ?? null) ? $zone['children'] : [] as $child) {
+            if (is_array($child) && self::hasLeafDoor($child, $level + 1)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function leaf(array $zone, ?string $content, float $width, float $height): void
+    {
+        if (($zone['noBack'] ?? false) === true) {
+            $this->add('panels', -$this->back($width, $height));
+        }
         if ($content !== null && in_array($content, self::DRAWERS, true)) {
-            $this->add('fronts', $this->grid->get('fronts', 'drawer', 'fixed_price') + $this->facade($width, $height));
-            $this->add('hardware', $content === 'push_drawer' ? $this->grid->get('fronts', 'push', 'supplement') : $this->handle($handle));
+            $facade = $this->facade($width * $height / 1_000_000, $this->materials->facade($zone, 'drawers'));
+            $this->add('fronts', $this->grid->get('fronts', 'drawer', 'fixed_price') + $facade);
+            $this->add('hardware', $content === 'push_drawer' ? $this->grid->get('fronts', 'push', 'supplement') : $this->handles->price($this->grid, $zone));
         }
         if ($content === 'shelf') {
-            $this->add('panels', $width * $this->depth / 1_000_000 * $this->materialPrice);
+            $this->add('panels', $width * $this->depth / 1_000_000 * $this->materials->part('shelves'));
         }
         if ($content === 'dressing' || ($zone['hasDressing'] ?? false) === true) {
             $this->add('hardware', $width / 1000 * $this->grid->get('options', 'dressing_rod', 'price_per_linear_meter'));
@@ -101,26 +129,13 @@ final class FurnitureCostLines
         }
     }
 
-    private function facade(float $width, float $height): float
+    private function back(float $width, float $height): float
     {
-        return $width * $height / 1_000_000 * $this->materialPrice * $this->grid->get('fronts', 'facade', 'material_factor');
+        return $width * $height / 1_000_000 * $this->grid->get('panels', 'back', 'surface_factor') * $this->materials->part('back');
     }
 
-    private function handle(?string $type): float
+    private function facade(float $surface, float $materialPrice): float
     {
-        return $type !== null && $this->grid->has('handles', $type) ? $this->grid->get('handles', $type, 'price_per_unit') : 0.0;
-    }
-
-    private static function ratio(array $zone, int $index, int $count): float
-    {
-        $ratios = $zone['splitRatios'] ?? null;
-        if (is_array($ratios) && count($ratios) === $count && is_numeric($ratios[$index] ?? null)) {
-            return max(0.0, (float) $ratios[$index] / 100);
-        }
-        if ($count === 2 && is_numeric($zone['splitRatio'] ?? null)) {
-            $first = (float) $zone['splitRatio'] / 100;
-            return max(0.0, $index === 0 ? $first : 1 - $first);
-        }
-        return 1 / $count;
+        return $surface * $materialPrice * $this->grid->get('fronts', 'facade', 'material_factor');
     }
 }

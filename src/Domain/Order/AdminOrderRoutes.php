@@ -44,7 +44,7 @@ final class AdminOrderRoutes
             if ($order === null) {
                 throw new NotFoundException('Commande non trouvée');
             }
-            $order['customer'] = $this->customers->findRawById((int) $order['customer_id']);
+            $order['customer'] = $this->customers->findFullById((int) $order['customer_id']);
             $order['items'] = $this->orders->itemsFor($orderId);
             $order['samples'] = $this->orders->samplesFor($orderId);
             $order['catalogue_items'] = $this->orders->catalogueItemsFor($orderId);
@@ -55,7 +55,7 @@ final class AdminOrderRoutes
         $limit = (int) ($r->queryString('limit') ?? 100);
         $offset = (int) ($r->queryString('offset') ?? 0);
         $orders = array_map(function (array $order): array {
-            $order['customer'] = $this->customers->findRawById((int) $order['customer_id']);
+            $order['customer'] = $this->customers->findFullById((int) $order['customer_id']);
             $order['samples_count'] = count($this->orders->samplesFor((int) $order['id']));
             return OrderMapper::toFrontend($order);
         }, $this->orders->all($status, $limit, $offset));

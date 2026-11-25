@@ -25,6 +25,7 @@
                     "needs_validation": "bool",
                     "order_number": "string",
                     "samples_count": "number",
+                    "shipping_amount": "number",
                     "status": "string",
                     "total": "number"
                 }

@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Domain\Order;
 
 use App\Db\Connection;
+use App\Domain\Cart\CartShipping;
 use App\Domain\Notification\AdminNotificationRepository;
+use App\Domain\Pricing\FurniturePricing;
 use App\Domain\Shared\DomainException;
 use App\Domain\Shared\NotFoundException;
 use App\Http\ErrorStyle;
@@ -20,6 +22,7 @@ final class AdminOrderFromConfigRoutes
     public function __construct(
         private readonly Connection $db,
         private readonly AdminNotificationRepository $adminNotifications,
+        private readonly CartShipping $shipping,
     ) {}
 
     public function register(RouteCollection $routes): void
@@ -52,22 +55,29 @@ final class AdminOrderFromConfigRoutes
         if (!$config['customer_id']) {
             throw new DomainException('Aucun client associé à cette configuration');
         }
+        $configData = json_decode((string) $config['config_string'], true);
+        if (!is_array($configData) || !FurniturePricing::canEstimate($configData)) {
+            throw new DomainException('Configuration invalide : dimensions manquantes. Faites-la réenregistrer depuis le configurateur avant de créer la commande.');
+        }
+        $price = round((float) $config['price'], 2);
+        $shippingAmount = $config['price_includes_delivery'] === true ? 0.0 : $this->shipping->furniture($configData);
+        $total = round($price + $shippingAmount, 2);
         $shippingAddress = trim(($config['address'] ?? '') . ', ' . ($config['city'] ?? '') . ', ' . ($config['postal_code'] ?? '') . ', ' . ($config['country'] ?? 'France'));
         $orderNumber = 'ORD-' . date('Y') . '-' . str_pad((string) random_int(1, 999999), 6, '0', STR_PAD_LEFT);
         $adminNotes = "Commande créée depuis configuration #{$configId} par " . $s->string('admin_email');
-        $orderId = (int) $this->db->transaction(function (Connection $db) use ($config, $configId, $orderNumber, $shippingAddress, $adminNotes): int {
+        $orderId = (int) $this->db->transaction(function (Connection $db) use ($config, $configId, $orderNumber, $shippingAddress, $adminNotes, $price, $shippingAmount, $total): int {
             if ($db->execute("UPDATE configurations SET status = 'en_commande' WHERE id = ? AND status NOT IN ('en_commande', 'payee')", [$configId]) === 0) {
                 throw new DomainException('Cette configuration a déjà été transformée en commande');
             }
             $orderId = $db->insertReturningId(
-                "INSERT INTO orders (customer_id, order_number, total_amount, shipping_address, billing_address, payment_method, payment_status, status, notes, admin_notes, created_at, updated_at)
-                 VALUES (?, ?, ?, ?, ?, 'card', 'pending', 'pending', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id",
-                [$config['customer_id'], $orderNumber, $config['price'], $shippingAddress, $shippingAddress, "Commande créée par l'admin après validation téléphonique", $adminNotes],
+                "INSERT INTO orders (customer_id, order_number, total_amount, shipping_amount, shipping_address, billing_address, payment_method, payment_status, status, notes, admin_notes, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, 'card', 'pending', 'pending', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id",
+                [$config['customer_id'], $orderNumber, $total, $shippingAmount, $shippingAddress, $shippingAddress, "Commande créée par l'admin après validation téléphonique", $adminNotes],
             );
             $db->execute(
                 "INSERT INTO order_items (order_id, configuration_id, prompt, config_data, glb_url, quantity, unit_price, total_price, production_status, created_at)
                  VALUES (?, ?, ?, ?, ?, 1, ?, ?, 'pending', CURRENT_TIMESTAMP)",
-                [$orderId, $configId, $config['prompt'], $config['config_string'], $config['glb_url'], $config['price'], $config['price']],
+                [$orderId, $configId, $config['prompt'], $config['config_string'], $config['glb_url'], $price, $price],
             );
             return $orderId;
         });
@@ -77,7 +87,8 @@ final class AdminOrderFromConfigRoutes
             'data' => [
                 'order_id' => $orderId,
                 'order_number' => $orderNumber,
-                'total_amount' => $config['price'],
+                'total_amount' => $total,
+                'shipping_amount' => $shippingAmount,
                 'customer_email' => $config['customer_email'],
                 'customer_name' => trim($config['first_name'] . ' ' . $config['last_name']),
                 'payment_link' => null,

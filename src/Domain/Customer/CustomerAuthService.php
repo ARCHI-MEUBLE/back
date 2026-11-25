@@ -57,6 +57,7 @@ final class CustomerAuthService
             $this->issueVerificationCodeQuietly((string) $customer['email'], (string) $customer['first_name']);
             throw new EmailNotVerifiedException((string) $customer['email']);
         }
+        $this->customers->recordActivity((int) $customer['id']);
         self::openSession($customer, $session);
         return $customer;
     }

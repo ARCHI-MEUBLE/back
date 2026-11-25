@@ -24,7 +24,7 @@ final class ConfigurationsTest extends ContractTestCase
             'name' => 'Nouvelle config',
             'model_id' => 1,
             'prompt' => 'M1(1500,400,700)EFbV3(,T,)',
-            'config_data' => ['dimensions' => ['width' => 1500], 'styling' => [], 'features' => []],
+            'config_data' => ['dimensions' => ['width' => 1500, 'height' => 400, 'depth' => 700], 'styling' => [], 'features' => []],
             'glb_url' => '/models/new.glb',
             'dxf_url' => null,
             'price' => 950.25,

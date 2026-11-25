@@ -118,6 +118,11 @@ final class CustomerRepository
         $this->db->execute('UPDATE customers SET email_verified = TRUE WHERE id = ?', [$id]);
     }
 
+    public function recordActivity(int $id): void
+    {
+        $this->db->execute('UPDATE customers SET last_activity_at = CURRENT_TIMESTAMP WHERE id = ?', [$id]);
+    }
+
     public function delete(int $id): bool
     {
         return (new CustomerErasure($this->db))->erase($id);

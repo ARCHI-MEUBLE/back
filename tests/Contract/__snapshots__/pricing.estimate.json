@@ -4,6 +4,7 @@
         "object": {
             "data": {
                 "object": {
+                    "delivery": "number",
                     "high": "number",
                     "lines": {
                         "list": {
