@@ -42,6 +42,47 @@ final class SamplesTest extends ContractTestCase
         $this->assertSnapshot('samples.admin.action.unknown', $admin->post('/backend/api/admin/samples.php', ['action' => 'nope']));
     }
 
+    public function testColourPriceIsKeptAndCanBeCleared(): void
+    {
+        $admin = $this->admin();
+        $type = $admin->post('/backend/api/admin/samples.php', ['action' => 'create_type', 'name' => 'Bois test', 'material' => 'Agglomere']);
+        $typeId = (int) ($type->data()['id'] ?? 0);
+        self::assertGreaterThan(0, $typeId, $type->body);
+        $priced = (int) ($admin->post('/backend/api/admin/samples.php', ['action' => 'create_color', 'type_id' => $typeId, 'name' => 'Clair', 'hex' => '#eeddcc'])->data()['id'] ?? 0);
+        $other = (int) ($admin->post('/backend/api/admin/samples.php', ['action' => 'create_color', 'type_id' => $typeId, 'name' => 'Fonce', 'hex' => '#332211'])->data()['id'] ?? 0);
+        self::assertGreaterThan(0, $priced);
+        self::assertGreaterThan(0, $other);
+        self::assertNull($this->colourPrice($priced));
+
+        $admin->post('/backend/api/admin/samples.php', ['action' => 'update_color', 'id' => $priced, 'furniture_price_per_m2' => 210.5]);
+        self::assertSame('210.50', $this->colourPrice($priced));
+        self::assertNull($this->colourPrice($other));
+
+        $admin->post('/backend/api/admin/samples.php', ['action' => 'update_color', 'id' => $priced, 'name' => 'Clair 2', 'unit_price' => 4]);
+        self::assertSame('210.50', $this->colourPrice($priced));
+
+        $rejected = $admin->post('/backend/api/admin/samples.php', ['action' => 'update_color', 'id' => $priced, 'furniture_price_per_m2' => -5]);
+        self::assertSame(400, $rejected->status, $rejected->body);
+        self::assertSame('210.50', $this->colourPrice($priced));
+
+        $admin->post('/backend/api/admin/samples.php', ['action' => 'update_color', 'id' => $priced, 'furniture_price_per_m2' => null]);
+        self::assertNull($this->colourPrice($priced));
+
+        $admin->post('/backend/api/admin/samples.php', ['action' => 'delete_type', 'id' => $typeId]);
+    }
+
+    private function colourPrice(int $colorId): ?string
+    {
+        foreach ($this->admin()->get('/backend/api/admin/samples.php')->data()['data'] as $type) {
+            foreach ($type['colors'] as $color) {
+                if ($color['id'] === $colorId) {
+                    return $color['furniture_price_per_m2'];
+                }
+            }
+        }
+        self::fail('Colour ' . $colorId . ' missing from the admin list');
+    }
+
     public function testAnalytics(): void
     {
         $this->assertSnapshot('samples.analytics.unauthorized', $this->client()->get('/backend/api/admin/samples/analytics.php'));

@@ -12,7 +12,10 @@ final class HandleModelSchemas
 {
     public const SHAPES = ['bar', 'flat_bar', 'profile', 'knob', 'cup', 'recessed', 'leather'];
     private const WITHOUT_LENGTH = ['knob', 'recessed'];
-    public const FIELDS = ['name', 'shape', 'finish_hex', 'length_mm', 'image_url', 'price_per_unit', 'active', 'position'];
+    public const FIELDS = [
+        'name', 'shape', 'finish_hex', 'length_mm', 'center_distance_mm', 'width_mm', 'projection_mm', 'image_url',
+        'price_per_unit', 'active', 'position',
+    ];
 
     public static function model(): Schema
     {
@@ -27,6 +30,15 @@ final class HandleModelSchemas
             'length_mm' => Field::int()->nullable()
                 ->min(20, 'La longueur doit être comprise entre 20 et 800 mm')
                 ->max(800, 'La longueur doit être comprise entre 20 et 800 mm'),
+            'center_distance_mm' => Field::int()->nullable()
+                ->min(10, "L'entraxe doit être compris entre 10 et 800 mm")
+                ->max(800, "L'entraxe doit être compris entre 10 et 800 mm"),
+            'width_mm' => Field::int()->nullable()
+                ->min(2, 'La largeur doit être comprise entre 2 et 100 mm')
+                ->max(100, 'La largeur doit être comprise entre 2 et 100 mm'),
+            'projection_mm' => Field::int()->nullable()
+                ->min(0, 'La saillie doit être comprise entre 0 et 100 mm')
+                ->max(100, 'La saillie doit être comprise entre 0 et 100 mm'),
             'image_url' => Field::string()->nullable()
                 ->maxLength(500, 'Le lien de la photo ne doit pas dépasser 500 caractères')
                 ->rule(self::isImageUrl(...), 'Lien de photo invalide (adresse http(s) ou chemin /uploads/)'),
@@ -48,8 +60,11 @@ final class HandleModelSchemas
         $data = self::model()->validate($input);
         if (in_array($data['shape'], self::WITHOUT_LENGTH, true)) {
             $data['length_mm'] = null;
+            $data['center_distance_mm'] = null;
         } elseif ($data['length_mm'] === null) {
             throw new ValidationException('La longueur est obligatoire pour cette forme de poignée');
+        } elseif ($data['center_distance_mm'] !== null && $data['center_distance_mm'] > $data['length_mm']) {
+            throw new ValidationException("L'entraxe ne peut pas dépasser la longueur de la poignée");
         }
         return $data;
     }
