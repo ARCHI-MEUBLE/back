@@ -10,7 +10,8 @@ use App\Lib\Validation\ValidationException;
 
 final class HandleModelSchemas
 {
-    public const SHAPES = ['bar', 'flat_bar', 'profile', 'knob'];
+    public const SHAPES = ['bar', 'flat_bar', 'profile', 'knob', 'cup', 'recessed', 'leather'];
+    private const WITHOUT_LENGTH = ['knob', 'recessed'];
     public const FIELDS = ['name', 'shape', 'finish_hex', 'length_mm', 'image_url', 'price_per_unit', 'active', 'position'];
 
     public static function model(): Schema
@@ -20,7 +21,7 @@ final class HandleModelSchemas
                 ->minLength(1, 'Le nom est obligatoire')
                 ->maxLength(80, 'Le nom ne doit pas dépasser 80 caractères'),
             'shape' => Field::string()->required('La forme est obligatoire')
-                ->oneOf(self::SHAPES, 'Forme de poignée invalide (barre ronde, barre plate, profilé ou bouton)'),
+                ->oneOf(self::SHAPES, 'Forme de poignée invalide (barre ronde, barre plate, profilé, bouton, cuvette, encastrée ou lanière cuir)'),
             'finish_hex' => Field::string()->required('La couleur de finition est obligatoire')
                 ->pattern('/^#[0-9A-Fa-f]{6}$/', 'Couleur de finition invalide (format #RRGGBB)'),
             'length_mm' => Field::int()->nullable()
@@ -45,10 +46,10 @@ final class HandleModelSchemas
     public static function validate(array $input): array
     {
         $data = self::model()->validate($input);
-        if ($data['shape'] === 'knob') {
+        if (in_array($data['shape'], self::WITHOUT_LENGTH, true)) {
             $data['length_mm'] = null;
         } elseif ($data['length_mm'] === null) {
-            throw new ValidationException('La longueur est obligatoire pour une barre ou un profilé');
+            throw new ValidationException('La longueur est obligatoire pour cette forme de poignée');
         }
         return $data;
     }
