@@ -21,8 +21,16 @@ final class PaymentStrategyRoutes
             if (!isset($data['order_id']) || $data['order_id'] === '' || !isset($data['strategy']) || $data['strategy'] === '') {
                 throw new DomainException('order_id et strategy requis');
             }
-            $this->strategies->update((int) $data['order_id'], (string) $data['strategy'], (float) ($data['deposit_percentage'] ?? 0));
-            return Response::json(['success' => true, 'message' => 'Stratégie de paiement mise à jour']);
+            $percentage = $data['deposit_percentage'] ?? null;
+            if ($percentage !== null && $percentage !== '' && !is_numeric($percentage)) {
+                throw new DomainException("Le pourcentage d'acompte doit être un nombre entre 1 et 99");
+            }
+            $amounts = $this->strategies->update(
+                (int) $data['order_id'],
+                (string) $data['strategy'],
+                $percentage === null || $percentage === '' ? null : (float) $percentage,
+            );
+            return Response::json(['success' => true, 'message' => 'Stratégie de paiement mise à jour. Les liens de paiement déjà envoyés ont été désactivés.'] + $amounts);
         });
     }
 }

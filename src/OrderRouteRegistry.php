@@ -7,7 +7,10 @@ namespace App;
 use App\Config\Settings;
 use App\Db\Connection;
 use App\Domain\Cart\CartRepository;
+use App\Domain\Cart\CartShipping;
 use App\Domain\Customer\CustomerRepository;
+use App\Domain\Facade\FacadePriceCalculator;
+use App\Domain\Handle\HandleModelRepository;
 use App\Domain\Notification\AdminNotificationRepository;
 use App\Domain\Notification\NotificationRepository;
 use App\Domain\Order\AdminOrderFromConfigRoutes;
@@ -20,6 +23,8 @@ use App\Domain\Order\OrderListRoutes;
 use App\Domain\Order\OrderRepository;
 use App\Domain\Order\OrderSendConfirmationRoutes;
 use App\Domain\Order\OrderValidateRoutes;
+use App\Domain\Pricing\FurniturePricing;
+use App\Domain\Pricing\PricingConfigRepository;
 use App\Http\RouteCollection;
 use App\Infrastructure\Mail\EmailGatewayFactory;
 
@@ -30,13 +35,20 @@ final class OrderRouteRegistry
         $orders = new OrderRepository($db);
         $customers = new CustomerRepository($db);
         $mail = EmailGatewayFactory::create($settings, $db);
-        $creation = new OrderCreationService($db, new OrderCreationRepository($db, new CartRepository($db)), $customers);
+        $shipping = new CartShipping(new FurniturePricing(new PricingConfigRepository($db), new HandleModelRepository($db)));
+        $creation = new OrderCreationService(
+            $db,
+            new OrderCreationRepository($db, new CartRepository($db)),
+            $customers,
+            new FacadePriceCalculator($db),
+            $shipping,
+        );
         (new OrderCreateRoutes($creation, new AdminNotificationRepository($db)))->register($routes);
         (new OrderListRoutes($orders))->register($routes);
         (new OrderDeleteRoutes($orders))->register($routes);
         (new OrderValidateRoutes($db))->register($routes);
         (new OrderSendConfirmationRoutes($orders, $db, $mail))->register($routes);
         (new AdminOrderRoutes($orders, $customers, $db, new NotificationRepository($db), $mail))->register($routes);
-        (new AdminOrderFromConfigRoutes($db, new AdminNotificationRepository($db)))->register($routes);
+        (new AdminOrderFromConfigRoutes($db, new AdminNotificationRepository($db), $shipping))->register($routes);
     }
 }

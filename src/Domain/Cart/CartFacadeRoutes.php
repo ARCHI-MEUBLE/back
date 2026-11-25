@@ -34,7 +34,8 @@ final class CartFacadeRoutes
                 throw new DomainException('config et price requis');
             }
             $quantity = CartQuantity::forAdd($data['quantity'] ?? 1);
-            $id = $this->facades->add((int) $s->customerId(), $data['config'], $this->prices->unitPrice($data['config']), $quantity);
+            $config = $this->prices->normalize($data['config']);
+            $id = $this->facades->add((int) $s->customerId(), $config, $this->prices->unitPrice($config), $quantity);
             return Response::json(['success' => true, 'message' => 'Façade ajoutée au panier', 'id' => (string) $id], 201);
         });
 

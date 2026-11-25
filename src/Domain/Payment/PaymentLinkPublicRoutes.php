@@ -47,6 +47,7 @@ final class PaymentLinkPublicRoutes
             'order' => [
                 'order_number' => $order['order_number'],
                 'total_amount' => (float) $order['total_amount'],
+                'shipping_amount' => (float) ($order['shipping_amount'] ?? 0),
                 'amount' => (float) $order['amount'],
                 'payment_type' => $order['payment_type'],
                 'deposit_percentage' => (float) ($order['deposit_percentage'] ?? 0),
@@ -67,6 +68,14 @@ final class PaymentLinkPublicRoutes
                     'id' => $sample['id'], 'name' => $sample['sample_name'], 'type' => $sample['sample_type_name'], 'material' => $sample['material'],
                     'hex' => $sample['hex'], 'image_url' => $sample['image_url'], 'quantity' => (int) $sample['quantity'], 'price' => (float) $sample['price'],
                 ], $orderData['samples']),
+                'facades' => array_map(static fn(array $facade): array => [
+                    'id' => $facade['id'], 'quantity' => (int) $facade['quantity'], 'unit_price' => (float) $facade['unit_price'],
+                    'total_price' => (float) $facade['total_price'], 'config' => json_decode((string) $facade['config_data'], true),
+                ], $orderData['facades']),
+                'catalogue' => array_map(static fn(array $item): array => [
+                    'id' => $item['id'], 'name' => $item['product_name'] ?? $item['name'] ?? 'Article', 'variation_name' => $item['variation_name'],
+                    'image_url' => $item['image_url'], 'quantity' => (int) $item['quantity'], 'unit_price' => (float) $item['unit_price'], 'total_price' => (float) $item['total_price'],
+                ], $orderData['catalogue']),
             ],
             'payment_link' => ['token' => $order['token'], 'expires_at' => $order['expires_at'], 'status' => $order['status']],
         ]]);

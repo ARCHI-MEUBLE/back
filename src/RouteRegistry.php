@@ -26,10 +26,12 @@ use App\Domain\Customer\CustomerProfileRoutes;
 use App\Domain\Customer\CustomerProfileService;
 use App\Domain\Customer\CustomerRepository;
 use App\Domain\Customer\CustomerVerificationRepository;
+use App\Domain\Handle\HandleModelRepository;
 use App\Domain\Model\ModelRepository;
 use App\Domain\Model\ModelRoutes;
 use App\Domain\Model\ModelService;
-use App\Domain\Model\TemplateRoutes;
+use App\Domain\Pricing\FurniturePricing;
+use App\Domain\Pricing\PricingConfigRepository;
 use App\Domain\System\AdminCreationRoutes;
 use App\Domain\System\BackupAccessGuard;
 use App\Domain\System\BackupService;
@@ -72,8 +74,8 @@ final class RouteRegistry
         ))->register($routes);
         (new CustomerProfileRoutes(new CustomerProfileService($customers)))->register($routes);
         (new CategoryRoutes(new CategoryService(new CategoryRepository($db))))->register($routes);
-        (new ModelRoutes(new ModelService(new ModelRepository($db))))->register($routes);
-        (new TemplateRoutes($db))->register($routes);
+        $pricing = new FurniturePricing(new PricingConfigRepository($db), new HandleModelRepository($db));
+        (new ModelRoutes(new ModelService(new ModelRepository($db), $pricing)))->register($routes);
         return $admins;
     }
 }

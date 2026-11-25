@@ -28,7 +28,7 @@ final class ConfigurationRequestEmail
         $phoneHtml = $phone !== '' ? "<a href='tel:{$phone}' style='color: #1A1917;'>{$phone}</a>" : 'Téléphone non renseigné';
         $emailHtml = $email !== '' ? "<a href='mailto:{$email}' style='color: #1A1917;'>{$email}</a>" : 'E-mail non renseigné';
         $messageHtml = $message !== '' ? $message : 'Aucun message.';
-        $price = is_float($request['price']) ? number_format($request['price'], 0, ',', ' ') . ' €' : 'Non communiqué';
+        $price = is_float($request['price']) ? number_format($request['price'], 0, ',', ' ') . ' €' : 'Prix indisponible (configuration incomplète)';
         $specs = self::specifications(Html::escapeAll($share['config_data']));
         return "
         <!DOCTYPE html>
@@ -56,7 +56,7 @@ final class ConfigurationRequestEmail
                     <p style='margin: 0 0 24px 0;'>{$name}<br>{$phoneHtml}<br>{$emailHtml}</p>
                     <p style='{$label}'>Message</p>
                     <p style='margin: 0 0 24px 0; white-space: pre-wrap;'>{$messageHtml}</p>
-                    <p style='{$label}'>Prix affiché au client</p>
+                    <p style='{$label}'>Prix estimé par le site</p>
                     <p style='margin: 0 0 32px 0; font-size: 20px; font-weight: 700;'>{$price}</p>
                     {$specs}
                     <div style='text-align: center; margin: 32px 0 16px 0;'>

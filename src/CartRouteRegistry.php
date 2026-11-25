@@ -13,16 +13,27 @@ use App\Domain\Cart\CartRepository;
 use App\Domain\Cart\CartRoutes;
 use App\Domain\Cart\CartSampleRepository;
 use App\Domain\Cart\CartSampleRoutes;
+use App\Domain\Cart\CartShipping;
+use App\Domain\Cart\CartShippingRoutes;
 use App\Domain\Facade\FacadePriceCalculator;
+use App\Domain\Handle\HandleModelRepository;
+use App\Domain\Pricing\FurniturePricing;
+use App\Domain\Pricing\PricingConfigRepository;
 use App\Http\RouteCollection;
 
 final class CartRouteRegistry
 {
     public static function register(RouteCollection $routes, Connection $db): void
     {
-        (new CartRoutes(new CartRepository($db)))->register($routes);
-        (new CartSampleRoutes(new CartSampleRepository($db)))->register($routes);
-        (new CartCatalogueRoutes(new CartCatalogueRepository($db)))->register($routes);
-        (new CartFacadeRoutes(new CartFacadeRepository($db), new FacadePriceCalculator($db)))->register($routes);
+        $cart = new CartRepository($db);
+        $samples = new CartSampleRepository($db);
+        $catalogue = new CartCatalogueRepository($db);
+        $facades = new CartFacadeRepository($db);
+        (new CartRoutes($cart))->register($routes);
+        (new CartSampleRoutes($samples))->register($routes);
+        (new CartCatalogueRoutes($catalogue))->register($routes);
+        (new CartFacadeRoutes($facades, new FacadePriceCalculator($db)))->register($routes);
+        $shipping = new CartShipping(new FurniturePricing(new PricingConfigRepository($db), new HandleModelRepository($db)));
+        (new CartShippingRoutes($shipping, $cart, $facades, $catalogue, $samples))->register($routes);
     }
 }

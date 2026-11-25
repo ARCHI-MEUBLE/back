@@ -42,6 +42,21 @@ final class OrderConfirmationEmailParts
         return $html;
     }
 
+    public static function shippingRow(float $amount): string
+    {
+        if ($amount <= 0) {
+            return '';
+        }
+        $formatted = number_format($amount, 2, ',', ' ') . ' €';
+        return "
+                <tr>
+                    <td style='padding: 10px 0; color: #1A1917; font-size: 14px; border-bottom: 1px solid #F0EFEA;'>Livraison et manutention</td>
+                    <td style='padding: 10px 0; color: #1A1917; text-align: center; border-bottom: 1px solid #F0EFEA;'></td>
+                    <td style='padding: 10px 0; color: #1A1917; text-align: right; font-weight: 600; border-bottom: 1px solid #F0EFEA;'>{$formatted}</td>
+                </tr>
+            ";
+    }
+
     public static function sampleRows(array $sampleRows): string
     {
         $html = '';

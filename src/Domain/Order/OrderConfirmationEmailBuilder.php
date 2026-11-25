@@ -17,7 +17,8 @@ final class OrderConfirmationEmailBuilder
         $itemsHtml = OrderConfirmationSections::configurations($items)
             . OrderConfirmationSections::facades($facadeItems)
             . OrderConfirmationSections::catalogue($catalogueItems)
-            . OrderConfirmationSections::samples($samples);
+            . OrderConfirmationSections::samples($samples)
+            . OrderConfirmationSections::shipping((float) ($order['shipping_amount'] ?? 0));
         [$subject, $intro] = self::subjectAndIntro($order['order_number'], $isSamplesOnly, $hasConfigurations, $hasFacades);
         $totalFormatted = $total === 0.0 ? 'Gratuit' : number_format($total, 2, ',', ' ') . ' €';
         $envFrontendUrl = getenv('FRONTEND_URL');

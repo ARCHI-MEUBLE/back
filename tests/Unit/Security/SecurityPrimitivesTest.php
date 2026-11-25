@@ -23,6 +23,35 @@ final class SecurityPrimitivesTest extends TestCase
         self::assertSame('0.0.0.0', ClientIp::from([]));
     }
 
+    public function testClientIpTrustsTheFrontOnlyWithTheSharedSecret(): void
+    {
+        $secret = str_repeat('k', ClientIp::MIN_SECRET_LENGTH);
+        $front = [
+            'REMOTE_ADDR' => '10.0.0.2',
+            'HTTP_X_FORWARDED_FOR' => '76.76.21.9',
+            ClientIp::CLIENT_IP_HEADER => '203.0.113.50',
+            ClientIp::PROXY_SECRET_HEADER => $secret,
+        ];
+        try {
+            ClientIp::trustFrontProxy(null);
+            self::assertSame('203.0.113.50', ClientIp::from($front, $secret));
+            self::assertSame('2001:db8::1', ClientIp::from([...$front, ClientIp::CLIENT_IP_HEADER => '2001:db8::1'], $secret));
+
+            self::assertSame('76.76.21.9', ClientIp::from([...$front, ClientIp::PROXY_SECRET_HEADER => 'devine'], $secret));
+            self::assertSame('76.76.21.9', ClientIp::from(array_diff_key($front, [ClientIp::PROXY_SECRET_HEADER => true]), $secret));
+            self::assertSame('76.76.21.9', ClientIp::from([...$front, ClientIp::CLIENT_IP_HEADER => 'pas-une-adresse'], $secret));
+            self::assertSame('76.76.21.9', ClientIp::from($front));
+            self::assertSame('76.76.21.9', ClientIp::from([...$front, ClientIp::PROXY_SECRET_HEADER => 'court'], 'court'));
+
+            ClientIp::trustFrontProxy($secret);
+            self::assertSame('203.0.113.50', ClientIp::from($front));
+            ClientIp::trustFrontProxy('court');
+            self::assertSame('76.76.21.9', ClientIp::from([...$front, ClientIp::PROXY_SECRET_HEADER => 'court']));
+        } finally {
+            ClientIp::trustFrontProxy(null);
+        }
+    }
+
     public function testHtmlEscaping(): void
     {
         self::assertSame('&lt;a href=&quot;x&quot;&gt;&#039;', Html::e('<a href="x">\''));

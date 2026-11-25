@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Email;
 
+use App\Lib\Html;
+
 final class PaymentLinkEmail
 {
     public static function subject(string $orderNumber): string
@@ -11,10 +13,19 @@ final class PaymentLinkEmail
         return "Lien de paiement pour votre commande #{$orderNumber}";
     }
 
-    public static function html(string $customerName, string $orderNumber, string $paymentUrl, string $expiresAt, float $totalAmount): string
-    {
+    public static function html(
+        string $customerName,
+        string $orderNumber,
+        string $paymentUrl,
+        string $expiresAt,
+        float $totalAmount,
+        array $lines = [],
+        ?float $orderTotal = null,
+        float $shippingAmount = 0.0,
+    ): string {
         $year = date('Y');
         $totalFormatted = number_format($totalAmount, 2, ',', ' ') . ' €';
+        $linesHtml = self::lines($lines, $orderTotal, $shippingAmount);
         $expiryTimestamp = strtotime($expiresAt);
         $expiryDate = date('d/m/Y à H:i', $expiryTimestamp === false ? time() : $expiryTimestamp);
         return "
@@ -59,6 +70,7 @@ final class PaymentLinkEmail
                             </tr>
                         </table>
                     </div>
+                    {$linesHtml}
 
                     <!-- Bouton -->
                     <div style='text-align: center; margin: 32px 0;'>
@@ -92,5 +104,26 @@ final class PaymentLinkEmail
         </body>
         </html>
         ";
+    }
+
+    private static function lines(array $lines, ?float $orderTotal, float $shippingAmount): string
+    {
+        if ($lines === [] && $orderTotal === null) {
+            return '';
+        }
+        $cell = 'padding: 8px 0; color: #1A1917; font-size: 14px; border-bottom: 1px solid #F0EFEA;';
+        $rows = '';
+        foreach ($lines as $line) {
+            $total = number_format((float) ($line['total_price'] ?? 0), 2, ',', ' ') . ' €';
+            $rows .= "<tr><td style='{$cell}'>" . Html::e($line['display_name'] ?? 'Article') . "</td><td style='{$cell} text-align: center;'>" . (int) ($line['quantity'] ?? 1) . "</td><td style='{$cell} text-align: right;'>{$total}</td></tr>";
+        }
+        if ($shippingAmount > 0) {
+            $rows .= "<tr><td style='{$cell}'>Livraison et manutention</td><td style='{$cell}'></td><td style='{$cell} text-align: right;'>" . number_format($shippingAmount, 2, ',', ' ') . ' €</td></tr>';
+        }
+        if ($orderTotal !== null) {
+            $rows .= "<tr><td colspan='2' style='padding: 12px 0; text-align: right; font-weight: 700;'>Total de la commande</td><td style='padding: 12px 0; text-align: right; font-weight: 700;'>" . number_format($orderTotal, 2, ',', ' ') . ' €</td></tr>';
+        }
+        return "<h3 style='margin: 24px 0 12px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em;'>Détail de la commande</h3>"
+            . "<div style='background-color: #FFFFFF; padding: 24px; border: 1px solid #E8E6E3;'><table style='width: 100%; border-collapse: collapse;'>{$rows}</table></div>";
     }
 }

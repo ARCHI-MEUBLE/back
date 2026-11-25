@@ -6,6 +6,7 @@ namespace App;
 
 use App\Config\Settings;
 use App\Db\Connection;
+use App\Domain\Configuration\AdminConfigurationPriceRoutes;
 use App\Domain\Configuration\AdminConfigurationRoutes;
 use App\Domain\Configuration\AdminConfigurationStatusRoutes;
 use App\Domain\Configuration\ArModelRoutes;
@@ -21,6 +22,9 @@ use App\Domain\Configuration\ConfigurationShareService;
 use App\Domain\Configuration\CustomerConfigurationRoutes;
 use App\Domain\Configuration\GenerateRoutes;
 use App\Domain\Customer\CustomerRepository;
+use App\Domain\Handle\HandleModelRepository;
+use App\Domain\Pricing\FurniturePricing;
+use App\Domain\Pricing\PricingConfigRepository;
 use App\Http\RouteCollection;
 use App\Infrastructure\Mail\EmailGatewayFactory;
 use App\Infrastructure\Python\ProcOpenRunner;
@@ -37,15 +41,17 @@ final class ConfigurationRouteRegistry
         (new CustomerConfigurationRoutes($configurations))->register($routes);
         (new AdminConfigurationRoutes($configurations))->register($routes);
         (new AdminConfigurationStatusRoutes($configurations))->register($routes);
+        (new AdminConfigurationPriceRoutes($configurations))->register($routes);
         (new ConfigurationDxfRoutes($db, $settings->rootDir))->register($routes);
         $mail = EmailGatewayFactory::create($settings, $db);
-        $saveService = new ConfigurationSaveService($configurations, new CustomerRepository($db), $mail);
+        $pricing = new FurniturePricing(new PricingConfigRepository($db), new HandleModelRepository($db));
+        $saveService = new ConfigurationSaveService($configurations, new CustomerRepository($db), $mail, $pricing);
         (new ConfigurationSaveRoutes($saveService))->register($routes);
         $shares = new ConfigurationShareRepository($db);
         $throttle = new Throttle(new RateLimiter($db));
         (new ConfigurationShareRoutes(
             new ConfigurationShareService($shares, $throttle),
-            new ConfigurationRequestService($shares, $mail, $throttle),
+            new ConfigurationRequestService($shares, $mail, $throttle, $pricing),
         ))->register($routes);
         (new GenerateRoutes(
             new ProcOpenRunner(),

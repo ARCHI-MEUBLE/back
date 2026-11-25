@@ -8,6 +8,7 @@ use App\Db\Connection;
 use App\Domain\Cart\CartRepository;
 use App\Domain\Customer\CustomerRepository;
 use App\Domain\Notification\AdminNotificationRepository;
+use App\Domain\Order\OrderLines;
 use App\Domain\Order\OrderRepository;
 use App\Infrastructure\Invoice\LegacyInvoiceGateway;
 use App\Infrastructure\Mail\EmailGateway;
@@ -25,6 +26,7 @@ final class PaymentConfirmationService
         private readonly LegacyInvoiceGateway $invoices,
         private readonly PaymentLinkRepository $paymentLinks,
         private readonly PaymentAmountPolicy $amounts,
+        private readonly OrderLines $lines,
     ) {}
 
     public function confirm(string $intentId, array $metadata, int $amountReceived, string $currency): PaymentConfirmationResult
@@ -62,8 +64,9 @@ final class PaymentConfirmationService
         $customer = (array) $this->customers->findRawById((int) $order['customer_id']);
         $items = $this->orders->itemsFor((int) $order['id']);
         $fullOrder = (array) $this->orders->findById((int) $order['id']);
-        $this->mail->sendOrderConfirmation($fullOrder, $customer, $items, $paymentType);
-        $this->mail->sendNewOrderNotificationToAdmin($fullOrder, $customer, $items);
+        $emailItems = array_merge($items, $this->lines->extraRows((int) $order['id']));
+        $this->mail->sendOrderConfirmation($fullOrder, $customer, $emailItems, $paymentType);
+        $this->mail->sendNewOrderNotificationToAdmin($fullOrder, $customer, array_merge($emailItems, OrderLines::sampleRows($this->orders->samplesFor((int) $order['id']))), $paymentType);
         if (is_string($paymentLinkToken) && $paymentLinkToken !== '') {
             $this->paymentLinks->markAsUsed($paymentLinkToken);
         }

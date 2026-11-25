@@ -80,6 +80,15 @@ final class OrderConfirmationSections
         return $html;
     }
 
+    public static function shipping(float $amount): string
+    {
+        if ($amount <= 0) {
+            return '';
+        }
+        return '<h4 style="margin: 20px 0 10px 0; color: #706F6C; font-size: 12px; text-transform: uppercase;">Livraison</h4>'
+            . self::row('Livraison et manutention', 'Calculée selon les articles commandés', number_format($amount, 2, ',', ' ') . ' €');
+    }
+
     private static function row(string $title, string $subtitleHtml, string $amount): string
     {
         return '<div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #E8E6E3;">'

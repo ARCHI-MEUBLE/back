@@ -55,9 +55,18 @@ echo "Setting up automated backup cron job..."
 # cron ne transmet pas l'environnement du conteneur : DATABASE_URL est écrit dans un fichier lisible par root seul
 umask 077
 printf 'export DATABASE_URL=%q\n' "$DATABASE_URL" > /etc/archimeuble-cron.env
+# Dossier des fichiers envoyés (fichiers joints aux devis), s'il n'est pas celui par défaut (/data/uploads)
+if [ -n "${UPLOADS_DIR:-}" ]; then
+    printf 'export UPLOADS_DIR=%q\n' "$UPLOADS_DIR" >> /etc/archimeuble-cron.env
+fi
 umask 022
-echo "0 3 * * * . /etc/archimeuble-cron.env && /usr/local/bin/backup-database.sh >> /data/backup-cron.log 2>&1" | crontab -
-echo "Backup cron job installed (runs daily at 3:00 AM)"
+# 3 h : sauvegarde de la base. 3 h 30 : suppression des données personnelles arrivées au bout de leur durée de
+# conservation (politique de confidentialité, voir src/Domain/System/PersonalDataRetention.php)
+printf '%s\n%s\n' \
+    "0 3 * * * . /etc/archimeuble-cron.env && /usr/local/bin/backup-database.sh >> /data/backup-cron.log 2>&1" \
+    "30 3 * * * . /etc/archimeuble-cron.env && /usr/local/bin/php /app/bin/console purge:personal-data >> /data/purge-cron.log 2>&1" \
+    | crontab -
+echo "Cron jobs installed (backup daily at 3:00 AM, personal-data purge at 3:30 AM)"
 
 # Démarrer le service cron en arrière-plan
 echo "Starting cron service..."

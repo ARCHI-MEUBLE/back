@@ -14,6 +14,7 @@ final class OrderMapper
             'status' => $order['status'],
             'total' => $order['total_amount'] ?? $order['total'] ?? 0,
             'amount' => $order['total_amount'] ?? $order['total'] ?? 0,
+            'shipping_amount' => (float) ($order['shipping_amount'] ?? 0),
             'shipping_address' => $order['shipping_address'] ?? '',
             'billing_address' => $order['billing_address'] ?? '',
             'payment_method' => $order['payment_method'] ?? 'card',

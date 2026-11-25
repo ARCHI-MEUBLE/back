@@ -26,10 +26,10 @@ final class CustomerConfigurationRoutes
             $customerId = (int) $s->customerId();
             if ($r->queryString('id') !== null) {
                 $configuration = $this->findOwned((int) $r->queryString('id'), $customerId);
-                return Response::json(['configuration' => $configuration]);
+                return Response::json(['configuration' => ConfigurationRepository::forCustomer($configuration)]);
             }
             return Response::json([
-                'configurations' => $this->configurations->findByCustomerId($customerId),
+                'configurations' => array_map(ConfigurationRepository::forCustomer(...), $this->configurations->findByCustomerId($customerId)),
                 'total' => $this->configurations->countByCustomerId($customerId),
             ]);
         });

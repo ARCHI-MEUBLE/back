@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Configuration;
 
+use App\Domain\Pricing\FurniturePricing;
 use App\Domain\QuoteRequest\LeadForm;
 use App\Domain\Shared\DomainException;
 use App\Domain\Shared\NotFoundException;
 use App\Infrastructure\Mail\EmailGateway;
 use App\Infrastructure\RateLimit\Throttle;
+use Throwable;
 
 final class ConfigurationRequestService
 {
@@ -16,6 +18,7 @@ final class ConfigurationRequestService
         private readonly ConfigurationShareRepository $shares,
         private readonly EmailGateway $mail,
         private readonly Throttle $throttle,
+        private readonly FurniturePricing $pricing,
     ) {}
 
     public function submit(array $form, string $ip): void
@@ -31,15 +34,27 @@ final class ConfigurationRequestService
         if ($email === '' && $fields['phone'] === '') {
             throw new DomainException('Indiquez un téléphone ou un e-mail pour que nous puissions vous recontacter');
         }
-        $price = is_numeric($form['price'] ?? null) && (float) $form['price'] >= 0 && (float) $form['price'] < 1000000 ? (float) $form['price'] : null;
         $this->throttle->consume($ip, 'configuration_request_ip', 10, 60);
         $share = ShareCode::isValid($fields['share_code']) ? $this->shares->open($fields['share_code']) : null;
         if ($share === null) {
             throw new NotFoundException(ConfigurationShareService::NOT_FOUND);
         }
-        $request = ['name' => $fields['name'], 'email' => $email, 'phone' => $fields['phone'], 'message' => $fields['message'], 'price' => $price];
+        $request = ['name' => $fields['name'], 'email' => $email, 'phone' => $fields['phone'], 'message' => $fields['message'], 'price' => $this->estimate($share['config_data'])];
         if (!$this->mail->sendConfigurationRequest($request, $share)) {
             throw new DomainException("Votre demande n'a pas pu être envoyée. Réessayez dans un instant ou appelez-nous.", 502);
+        }
+    }
+
+    private function estimate(array $configData): ?float
+    {
+        if (!FurniturePricing::canEstimate($configData)) {
+            return null;
+        }
+        try {
+            return (float) $this->pricing->estimate($configData)['price'];
+        } catch (Throwable $e) {
+            error_log('Configuration request: price estimate failed: ' . $e->getMessage());
+            return null;
         }
     }
 }

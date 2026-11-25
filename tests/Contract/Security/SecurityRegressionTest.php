@@ -22,6 +22,19 @@ final class SecurityRegressionTest extends ContractTestCase
         self::assertNotSame('paid', $customer->get('/backend/api/orders/list.php?id=' . $orderId)->data()['order']['payment_status'] ?? null);
     }
 
+    public function testAdminOrdersNeverExposeCustomerPasswordHash(): void
+    {
+        $admin = $this->admin();
+        $orderId = Orders::createOrder($this->customer(), $admin, 'hash-' . bin2hex(random_bytes(3)));
+
+        foreach (['/backend/api/admin/orders.php', '/backend/api/admin/orders.php?id=' . $orderId] as $url) {
+            $response = $admin->get($url);
+            self::assertSame(200, $response->status, $response->body);
+            self::assertStringNotContainsString('password_hash', $response->body);
+            self::assertStringNotContainsString('$2y$', $response->body);
+        }
+    }
+
     public function testFacadePriceIsComputedByTheServer(): void
     {
         $customer = Accounts::registerVerifiedCustomer($this->client(), Accounts::uniqueEmail('facade'), 'Facade#2026');
