@@ -1,0 +1,21 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "data": {
+                "list": {
+                    "object": {
+                        "finish_hex": "string",
+                        "id": "number",
+                        "image_url": "null",
+                        "length_mm": "number",
+                        "name": "string",
+                        "position": "number",
+                        "shape": "string"
+                    }
+                }
+            },
+            "success": "bool"
+        }
+    }
+}
