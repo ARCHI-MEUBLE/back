@@ -41,7 +41,7 @@ final class ModelService
             'name' => $input['name'],
             'description' => $input['description'] ?? null,
             'prompt' => $input['prompt'],
-            'price' => $this->estimate($configData) ?? $input['price'] ?? $input['basePrice'] ?? $input['base_price'] ?? null,
+            'price' => $this->estimate($configData),
             'image_url' => $input['imageUrl'] ?? $input['image_url'] ?? $input['imagePath'] ?? $input['image_path'] ?? null,
             'category' => $input['category'] ?? null,
             'config_data' => $configData,
@@ -63,6 +63,8 @@ final class ModelService
         $estimate = $this->estimate(is_string($configData) ? $configData : null);
         if ($estimate !== null) {
             $data['price'] = $estimate;
+        } else {
+            unset($data['price']);
         }
         if (!$this->models->update($id, $data)) {
             throw new DomainException('Erreur lors de la mise à jour du modèle', 500);

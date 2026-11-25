@@ -37,7 +37,11 @@ final class HandlePricingTest extends TestCase
         $knob = (int) (new FurniturePricingGrid())->get('handles', 'knob', 'price_per_unit');
 
         self::assertSame($knob, self::hardware(self::leaf('door', ['handleType' => 'knob']), ['modelId' => 7]));
-        self::assertSame($knob, self::hardware(self::leaf('door', ['handleModelId' => 99, 'handleType' => 'knob']), ['modelId' => 7]));
+    }
+
+    public function testUnknownZoneModelUsesFurnitureDefault(): void
+    {
+        self::assertSame(40, self::hardware(self::leaf('door', ['handleModelId' => 99, 'handleType' => 'knob']), ['modelId' => 7]));
     }
 
     public function testFurnitureModelAppliesToDoorsAndDrawersWithoutTheirOwnChoice(): void
@@ -47,12 +51,12 @@ final class HandlePricingTest extends TestCase
         self::assertSame(120, self::hardware($zone, ['modelId' => 7, 'doorOrientation' => 'vertical', 'drawerOrientation' => 'horizontal']));
     }
 
-    public function testInactiveOrUnknownModelsAreIgnored(): void
+    public function testInactiveOrUnknownModelsUseFirstActiveModel(): void
     {
         self::assertSame(40, self::hardware(self::leaf('door', ['handleModelId' => 99]), ['modelId' => 7]));
-        self::assertSame(0, self::hardware(self::leaf('door', ['handleModelId' => 99]), ['modelId' => 98]));
-        self::assertSame(0, self::hardware(self::leaf('door'), ['modelId' => '7']));
-        self::assertSame(0, self::hardware(self::leaf('door')));
+        self::assertSame(40, self::hardware(self::leaf('door', ['handleModelId' => 99]), ['modelId' => 98]));
+        self::assertSame(40, self::hardware(self::leaf('door'), ['modelId' => '7']));
+        self::assertSame(40, self::hardware(self::leaf('door')));
     }
 
     public function testOrientationDoesNotChangeThePrice(): void
@@ -83,9 +87,9 @@ final class HandlePricingTest extends TestCase
         $prices = HandlePrices::fromModelRows([['id' => 3, 'price_per_unit' => '30.00'], ['id' => 'x', 'price_per_unit' => '5'], ['id' => 4]]);
         $grid = new FurniturePricingGrid();
 
-        self::assertSame(30.0, $prices->price($grid, 3, null));
-        self::assertSame(0.0, $prices->price($grid, 4, null));
-        self::assertSame(30.0, $prices->forFurniture(['modelId' => 3])->price($grid, null, null));
+        self::assertSame(0.0, $prices->price($grid, []));
+        self::assertSame(30.0, $prices->forFurniture(['modelId' => 3])->price($grid, []));
+        self::assertSame(30.0, $prices->forFurniture(['modelId' => 4])->price($grid, []));
     }
 
     private static function hardware(array $zone, ?array $handles = null): int

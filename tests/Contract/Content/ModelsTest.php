@@ -46,6 +46,7 @@ final class ModelsTest extends ContractTestCase
             'hoverImagePath' => null,
         ]);
         $this->assertSnapshot('models.create', $created);
+        self::assertNull($created->data()['model']['price']);
         $id = (int) $created->data()['model']['id'];
         $this->assertSnapshot('models.create.invalid', $admin->post('/backend/api/models.php', ['name' => 'Sans prompt']));
         $this->assertSnapshot('models.update', $admin->put('/backend/api/models.php?id=' . $id, [
@@ -56,7 +57,7 @@ final class ModelsTest extends ContractTestCase
             'category' => 'Meubles TV',
             'price' => 1300,
             'image_url' => '/uploads/models/buffet.png',
-            'config_data' => ['dimensions' => ['width' => 1800]],
+            'config_data' => ['dimensions' => ['width' => 1800, 'height' => 450, 'depth' => 800]],
         ]));
         $this->assertSnapshot('models.delete', $admin->delete('/backend/api/models.php?id=' . $id, ['id' => $id]));
         $this->assertSnapshot('models.delete.missing', $admin->delete('/backend/api/models.php?id=' . $id, ['id' => $id]));
@@ -64,16 +65,20 @@ final class ModelsTest extends ContractTestCase
 
     public function testConfiguratorCanSaveModelAsAdmin(): void
     {
+        $configData = ['dimensions' => ['width' => 1200, 'height' => 350, 'depth' => 650]];
+        $estimate = $this->client()->post('/backend/api/pricing/estimate.php', ['config_data' => $configData]);
+        self::assertSame(200, $estimate->status, $estimate->body);
         $created = $this->admin()->post('/backend/api/models.php', [
             'name' => 'Depuis configurateur',
             'description' => '',
             'prompt' => 'M1(1200,350,650)EFbV4(,,T,)',
             'category' => 'Meubles TV',
-            'price' => 699,
+            'price' => -1,
             'image_url' => '/uploads/models/conf.png',
-            'config_data' => ['dimensions' => ['width' => 1200]],
+            'config_data' => $configData,
         ]);
 
         $this->assertSnapshot('models.create.configurator', $created);
+        self::assertSame((float) $estimate->data()['data']['price'], (float) $created->data()['model']['price']);
     }
 }

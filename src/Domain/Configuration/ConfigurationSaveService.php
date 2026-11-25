@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Configuration;
 
 use App\Domain\Customer\CustomerRepository;
+use App\Domain\Pricing\FurniturePricing;
 use App\Domain\Shared\ConflictException;
 use App\Domain\Shared\DomainException;
 use App\Domain\Shared\ForbiddenException;
@@ -21,6 +22,7 @@ final class ConfigurationSaveService
         private readonly ConfigurationRepository $configurations,
         private readonly CustomerRepository $customers,
         private readonly EmailGateway $mail,
+        private readonly FurniturePricing $pricing,
     ) {}
 
     public function save(array $data, Session $session): ConfigurationSaveResult

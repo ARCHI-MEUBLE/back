@@ -11,6 +11,8 @@ final class FurnitureOptionsPricingTest extends TestCase
 {
     use PricingFixtures;
 
+    private const HANDLE_MODELS = [['id' => 7, 'price_per_unit' => '25.00'], ['id' => 8, 'price_per_unit' => '12.50']];
+
     public function testDeliveryIsChargedApartFromTheFurniturePrice(): void
     {
         $config = self::config(1700, 600, 450, self::leaf('door'));

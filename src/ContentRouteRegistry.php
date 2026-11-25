@@ -71,6 +71,7 @@ final class ContentRouteRegistry
         (new PricingConfigRoutes($pricingConfig))->register($routes);
         (new MaterialPriceRoutes($materialPrices, $pricingConfig))->register($routes);
         (new FurniturePriceRoutes(new FurniturePricing($pricingConfig, $handleModels, $materialPrices)))->register($routes);
+        (new PricingRoutes(new PricingRepository($db)))->register($routes);
         $catalogueItems = new CatalogueRepository($db);
         $catalogueVariations = new CatalogueVariationRepository($db);
         (new CatalogueRoutes($catalogueItems, $catalogueVariations))->register($routes);

@@ -14,7 +14,7 @@ final class Orders
             'name' => $name,
             'model_id' => 1,
             'prompt' => 'M1(1600,450,720)EFbV3(,T,)',
-            'config_data' => ['dimensions' => ['width' => 1600]],
+            'config_data' => ['dimensions' => ['width' => 1600, 'height' => 450, 'depth' => 720]],
             'glb_url' => '/models/' . $name . '.glb',
             'dxf_url' => null,
             'price' => 850.75,

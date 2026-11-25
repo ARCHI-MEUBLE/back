@@ -6,7 +6,6 @@
                 "list": {
                     "object": {
                         "category": "string",
-                        "created_at": "string",
                         "description": "string",
                         "id": "number",
                         "is_active": "bool",

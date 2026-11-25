@@ -18,8 +18,6 @@ trait PricingFixtures
         ['color_id' => 4, 'material' => 'Chêne massif', 'price_per_m2' => null],
     ];
 
-    private const HANDLE_MODELS = [['id' => 7, 'price_per_unit' => '25.00'], ['id' => 8, 'price_per_unit' => '12.50']];
-
     private static function calculator(array $gridRows = [], array $handleModels = []): FurniturePriceCalculator
     {
         return FurniturePriceCalculator::fromConfigRows($gridRows, $handleModels, self::MATERIAL_ROWS);

@@ -9,7 +9,8 @@
                     "order_id": "number",
                     "order_number": "string",
                     "payment_link": "null",
-                    "total_amount": "string"
+                    "shipping_amount": "number",
+                    "total_amount": "number"
                 }
             },
             "message": "string",

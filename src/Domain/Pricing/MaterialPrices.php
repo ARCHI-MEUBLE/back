@@ -107,7 +107,7 @@ final class MaterialPrices
                 return (float) $this->materials[$text];
             }
         }
-        foreach (array_filter(array_map(self::legacyKey(...), $texts)) as $legacy) {
+        foreach (array_filter(array_map(self::legacyKey(...), $texts), static fn(?string $legacy): bool => $legacy !== null) as $legacy) {
             foreach ($this->materials as $name => $price) {
                 if (self::legacyKey((string) $name) === $legacy) {
                     return (float) $price;
