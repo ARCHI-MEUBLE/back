@@ -97,7 +97,7 @@ final class CustomerAuthService
         $this->customers->markEmailVerifiedById((int) $customer['id']);
         $this->throttle->reset($email, 'email_verify');
         $full = (array) $this->customers->findFullById((int) $customer['id']);
-        $this->openSession($full, $session);
+        self::openSession($full, $session);
         $this->verifications->clearCodesForEmail($email);
         return $full;
     }
@@ -136,7 +136,7 @@ final class CustomerAuthService
         }
     }
 
-    private function openSession(array $customer, Session $session): void
+    public static function openSession(array $customer, Session $session): void
     {
         $session->regenerate();
         $session->remove('admin_id');

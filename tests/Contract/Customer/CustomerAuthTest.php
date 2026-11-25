@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Contract\Customer;
 
+use Tests\Support\Accounts;
 use Tests\Support\ContractTestCase;
 use Tests\Support\DbSeeder;
 
@@ -93,5 +94,46 @@ final class CustomerAuthTest extends ContractTestCase
 
         $this->assertJsonResponse($response);
         $this->assertSnapshot('customer.resend-code', $response);
+    }
+
+    public function testLoginCodeUnknownEmailNeedsName(): void
+    {
+        $response = $this->client()->post('/backend/api/customers/email-code.php', ['email' => Accounts::uniqueEmail('code')]);
+
+        $this->assertSnapshot('customer.email-code.needs-name', $response);
+        self::assertTrue($response->data()['needsName']);
+    }
+
+    public function testLoginCodeCreatesCustomerAndOpensSession(): void
+    {
+        $client = $this->client();
+        $email = Accounts::uniqueEmail('code');
+        $request = $client->post('/backend/api/customers/email-code.php', ['email' => $email, 'first_name' => 'Camille', 'last_name' => 'Code']);
+        $this->assertSnapshot('customer.email-code.sent', $request);
+
+        $verify = $client->post('/backend/api/customers/email-verify.php', ['email' => $email, 'code' => Accounts::latestCode($email)]);
+        $this->assertSnapshot('customer.email-verify.ok', $verify);
+        $session = $client->get('/backend/api/customers/session.php');
+        self::assertTrue($session->data()['authenticated']);
+        self::assertSame($email, $session->data()['customer']['email']);
+        self::assertSame('Camille', $session->data()['customer']['first_name']);
+    }
+
+    public function testLoginCodeExistingCustomerKeepsAccount(): void
+    {
+        $client = $this->client();
+        $client->post('/backend/api/customers/email-code.php', ['email' => DbSeeder::CUSTOMER_EMAIL, 'first_name' => 'Autre', 'last_name' => 'Nom']);
+
+        $client->post('/backend/api/customers/email-verify.php', ['email' => DbSeeder::CUSTOMER_EMAIL, 'code' => Accounts::latestCode(DbSeeder::CUSTOMER_EMAIL)]);
+        $session = $client->get('/backend/api/customers/session.php');
+        self::assertTrue($session->data()['authenticated']);
+        self::assertNotSame('Autre', $session->data()['customer']['first_name']);
+    }
+
+    public function testLoginCodeInvalid(): void
+    {
+        $response = $this->client()->post('/backend/api/customers/email-verify.php', ['email' => DbSeeder::CUSTOMER_EMAIL, 'code' => '000000']);
+
+        $this->assertSnapshot('customer.email-verify.invalid', $response);
     }
 }

@@ -56,7 +56,17 @@ textures={"exterieur": textures_dict["Blanc Premium"],"interieur": textures_dict
 
 print(textures_dict["Chêne Brun"].epaisseur)
 
-def process(sequence,zone,textures=textures) : # cette fonction sert à parser un sequence de caractère pour modeliser un meuble 
+# Au-delà de cette largeur (mm), un meuble M(...) est automatiquement scindé en 2 caissons
+# côte à côte (une double planche verticale, chacun avec sa propre enveloppe) plutôt que d'être
+# fabriqué d'un seul tenant. Temporaire : à terme la valeur viendra d'une configuration partagée
+# avec le front (voir CAISSON_WIDTH_THRESHOLD_MM dans ThreeCanvas.tsx).
+CAISSON_LARGEUR_MAX_MM = 1000
+
+# Le fond n'est pas posé flush contre l'arrière du meuble : il glisse dans une rainure usinée
+# dans les plaques latérales, en retrait de cette distance (mm) par rapport au bord arrière réel.
+RAINURE_FOND_MM = 20
+
+def process(sequence,zone,textures=textures) : # cette fonction sert à parser un sequence de caractère pour modeliser un meuble
     #l'objet zone est ammenée à évoluer suite aux opération faites dessus cela repésente une zone d'espace 
     # l'objet Listplanches permet d'accumuler les planches qui résultent des différentes opérations
     
@@ -110,7 +120,17 @@ def process(sequence,zone,textures=textures) : # cette fonction sert à parser u
                 seq1,seq2,seq3=subsequence(sequence[i:])
                 i=i+len(seq1)+len(seq2)+len(seq3)+3
                 zone=M5(seq1,seq2,seq3)
-        elif char=="E" : # E comme enveloppe : créer une enveloppe externe au meuble 
+
+            # Meuble trop large : on le scinde en 2 caissons côte à côte (simple découpe, sans
+            # planche) et on applique la suite de la séquence identiquement à chacun des deux.
+            if float(seq1) > CAISSON_LARGEUR_MAX_MM:
+                print(f"Largeur {seq1}mm > {CAISSON_LARGEUR_MAX_MM}mm : scission en 2 caissons")
+                zone_gauche, zone_droite = zone.couper(dir="verticale")
+                reste = sequence[i+1:]
+                Listplanches = Listplanches + process(reste, zone_gauche, textures)
+                Listplanches = Listplanches + process(reste, zone_droite, textures)
+                return Listplanches
+        elif char=="E" : # E comme enveloppe : créer une enveloppe externe au meuble
             print("E")
             planches,zone=zone.envelopper(label="d",epaisseur=textures["exterieur"].epaisseur,texture=textures["exterieur"])
             Listplanches=Listplanches+planches
@@ -120,8 +140,12 @@ def process(sequence,zone,textures=textures) : # cette fonction sert à parser u
             Listplanches=Listplanches+planches
         elif char=="F" : # F permet d'ajouter une planche de fond
             print("F")
+            # Le fond glisse dans une rainure à RAINURE_FOND_MM du bord arrière réel : on
+            # réserve d'abord cet espace (sans planche, juste la rainure), puis on pose la vraie
+            # planche juste après, qui se retrouve donc en retrait d'autant.
+            _,zone=zone.envelopper(label="f",epaisseur=RAINURE_FOND_MM)
             planches,zone=zone.envelopper(label="f",epaisseur=textures["exterieur"].epaisseur,texture=textures["exterieur"])
-            Listplanches=Listplanches+planches  
+            Listplanches=Listplanches+planches
         elif char=="V": # V permet de faire une séparation verticale
             print("V")
             i=i+1

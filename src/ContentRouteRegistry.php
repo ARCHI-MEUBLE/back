@@ -30,8 +30,6 @@ use App\Domain\Pricing\MaterialPriceRepository;
 use App\Domain\Pricing\MaterialPriceRoutes;
 use App\Domain\Pricing\PricingConfigRepository;
 use App\Domain\Pricing\PricingConfigRoutes;
-use App\Domain\Pricing\PricingRepository;
-use App\Domain\Pricing\PricingRoutes;
 use App\Domain\Realisation\AdminRealisationImageRoutes;
 use App\Domain\Realisation\AdminRealisationRoutes;
 use App\Domain\Realisation\RealisationImageRepository;
@@ -71,7 +69,6 @@ final class ContentRouteRegistry
         (new PricingConfigRoutes($pricingConfig))->register($routes);
         (new MaterialPriceRoutes($materialPrices, $pricingConfig))->register($routes);
         (new FurniturePriceRoutes(new FurniturePricing($pricingConfig, $handleModels, $materialPrices)))->register($routes);
-        (new PricingRoutes(new PricingRepository($db)))->register($routes);
         $catalogueItems = new CatalogueRepository($db);
         $catalogueVariations = new CatalogueVariationRepository($db);
         (new CatalogueRoutes($catalogueItems, $catalogueVariations))->register($routes);

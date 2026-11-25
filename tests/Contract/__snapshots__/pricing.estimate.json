@@ -1,0 +1,26 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "data": {
+                "object": {
+                    "delivery": "number",
+                    "high": "number",
+                    "lines": {
+                        "list": {
+                            "object": {
+                                "amount": "number",
+                                "key": "string",
+                                "label": "string"
+                            }
+                        }
+                    },
+                    "low": "number",
+                    "price": "number",
+                    "sigma": "number"
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

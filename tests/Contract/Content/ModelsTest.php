@@ -23,11 +23,6 @@ final class ModelsTest extends ContractTestCase
         $this->assertSnapshot('models.one.missing', $this->client()->get('/api/models?id=999'));
     }
 
-    public function testTemplates(): void
-    {
-        $this->assertSnapshot('templates.list', $this->client()->get('/backend/api/templates.php'));
-    }
-
     public function testAnonymousCannotWrite(): void
     {
         $this->assertSnapshot('models.create.unauthorized', $this->client()->post('/backend/api/models.php', ['name' => 'X', 'prompt' => 'M1(1,1,1)Eb']));

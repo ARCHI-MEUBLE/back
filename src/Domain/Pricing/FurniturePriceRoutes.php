@@ -19,7 +19,7 @@ final class FurniturePriceRoutes
         $routes->script('pricing/estimate', errorStyle: ErrorStyle::Success)
             ->post(null, function (Request $request): Response {
                 $config = $request->json()['config_data'] ?? null;
-                if (!is_array($config)) {
+                if (!is_array($config) || !FurniturePricing::canEstimate($config)) {
                     throw new DomainException('Configuration invalide');
                 }
                 return Response::json(['success' => true, 'data' => $this->pricing->estimate($config)]);

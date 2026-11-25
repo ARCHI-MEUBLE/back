@@ -1,8 +1,9 @@
 {
-    "status": 200,
+    "status": 422,
     "shape": {
         "object": {
-            "message": "string",
+            "error": "string",
+            "needsName": "bool",
             "success": "bool"
         }
     }

@@ -55,6 +55,15 @@ final class CustomerSchemas
         ]);
     }
 
+    public static function loginCodeRequest(): Schema
+    {
+        return Schema::object([
+            'email' => Field::string()->required('Email requis')->email('Email invalide'),
+            'first_name' => Field::string()->nullable(),
+            'last_name' => Field::string()->nullable(),
+        ]);
+    }
+
     public static function emailOnly(string $message): Schema
     {
         return Schema::object(['email' => Field::string()->required($message)->email('Email invalide')]);

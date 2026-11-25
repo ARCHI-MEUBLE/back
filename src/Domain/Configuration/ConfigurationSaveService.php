@@ -45,6 +45,9 @@ final class ConfigurationSaveService
             }
         }
         $configData = self::configData($data);
+        if (FurniturePricing::canEstimate($configData)) {
+            $data['price'] = $this->pricing->estimate($configData)['price'];
+        }
         return $isUpdate
             ? new ConfigurationSaveResult($this->update((int) $data['id'], $data, $configData, $isAdmin, $customerId), 200)
             : new ConfigurationSaveResult($this->create($data, $configData, $isAdmin, $customerId, $session), 201);
