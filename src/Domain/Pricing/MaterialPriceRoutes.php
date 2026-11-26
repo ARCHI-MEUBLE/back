@@ -46,7 +46,7 @@ final class MaterialPriceRoutes
             $this->materials->set($material, (float) $price);
             return Response::json(['success' => true]);
         }
-        $colors =$this->materials->colorCount($material);
+        $colors = $this->materials->colorCount($material);
         if ($colors > 0) {
             throw new DomainException(sprintf('Cette matière est encore utilisée par %d couleur%s : changez leur matière avant de retirer son prix', $colors, $colors > 1 ? 's' : ''));
         }
