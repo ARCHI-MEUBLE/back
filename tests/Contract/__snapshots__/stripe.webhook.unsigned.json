@@ -1,5 +1,5 @@
 {
-    "status": 400,
+    "status": 500,
     "shape": {
         "list": "string"
     }

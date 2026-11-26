@@ -37,6 +37,7 @@ final class FurniturePricingGrid
             'furniture' => ['price_per_m2' => 45, 'minimum' => 0],
             'parcel' => ['flat' => 0, 'free_from' => 0],
         ],
+        'installation' => ['furniture' => ['price_per_m2' => 50, 'minimum' => 90]],
         'rounding' => ['price' => ['step' => 10]],
         'payment' => ['deposit' => ['default_percent' => 30]],
         'uncertainty' => [
@@ -44,6 +45,7 @@ final class FurniturePricingGrid
             'panels' => ['relative' => 0.15],
             'fronts' => ['relative' => 0.25],
             'hardware' => ['relative' => 0.20],
+            'installation' => ['relative' => 0.15],
         ],
     ];
 

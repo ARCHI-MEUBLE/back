@@ -6,6 +6,7 @@
                 "object": {
                     "delivery": "number",
                     "high": "number",
+                    "installation": "number",
                     "lines": {
                         "list": {
                             "object": {

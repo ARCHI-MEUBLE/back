@@ -39,6 +39,7 @@ final class ConfigurationDetailSections
         $color = $styling['colorLabel'] ?? ($styling['color'] ?? 'Standard');
         $socle = $styling['socle'] ?? 'none';
         $socleLabel = $socle === 'metal' ? 'Socle métal noir' : ($socle === 'wood' ? 'Socle bois' : 'Sans socle (pose au sol)');
+        $installationLabel = ($features['installation'] ?? false) === true ? 'Comprise' : 'Non comprise (livraison seule)';
         $html = "
                     <div style='background-color: #FAFAF9; padding: 24px; border: 1px solid #E8E6E3; margin-bottom: 24px;'>
                         <h4 style='margin: 0 0 16px 0; color: #1A1917; font-size: 14px; text-transform: uppercase; tracking: 0.1em; font-weight: 700;'>🎨 Finitions & Matériaux</h4>
@@ -56,8 +57,12 @@ final class ConfigurationDetailSections
                                 <td style='padding: 10px 0; color: #1A1917; text-align: right; font-weight: 600;'>{$color}</td>
                             </tr>
                             <tr>
-                                <td style='padding: 10px 0; color: #706F6C; font-size: 14px;'>Type de socle</td>
+                                <td style='padding: 10px 0; color: #706F6C; font-size: 14px; border-bottom: 1px solid #F0EFEA;'>Type de socle</td>
                                 <td style='padding: 10px 0; color: #1A1917; text-align: right; font-weight: 600;'>{$socleLabel}</td>
+                            </tr>
+                            <tr>
+                                <td style='padding: 10px 0; color: #706F6C; font-size: 14px;'>Pose et montage</td>
+                                <td style='padding: 10px 0; color: #1A1917; text-align: right; font-weight: 600;'>{$installationLabel}</td>
                             </tr>
                         </table>
                     </div>

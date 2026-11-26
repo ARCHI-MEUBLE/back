@@ -9,7 +9,7 @@ use App\Domain\Shared\DomainException;
 
 final class SampleColorRepository
 {
-    private const COLUMNS = 'id, type_id, name, hex, image_url, active, position, price_per_m2, unit_price, created_at, updated_at';
+    private const COLUMNS = 'id, type_id, name, hex, image_url, active, position, price_per_m2, unit_price, furniture_price_per_m2, created_at, updated_at';
 
     public function __construct(private readonly Connection $db) {}
 
@@ -45,13 +45,17 @@ final class SampleColorRepository
             return false;
         }
         $active = (isset($data['active']) && $data['active'] !== '') ? filter_var($data['active'], FILTER_VALIDATE_BOOLEAN) : $color['active'];
+        $furniturePrice = array_key_exists('furniture_price_per_m2', $data)
+            ? (is_numeric($data['furniture_price_per_m2']) ? (float) $data['furniture_price_per_m2'] : null)
+            : $color['furniture_price_per_m2'];
         $this->db->execute(
-            'UPDATE sample_colors SET name = ?, hex = ?, image_url = ?, active = ?, position = ?, price_per_m2 = ?, unit_price = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            'UPDATE sample_colors SET name = ?, hex = ?, image_url = ?, active = ?, position = ?, price_per_m2 = ?, unit_price = ?, furniture_price_per_m2 = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
             [
                 $data['name'] ?? $color['name'], $data['hex'] ?? $color['hex'], $data['image_url'] ?? $color['image_url'], $active,
                 isset($data['position']) ? (int) $data['position'] : $color['position'],
                 isset($data['price_per_m2']) ? (float) $data['price_per_m2'] : $color['price_per_m2'],
                 isset($data['unit_price']) ? (float) $data['unit_price'] : $color['unit_price'],
+                $furniturePrice,
                 $id,
             ],
         );

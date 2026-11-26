@@ -15,7 +15,7 @@ final class MaterialPriceRepository
         $sql = 'SELECT 0 AS part, id AS ord, NULL::integer AS color_id, material, price_per_m2 FROM material_prices';
         $ids = array_values(array_filter($colorIds, 'is_int'));
         if ($ids !== []) {
-            $sql .= ' UNION ALL SELECT 1, sc.id, sc.id, st.material, mp.price_per_m2 FROM sample_colors sc
+            $sql .= ' UNION ALL SELECT 1, sc.id, sc.id, st.material, COALESCE(sc.furniture_price_per_m2, mp.price_per_m2) FROM sample_colors sc
                 JOIN sample_types st ON st.id = sc.type_id
                 LEFT JOIN material_prices mp ON LOWER(mp.material) = LOWER(TRIM(st.material))
                 WHERE sc.id IN (' . implode(', ', array_fill(0, count($ids), '?')) . ')';

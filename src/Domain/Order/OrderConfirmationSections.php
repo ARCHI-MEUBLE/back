@@ -14,9 +14,9 @@ final class OrderConfirmationSections
         $html = '<h4 style="margin: 20px 0 10px 0; color: #706F6C; font-size: 12px; text-transform: uppercase;">Meubles sur mesure</h4>';
         foreach ($items as $item) {
             $configData = is_string($item['config_data']) ? json_decode($item['config_data'], true) : $item['config_data'];
-            $name = $configData['name'] ?? $item['name'] ?? 'Configuration';
+            $name = ($configData['name'] ?? $item['name'] ?? 'Configuration') . OrderLines::installationSuffix($configData);
             $total = $item['total_price'] ?? ($item['unit_price'] * $item['quantity']);
-            $html .= self::row(htmlspecialchars((string) $name), 'Qté: ' . $item['quantity'], number_format((float) $total, 2, ',', ' ') . ' €');
+            $html .= self::row(htmlspecialchars($name), 'Qté: ' . $item['quantity'], number_format((float) $total, 2, ',', ' ') . ' €');
         }
         return $html;
     }

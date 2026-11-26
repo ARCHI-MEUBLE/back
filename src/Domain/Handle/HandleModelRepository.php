@@ -8,7 +8,8 @@ use App\Db\Connection;
 
 final class HandleModelRepository
 {
-    private const PUBLIC_COLUMNS = 'id, name, shape, finish_hex, length_mm, image_url, position';
+    private const PUBLIC_COLUMNS = 'id, name, shape, finish_hex, length_mm, center_distance_mm, width_mm, projection_mm, image_url, position';
+    private const DIMENSIONS = ['length_mm', 'center_distance_mm', 'width_mm', 'projection_mm'];
     private const ADMIN_COLUMNS = self::PUBLIC_COLUMNS . ', price_per_unit, active, created_at, updated_at';
     private const ORDER = ' ORDER BY position, name, id';
 
@@ -48,8 +49,8 @@ final class HandleModelRepository
     public function create(array $data): int
     {
         return $this->db->insertReturningId(
-            'INSERT INTO handle_models (name, shape, finish_hex, length_mm, image_url, price_per_unit, active, position)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id',
+            'INSERT INTO handle_models (name, shape, finish_hex, length_mm, center_distance_mm, width_mm, projection_mm, image_url,
+             price_per_unit, active, position) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id',
             self::values($data),
         );
     }
@@ -57,8 +58,8 @@ final class HandleModelRepository
     public function update(int $id, array $data): bool
     {
         return $this->db->execute(
-            'UPDATE handle_models SET name = ?, shape = ?, finish_hex = ?, length_mm = ?, image_url = ?, price_per_unit = ?,
-             active = ?, position = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            'UPDATE handle_models SET name = ?, shape = ?, finish_hex = ?, length_mm = ?, center_distance_mm = ?, width_mm = ?,
+             projection_mm = ?, image_url = ?, price_per_unit = ?, active = ?, position = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
             [...self::values($data), $id],
         ) > 0;
     }
@@ -71,15 +72,17 @@ final class HandleModelRepository
     private static function values(array $data): array
     {
         return [
-            $data['name'], $data['shape'], $data['finish_hex'], $data['length_mm'], $data['image_url'],
-            $data['price_per_unit'], $data['active'], $data['position'],
+            $data['name'], $data['shape'], $data['finish_hex'], $data['length_mm'], $data['center_distance_mm'],
+            $data['width_mm'], $data['projection_mm'], $data['image_url'], $data['price_per_unit'], $data['active'], $data['position'],
         ];
     }
 
     private static function row(array $row): array
     {
         $row['id'] = (int) $row['id'];
-        $row['length_mm'] = $row['length_mm'] === null ? null : (int) $row['length_mm'];
+        foreach (self::DIMENSIONS as $column) {
+            $row[$column] = $row[$column] === null ? null : (int) $row[$column];
+        }
         $row['position'] = (int) $row['position'];
         if (array_key_exists('active', $row)) {
             $row['active'] = (bool) $row['active'];
