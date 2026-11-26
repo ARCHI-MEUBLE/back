@@ -2,7 +2,11 @@
     "status": 200,
     "shape": {
         "object": {
+            "deposit_amount": "number",
+            "deposit_percentage": "number",
             "message": "string",
+            "payment_strategy": "string",
+            "remaining_amount": "number",
             "success": "bool"
         }
     }

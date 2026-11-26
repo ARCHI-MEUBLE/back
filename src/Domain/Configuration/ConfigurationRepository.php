@@ -70,6 +70,12 @@ final class ConfigurationRepository
         $this->db->execute('UPDATE configurations SET ' . implode(', ', $set) . ' WHERE id = ?', $params);
     }
 
+    public static function forCustomer(array $row): array
+    {
+        unset($row['price_note']);
+        return $row;
+    }
+
     public function delete(int $id): void
     {
         $this->db->execute('DELETE FROM configurations WHERE id = ?', [$id]);
@@ -92,7 +98,7 @@ final class ConfigurationRepository
     {
         [$where, $params] = self::statusFilter($status);
         $rows = $this->db->query(
-            "SELECT c.id, c.user_id, c.template_id as model_id, c.prompt, c.config_string, c.price, c.glb_url, c.dxf_url, c.created_at, c.status,
+            "SELECT c.id, c.user_id, c.template_id as model_id, c.prompt, c.config_string, c.price, c.price_adjusted, c.price_note, c.price_includes_delivery, c.glb_url, c.dxf_url, c.created_at, c.status,
                     cust.email as customer_email, cust.first_name as customer_first_name, cust.last_name as customer_last_name, cust.phone as customer_phone, m.name as model_name
              FROM configurations c
              LEFT JOIN customers cust ON CAST(c.user_id AS INTEGER) = cust.id

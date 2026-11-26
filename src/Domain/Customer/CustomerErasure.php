@@ -21,7 +21,7 @@ final class CustomerErasure
             if (!$hasHistory) {
                 return $db->execute('DELETE FROM customers WHERE id = ?', [$id]) > 0;
             }
-            foreach (['cart_items', 'cart_sample_items', 'cart_catalogue_items', 'facade_cart_items', 'notifications', 'saved_facades'] as $table) {
+            foreach (['cart_items', 'cart_sample_items', 'cart_catalogue_items', 'facade_cart_items', 'notifications'] as $table) {
                 $db->execute("DELETE FROM {$table} WHERE customer_id = ?", [$id]);
             }
             return $db->execute(

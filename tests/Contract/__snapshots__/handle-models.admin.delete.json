@@ -1,8 +1,8 @@
 {
-    "status": 401,
+    "status": 200,
     "shape": {
         "object": {
-            "error": "string"
+            "success": "bool"
         }
     }
 }

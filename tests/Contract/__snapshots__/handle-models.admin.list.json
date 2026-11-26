@@ -1,0 +1,48 @@
+{
+    "status": 200,
+    "shape": {
+        "object": {
+            "data": {
+                "list": {
+                    "object": {
+                        "active": "bool",
+                        "center_distance_mm": {
+                            "union": [
+                                "null",
+                                "number"
+                            ]
+                        },
+                        "created_at": "string",
+                        "finish_hex": "string",
+                        "id": "number",
+                        "image_url": "null",
+                        "length_mm": {
+                            "union": [
+                                "null",
+                                "number"
+                            ]
+                        },
+                        "name": "string",
+                        "position": "number",
+                        "price_per_unit": "string",
+                        "projection_mm": {
+                            "union": [
+                                "null",
+                                "number"
+                            ]
+                        },
+                        "shape": "string",
+                        "updated_at": "string",
+                        "width_mm": {
+                            "union": [
+                                "null",
+                                "number"
+                            ]
+                        }
+                    }
+                }
+            },
+            "success": "bool"
+        }
+    }
+}

@@ -26,7 +26,10 @@ INSERT INTO facade_settings (setting_key, setting_value, description) VALUES
 ('hinge_hole_diameter', '35', 'Diamètre perçage'),
 ('max_width', '1200', 'Largeur max'),
 ('max_height', '2400', 'Hauteur max'),
-('fixed_depth', '19', 'Épaisseur');
+('fixed_depth', '19', 'Épaisseur')
+ON CONFLICT (setting_key) DO UPDATE SET
+    setting_value = EXCLUDED.setting_value,
+    description = EXCLUDED.description;
 
 INSERT INTO realisations (titre, description, image_url, date_projet, categorie, lieu, dimensions) VALUES
 ('Bibliothèque sur mesure', 'Chêne massif', '/uploads/realisations/biblio.jpg', '2026-03', 'Bibliothèque', 'Lille', '2400x300x2200');
@@ -46,12 +49,9 @@ INSERT INTO calendly_appointments (calendly_event_id, client_name, client_email,
 INSERT INTO quote_requests (first_name, last_name, email, phone, description, status) VALUES
 ('Jean', 'Dupont', 'jean@example.test', '0600000000', 'Un dressing', 'pending');
 
-INSERT INTO templates (name, description, prompt, config_data, image_url, category, price, is_active) VALUES
-('Template TV', 'Base', 'M1(1700,500,730)EFbV3(,T,)', '{}', NULL, 'Meubles TV', 899.00, TRUE);
-
 INSERT INTO configurations (id, user_id, user_session, template_id, config_string, prompt, price, glb_url, dxf_url, status) VALUES
-(1, '1', NULL, 1, '{"name":"Ma config","dimensions":{"width":1700}}', 'M1(1700,500,730)EFbV3(,T,)', 899.50, '/models/seed.glb', '/models/seed.dxf', 'validee'),
-(2, '1', NULL, 1, '{"name":"Brouillon"}', 'M1(1200,350,650)EFbV4(,,T,)', 699.00, '/models/seed2.glb', NULL, 'en_attente_validation'),
-(3, '1', NULL, 2, '{"name":"Pour commande admin"}', 'M1(2000,400,600)EFbV2(T,T)', 1099.00, '/models/seed3.glb', NULL, 'validee');
+(1, '1', NULL, 1, '{"name":"Ma config","dimensions":{"width":1700,"height":500,"depth":730}}', 'M1(1700,500,730)EFbV3(,T,)', 899.50, '/models/seed.glb', '/models/seed.dxf', 'validee'),
+(2, '1', NULL, 1, '{"name":"Brouillon","dimensions":{"width":1200,"height":350,"depth":650}}', 'M1(1200,350,650)EFbV4(,,T,)', 699.00, '/models/seed2.glb', NULL, 'en_attente_validation'),
+(3, '1', NULL, 2, '{"name":"Pour commande admin","dimensions":{"width":2000,"height":400,"depth":600}}', 'M1(2000,400,600)EFbV2(T,T)', 1099.00, '/models/seed3.glb', NULL, 'validee');
 SELECT setval('configurations_id_seq', (SELECT MAX(id) FROM configurations));
 

@@ -5,12 +5,14 @@
             "data": {
                 "list": {
                     "object": {
-                        "created_at": "string",
+                        "category": "string",
                         "description": "string",
                         "id": "number",
                         "is_active": "bool",
-                        "name": "string",
-                        "price_per_m3": "string",
+                        "item_type": "string",
+                        "param_name": "string",
+                        "param_value": "string",
+                        "unit": "string",
                         "updated_at": "string"
                     }
                 }

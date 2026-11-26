@@ -13,11 +13,22 @@ use App\Http\Request;
 use App\Http\Response;
 use App\Http\RouteCollection;
 use App\Infrastructure\Stripe\StripeGateway;
+use App\Infrastructure\Stripe\StripeObjectReader;
 use Throwable;
 
 final class SyncPaymentStatusRoutes
 {
-    public function __construct(private readonly Connection $db, private readonly StripeGateway $stripe) {}
+    private const INTENTS = [
+        'stripe_payment_intent_id' => ['full', 'payment_status', 'Paiement complet'],
+        'deposit_stripe_intent_id' => ['deposit', 'deposit_payment_status', 'Acompte'],
+        'balance_stripe_intent_id' => ['balance', 'balance_payment_status', 'Solde'],
+    ];
+
+    public function __construct(
+        private readonly Connection $db,
+        private readonly StripeGateway $stripe,
+        private readonly PaymentConfirmationService $confirmation,
+    ) {}
 
     public function register(RouteCollection $routes): void
     {
@@ -37,16 +48,15 @@ final class SyncPaymentStatusRoutes
         if ($order === null) {
             throw new NotFoundException('Commande introuvable');
         }
-        $updates = [];
         $logs = [];
-        $this->checkFull($order, $updates, $logs);
-        $this->checkDeposit($order, $updates, $logs);
-        $this->checkBalance($order, $updates, $logs);
-        if ($updates !== []) {
-            $updates[] = 'updated_at = CURRENT_TIMESTAMP';
-            $this->db->execute('UPDATE orders SET ' . implode(', ', array_unique($updates)) . ' WHERE id = ?', [$orderId]);
-            $logs[] = 'Base de données mise à jour';
-        } else {
+        foreach (self::INTENTS as $column => [$type, $statusColumn, $label]) {
+            $intentId = $order[$column] ?? null;
+            if (is_string($intentId) && $intentId !== '') {
+                $logs[] = $this->check($orderId, $intentId, $type, $statusColumn, $label);
+            }
+        }
+        $logs = array_values(array_filter($logs, static fn(?string $log): bool => $log !== null));
+        if ($logs === []) {
             $logs[] = 'Aucune mise à jour nécessaire';
         }
         $final = (array) $this->db->queryOne('SELECT * FROM orders WHERE id = ?', [$orderId]);
@@ -56,73 +66,35 @@ final class SyncPaymentStatusRoutes
         ]]);
     }
 
-    private function checkFull(array $order, array &$updates, array &$logs): void
+    private function check(int $orderId, string $intentId, string $type, string $statusColumn, string $label): ?string
     {
-        $intentId = $order['stripe_payment_intent_id'] ?? null;
-        if ($intentId === null) {
-            return;
-        }
         try {
-            $status = $this->stripe->retrievePaymentIntent($intentId)->status;
-            if ($status === 'succeeded') {
-                $updates[] = "payment_status = 'paid'";
-                $updates[] = "status = 'confirmed'";
-                if (!$order['confirmed_at']) {
-                    $updates[] = 'confirmed_at = CURRENT_TIMESTAMP';
+            $intent = $this->stripe->retrievePaymentIntent($intentId);
+            if ($intent->status === 'succeeded') {
+                $metadata = StripeObjectReader::metadataArray($intent);
+                if (isset($metadata['order_id']) && (int) $metadata['order_id'] !== $orderId) {
+                    return "{$label} ignoré : le paiement {$intentId} concerne une autre commande";
                 }
-                $logs[] = "Paiement complet confirmé (PI: {$intentId})";
-            } elseif (in_array($status, ['canceled', 'failed'], true)) {
-                $updates[] = "payment_status = 'failed'";
-                $logs[] = "Paiement complet échoué (PI: {$intentId})";
+                $metadata['order_id'] = $orderId;
+                $metadata['payment_type'] ??= $type;
+                $result = $this->confirmation->confirm($intentId, $metadata, StripeObjectReader::amountReceived($intent), (string) $intent->currency);
+                return match (true) {
+                    $result->order === null => "{$label} : commande introuvable pour le paiement {$intentId}",
+                    $result->amountMismatch => "{$label} NON enregistré : le montant payé ne correspond pas au montant dû (PI: {$intentId}). Vérifiez dans Stripe.",
+                    $result->alreadyProcessed => "{$label} déjà enregistré (PI: {$intentId})",
+                    default => "{$label} confirmé (PI: {$intentId})",
+                };
             }
-        } catch (Throwable $e) {
-            $logs[] = 'Erreur lors de la vérification du paiement complet: ' . $e->getMessage();
-        }
-    }
-
-    private function checkDeposit(array $order, array &$updates, array &$logs): void
-    {
-        $intentId = $order['deposit_stripe_intent_id'] ?? null;
-        if ($intentId === null) {
-            return;
-        }
-        try {
-            $status = $this->stripe->retrievePaymentIntent($intentId)->status;
-            if ($status === 'succeeded') {
-                $updates[] = "deposit_payment_status = 'paid'";
-                $updates[] = "payment_status = 'partially_paid'";
-                $updates[] = "status = 'confirmed'";
-                if (!$order['confirmed_at']) {
-                    $updates[] = 'confirmed_at = CURRENT_TIMESTAMP';
-                }
-                $logs[] = "Acompte confirmé (PI: {$intentId})";
-            } elseif (in_array($status, ['canceled', 'failed'], true)) {
-                $updates[] = "deposit_payment_status = 'failed'";
-                $logs[] = "Acompte échoué (PI: {$intentId})";
+            if ($intent->status === 'canceled') {
+                $this->db->execute(
+                    "UPDATE orders SET {$statusColumn} = 'failed', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND {$statusColumn} IS DISTINCT FROM 'paid'",
+                    [$orderId],
+                );
+                return "{$label} annulé dans Stripe (PI: {$intentId})";
             }
+            return null;
         } catch (Throwable $e) {
-            $logs[] = "Erreur lors de la vérification de l'acompte: " . $e->getMessage();
-        }
-    }
-
-    private function checkBalance(array $order, array &$updates, array &$logs): void
-    {
-        $intentId = $order['balance_stripe_intent_id'] ?? null;
-        if ($intentId === null) {
-            return;
-        }
-        try {
-            $status = $this->stripe->retrievePaymentIntent($intentId)->status;
-            if ($status === 'succeeded') {
-                $updates[] = "balance_payment_status = 'paid'";
-                $updates[] = "payment_status = 'paid'";
-                $logs[] = "Solde confirmé (PI: {$intentId})";
-            } elseif (in_array($status, ['canceled', 'failed'], true)) {
-                $updates[] = "balance_payment_status = 'failed'";
-                $logs[] = "Solde échoué (PI: {$intentId})";
-            }
-        } catch (Throwable $e) {
-            $logs[] = 'Erreur lors de la vérification du solde: ' . $e->getMessage();
+            return "Erreur lors de la vérification ({$label}) : " . $e->getMessage();
         }
     }
 }

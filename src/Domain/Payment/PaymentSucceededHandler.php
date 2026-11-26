@@ -5,36 +5,18 @@ declare(strict_types=1);
 namespace App\Domain\Payment;
 
 use App\Infrastructure\Stripe\StripeObjectReader;
-use Throwable;
 
 final class PaymentSucceededHandler
 {
-    public function __construct(
-        private readonly PaymentConfirmationService $confirmation,
-        private readonly InstallmentRepository $installments,
-    ) {}
+    public function __construct(private readonly PaymentConfirmationService $confirmation) {}
 
     public function handle(object $paymentIntent): void
     {
-        $intentId = (string) StripeObjectReader::string($paymentIntent, 'id');
-        $metadata = StripeObjectReader::metadataArray($paymentIntent);
-        $result = $this->confirmation->confirm(
-            $intentId,
-            $metadata,
+        $this->confirmation->confirm(
+            (string) StripeObjectReader::string($paymentIntent, 'id'),
+            StripeObjectReader::metadataArray($paymentIntent),
             StripeObjectReader::amountReceived($paymentIntent),
             (string) StripeObjectReader::string($paymentIntent, 'currency'),
         );
-        $order = $result->order;
-        if ($order === null || $result->amountMismatch || $result->alreadyProcessed) {
-            return;
-        }
-        $installmentsCount = $metadata['installments'] ?? 1;
-        if ((int) $installmentsCount === 3) {
-            try {
-                $this->installments->create((int) $order['id'], (int) $order['customer_id'], (float) $order['total_amount']);
-            } catch (Throwable $e) {
-                error_log("Failed to create installments for order ID: {$order['id']}: " . $e->getMessage());
-            }
-        }
     }
 }

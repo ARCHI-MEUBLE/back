@@ -16,7 +16,7 @@ final class CartCatalogueRepository
     {
         return $this->db->query(
             'SELECT cci.id, cci.catalogue_item_id, cci.variation_id, cci.quantity,
-                    ci.name, ci.unit_price, ci.unit, ci.image_url as item_image,
+                    ci.name, ci.unit_price, ci.unit, ci.image_url as item_image, ci.min_order_quantity,
                     civ.color_name as variation_name, civ.image_url as variation_image
              FROM cart_catalogue_items cci
              JOIN catalogue_items ci ON cci.catalogue_item_id = ci.id
@@ -28,7 +28,8 @@ final class CartCatalogueRepository
 
     public function add(int $customerId, int $catalogueItemId, ?int $variationId, int $quantity): void
     {
-        if ($this->db->queryOne('SELECT id FROM catalogue_items WHERE id = ? AND is_available IS NOT FALSE', [$catalogueItemId]) === null) {
+        $item = $this->db->queryOne('SELECT id, min_order_quantity FROM catalogue_items WHERE id = ? AND is_available IS NOT FALSE', [$catalogueItemId]);
+        if ($item === null) {
             throw new NotFoundException('Article introuvable ou indisponible');
         }
         if ($variationId !== null && $this->db->queryOne('SELECT id FROM catalogue_item_variations WHERE id = ? AND catalogue_item_id = ?', [$variationId, $catalogueItemId]) === null) {
@@ -43,16 +44,15 @@ final class CartCatalogueRepository
                 'SELECT id, quantity FROM cart_catalogue_items WHERE customer_id = ? AND catalogue_item_id = ? AND variation_id = ?',
                 [$customerId, $catalogueItemId, $variationId],
             );
+        $total = CartQuantity::capped(($existing === null ? 0 : (int) $existing['quantity']) + $quantity);
+        self::assertMinimum($total, (int) ($item['min_order_quantity'] ?? 1));
         if ($existing !== null) {
-            $this->db->execute(
-                'UPDATE cart_catalogue_items SET quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-                [CartQuantity::capped((int) $existing['quantity'] + $quantity), $existing['id']],
-            );
+            $this->db->execute('UPDATE cart_catalogue_items SET quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$total, $existing['id']]);
             return;
         }
         $this->db->execute(
             'INSERT INTO cart_catalogue_items (customer_id, catalogue_item_id, variation_id, quantity) VALUES (?, ?, ?, ?)',
-            [$customerId, $catalogueItemId, $variationId, $quantity],
+            [$customerId, $catalogueItemId, $variationId, $total],
         );
     }
 
@@ -62,6 +62,11 @@ final class CartCatalogueRepository
             $this->db->execute('DELETE FROM cart_catalogue_items WHERE id = ? AND customer_id = ?', [$id, $customerId]);
             return;
         }
+        $minimum = $this->db->scalar(
+            'SELECT ci.min_order_quantity FROM cart_catalogue_items cci JOIN catalogue_items ci ON cci.catalogue_item_id = ci.id WHERE cci.id = ? AND cci.customer_id = ?',
+            [$id, $customerId],
+        );
+        self::assertMinimum($quantity, is_numeric($minimum) ? (int) $minimum : 1);
         $this->db->execute(
             'UPDATE cart_catalogue_items SET quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND customer_id = ?',
             [$quantity, $id, $customerId],
@@ -75,5 +80,12 @@ final class CartCatalogueRepository
             return;
         }
         $this->db->execute('DELETE FROM cart_catalogue_items WHERE customer_id = ?', [$customerId]);
+    }
+
+    public static function assertMinimum(int $quantity, int $minimum): void
+    {
+        if ($minimum > 1 && $quantity < $minimum) {
+            throw new DomainException(sprintf('Cet article se commande par %d au minimum', $minimum));
+        }
     }
 }

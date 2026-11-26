@@ -4,125 +4,69 @@ declare(strict_types=1);
 
 namespace App\Domain\Pricing;
 
+use App\Domain\Shared\DomainException;
+use App\Http\ErrorStyle;
 use App\Http\Guard\AdminGuard;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\RouteCollection;
+use App\Lib\Validation\Field;
+use App\Lib\Validation\Schema;
+use App\Lib\Validation\ValidationException;
 
 final class PricingConfigRoutes
 {
-    private const REQUIRED_FIELDS = ['category', 'item_type', 'param_name', 'param_value', 'unit'];
+    private const KEY_PATTERN = '/^[a-z][a-z0-9_]{0,59}$/';
 
     public function __construct(private readonly PricingConfigRepository $config) {}
 
     public function register(RouteCollection $routes): void
     {
-        $admin = [new AdminGuard()];
-        $script = $routes->script('pricing-config/index');
-
-        $script->get(null, fn(Request $r): Response => $this->list($r));
-        $script->post(null, fn(Request $r): Response => $this->create($r), $admin);
-        $script->put(null, fn(Request $r): Response => $this->update($r), $admin);
-        $script->delete(null, fn(Request $r): Response => $this->delete($r), $admin);
+        $routes->script('pricing-config/index', [new AdminGuard()], ErrorStyle::Success)
+            ->get(null, fn(): Response => Response::json(['success' => true, 'data' => $this->config->all()]))
+            ->post(null, fn(Request $r): Response => $this->create($r->json()))
+            ->put(null, fn(Request $r): Response => $this->update($r->json()))
+            ->delete(null, static fn(): Response => throw new DomainException('Les paramètres de la grille ne se suppriment pas : modifiez leur valeur'));
     }
 
-    private function list(Request $r): Response
+    private function create(array $data): Response
     {
-        $category = self::trimmedOrNull($r->queryString('category'));
-        $itemType = self::trimmedOrNull($r->queryString('item_type'));
-        $id = $r->queryString('id') !== null ? (int) $r->queryString('id') : null;
-        $activeOnly = $r->queryString('active_only') !== 'false';
-        $results = $this->config->search($id, $category, $itemType, $activeOnly);
-        if ($category !== null && $itemType !== null && $results !== []) {
-            $grouped = [];
-            foreach ($results as $row) {
-                $grouped[$row['param_name']] = ['id' => $row['id'], 'value' => $row['param_value'], 'unit' => $row['unit'], 'description' => $row['description'], 'is_active' => $row['is_active']];
-            }
-            return Response::json(['success' => true, 'data' => $grouped]);
+        $key = static fn(string $label): Field => Field::string()->required("$label est obligatoire")
+            ->pattern(self::KEY_PATTERN, "$label est invalide (lettres minuscules, chiffres et _)");
+        $input = Schema::object([
+            'category' => $key('La catégorie'),
+            'item_type' => $key('L\'élément'),
+            'param_name' => $key('Le nom du paramètre'),
+            'unit' => Field::string()->required('L\'unité est obligatoire')
+                ->oneOf(PricingConfigRules::UNITS, 'Unité invalide (' . implode(', ', PricingConfigRules::UNITS) . ')'),
+            'description' => Field::string()->nullable()->maxLength(300, 'La description ne doit pas dépasser 300 caractères'),
+        ])->validate($data);
+        $value = PricingConfigRules::value($input, self::submittedValue($data));
+        if ($this->config->findDuplicate($input['category'], $input['item_type'], $input['param_name'])) {
+            throw new DomainException('Ce paramètre existe déjà : modifiez sa valeur', 409);
         }
-        if ($id !== null && count($results) === 1) {
-            return Response::json(['success' => true, 'data' => $results[0]]);
-        }
-        return Response::json(['success' => true, 'data' => $results]);
+        $id = $this->config->create($input + ['param_value' => $value, 'description' => null]);
+        return Response::json(['success' => true, 'message' => 'Paramètre créé', 'id' => (string) $id]);
     }
 
-    private function create(Request $r): Response
+    private function update(array $data): Response
     {
-        $data = $r->json();
-        foreach (self::REQUIRED_FIELDS as $field) {
-            if (!isset($data[$field]) || trim((string) $data[$field]) === '') {
-                return self::error("Missing required field: $field");
-            }
+        $id = Schema::object([
+            'id' => Field::int()->required('Identifiant du paramètre manquant')->min(1, 'Identifiant du paramètre invalide'),
+        ])->validate($data)['id'];
+        $row = $this->config->find($id);
+        if ($row === null) {
+            throw new DomainException('Paramètre introuvable', 404);
         }
-        if (!is_numeric($data['param_value'])) {
-            return self::error('param_value must be a number');
-        }
-        $category = trim((string) $data['category']);
-        $itemType = trim((string) $data['item_type']);
-        $paramName = trim((string) $data['param_name']);
-        if ($this->config->findDuplicate($category, $itemType, $paramName)) {
-            return self::error('This parameter already exists', 409);
-        }
-        $id = $this->config->create([
-            'category' => $category, 'item_type' => $itemType, 'param_name' => $paramName,
-            'param_value' => (float) $data['param_value'], 'unit' => trim((string) $data['unit']),
-            'description' => isset($data['description']) ? trim((string) $data['description']) : null,
-            'is_active' => (isset($data['is_active']) && $data['is_active'] !== '') ? filter_var($data['is_active'], FILTER_VALIDATE_BOOLEAN) : true,
-        ]);
-        return Response::json(['success' => true, 'message' => 'Pricing parameter created successfully', 'id' => (string) $id]);
+        $this->config->updateValue($id, PricingConfigRules::value($row, self::submittedValue($data)));
+        return Response::json(['success' => true, 'message' => 'Paramètre mis à jour']);
     }
 
-    private function update(Request $r): Response
+    private static function submittedValue(array $data): mixed
     {
-        $data = $r->json();
-        if (!isset($data['id'])) {
-            return self::error('Missing id');
+        if (!array_key_exists('param_value', $data) || $data['param_value'] === '' || $data['param_value'] === null) {
+            throw new ValidationException('La valeur est obligatoire');
         }
-        $id = (int) $data['id'];
-        if (!$this->config->exists($id)) {
-            return self::error('Parameter not found', 404);
-        }
-        $columns = [];
-        if (isset($data['param_value'])) {
-            if (!is_numeric($data['param_value'])) {
-                return self::error('param_value must be a number');
-            }
-            $columns['param_value'] = (float) $data['param_value'];
-        }
-        foreach (['description', 'unit'] as $field) {
-            if (isset($data[$field])) {
-                $columns[$field] = trim((string) $data[$field]);
-            }
-        }
-        if (isset($data['is_active'])) {
-            $columns['is_active'] = $data['is_active'] !== '' ? filter_var($data['is_active'], FILTER_VALIDATE_BOOLEAN) : true;
-        }
-        if ($columns === []) {
-            return self::error('No fields to update');
-        }
-        $this->config->update($id, $columns);
-        return Response::json(['success' => true, 'message' => 'Parameter updated successfully']);
-    }
-
-    private function delete(Request $r): Response
-    {
-        $id = $r->queryString('id') !== null ? (int) $r->queryString('id') : null;
-        if ($id === null) {
-            return self::error('Missing id');
-        }
-        if (!$this->config->deactivate($id)) {
-            return self::error('Parameter not found', 404);
-        }
-        return Response::json(['success' => true, 'message' => 'Parameter deactivated successfully']);
-    }
-
-    private static function trimmedOrNull(?string $value): ?string
-    {
-        return $value === null ? null : trim($value);
-    }
-
-    private static function error(string $message, int $status = 400): Response
-    {
-        return Response::json(['success' => false, 'error' => $message], $status);
+        return $data['param_value'];
     }
 }

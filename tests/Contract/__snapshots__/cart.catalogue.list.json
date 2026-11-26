@@ -8,6 +8,7 @@
                         "catalogue_item_id": "number",
                         "id": "number",
                         "item_image": "string",
+                        "min_order_quantity": "number",
                         "name": "string",
                         "quantity": "number",
                         "unit": "string",

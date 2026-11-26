@@ -17,15 +17,12 @@
                                 "country": "string",
                                 "created_at": "string",
                                 "email": "string",
-                                "email_verified": "bool",
                                 "first_name": "string",
                                 "id": "number",
                                 "last_name": "string",
-                                "password_hash": "string",
                                 "phone": "string",
                                 "postal_code": "string",
-                                "stripe_customer_id": "null",
-                                "updated_at": "string"
+                                "stripe_customer_id": "null"
                             }
                         },
                         "customer_email": "string",
@@ -42,6 +39,7 @@
                         "payment_strategy": "string",
                         "remaining_amount": "number",
                         "shipping_address": "string",
+                        "shipping_amount": "number",
                         "status": "string",
                         "total": "string",
                         "updated_at": "string"

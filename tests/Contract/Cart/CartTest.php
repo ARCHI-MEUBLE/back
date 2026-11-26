@@ -19,6 +19,7 @@ final class CartTest extends ContractTestCase
     public function testConfigurationCart(): void
     {
         $customer = $this->customer();
+        $this->admin()->post('/backend/api/admin/update-configuration-status.php', ['id' => 2, 'status' => 'en_attente_validation']);
         $customer->delete('/backend/api/cart/index.php');
         $this->assertSnapshot('cart.empty', $customer->get('/backend/api/cart/index.php'));
         $this->assertSnapshot('cart.add', $customer->post('/backend/api/cart/index.php', ['configuration_id' => 1, 'quantity' => 1]));
@@ -63,7 +64,7 @@ final class CartTest extends ContractTestCase
     public function testFacadeCart(): void
     {
         $customer = $this->customer();
-        $config = ['width' => 600, 'height' => 800, 'depth' => 19, 'material' => ['id' => 1, 'name' => 'Chêne brun', 'color_hex' => '#8B5A2B', 'texture_url' => '/textures/chene_brun.png'], 'hinges' => ['type' => 'standard', 'count' => 2, 'direction' => 'left'], 'drillings' => []];
+        $config = ['width' => 600, 'height' => 800, 'depth' => 19, 'material' => ['id' => 1, 'name' => 'Chêne brun', 'color_hex' => '#8B5A2B', 'texture_url' => '/textures/chene_brun.png'], 'hinges' => ['type' => 'hole-with-applied-hinge', 'count' => 2, 'direction' => 'left'], 'drillings' => []];
         $this->assertSnapshot('cart.facades.add', $customer->post('/backend/api/cart/facades.php', ['config' => $config, 'price' => 87.5, 'quantity' => 1]));
         $this->assertSnapshot('cart.facades.add.invalid', $customer->post('/backend/api/cart/facades.php', ['quantity' => 1]));
         $list = $customer->get('/backend/api/cart/facades.php');

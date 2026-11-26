@@ -43,7 +43,7 @@ final class PaymentLinkCreateIntentRoutes
         }
         $order = $orderData['order'];
         $paymentType = (string) ($order['payment_type'] ?? 'full');
-        $amount = (float) ($order['amount'] ?? 0) > 0 ? (float) $order['amount'] : PaymentAmountPolicy::dueAmount($order, $paymentType);
+        $amount = PaymentAmountPolicy::dueAmount($order, $paymentType);
         if ($amount <= 0) {
             throw new DomainException('Montant du lien de paiement invalide');
         }
@@ -65,7 +65,7 @@ final class PaymentLinkCreateIntentRoutes
         }
         $intent = $this->stripe->createPaymentIntent([
             'amount' => PaymentAmountPolicy::cents($amount),
-            'currency' => 'eur',
+            'currency' => PaymentAmountPolicy::CURRENCY,
             'customer' => $stripeCustomerId,
             'automatic_payment_methods' => ['enabled' => true],
             'metadata' => ['order_id' => $order['order_id'], 'order_number' => $order['order_number'], 'customer_id' => $customer['customer_id'], 'payment_link_token' => $token, 'payment_type' => $paymentType, 'source' => 'payment_link'],

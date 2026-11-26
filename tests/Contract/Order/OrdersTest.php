@@ -14,6 +14,9 @@ final class OrdersTest extends ContractTestCase
     public function testOrderLifecycle(): void
     {
         $customer = $this->customer();
+        foreach (['index.php', 'samples.php', 'catalogue.php', 'facades.php'] as $cart) {
+            $customer->delete('/backend/api/cart/' . $cart);
+        }
         $this->assertSnapshot('orders.create.unauthorized', $this->client()->post('/backend/api/orders/create.php', ['shipping_address' => 'x']));
         $this->assertSnapshot('orders.create.empty-cart', $customer->post('/backend/api/orders/create.php', ['shipping_address' => '1 rue des Tests, 59000 Lille, France']));
         $this->fillCart($customer);
@@ -85,7 +88,7 @@ final class OrdersTest extends ContractTestCase
             $customer->post('/backend/api/cart/index.php', ['configuration_id' => $configurationId, 'quantity' => 1]),
             $customer->post('/backend/api/cart/samples.php', ['sample_color_id' => 1, 'quantity' => 1]),
             $customer->post('/backend/api/cart/catalogue.php', ['catalogue_item_id' => 1, 'variation_id' => 1, 'quantity' => 2]),
-            $customer->post('/backend/api/cart/facades.php', ['config' => ['width' => 600, 'height' => 800, 'depth' => 19, 'material' => ['id' => 1], 'hinges' => ['type' => 'standard', 'count' => 2], 'drillings' => []], 'price' => 87.5, 'quantity' => 1]),
+            $customer->post('/backend/api/cart/facades.php', ['config' => ['width' => 600, 'height' => 800, 'depth' => 19, 'material' => ['id' => 1], 'hinges' => ['type' => 'hole-with-applied-hinge', 'count' => 2], 'drillings' => []], 'price' => 87.5, 'quantity' => 1]),
         ];
         foreach ($responses as $response) {
             self::assertContains($response->status, [200, 201], $response->body);

@@ -12,7 +12,7 @@
                     "id": "number",
                     "image_url": "string",
                     "name": "string",
-                    "price": "string",
+                    "price": "null",
                     "prompt": "string",
                     "updated_at": "string"
                 }

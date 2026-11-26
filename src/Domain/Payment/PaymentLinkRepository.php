@@ -9,10 +9,15 @@ use App\Domain\Shared\DomainException;
 
 final class PaymentLinkRepository
 {
+    public const TYPES = ['full', 'deposit', 'balance'];
+
     public function __construct(private readonly Connection $db) {}
 
-    public function generateLink(int $orderId, string $adminEmail, int $expiryDays, string $paymentType, ?float $amount): array
+    public function generateLink(int $orderId, string $adminEmail, int $expiryDays, string $paymentType): array
     {
+        if (!in_array($paymentType, self::TYPES, true)) {
+            throw new DomainException('Type de paiement invalide');
+        }
         $order = $this->db->queryOne('SELECT * FROM orders WHERE id = ?', [$orderId]);
         if ($order === null) {
             throw new DomainException('Commande introuvable');
@@ -26,13 +31,10 @@ final class PaymentLinkRepository
         if ($paymentType === 'balance' && ($order['balance_payment_status'] ?? 'pending') === 'paid') {
             throw new DomainException('Le solde pour cette commande a déjà été payé');
         }
-        if ($amount === null) {
-            $amount = match ($paymentType) {
-                'deposit' => (float) ($order['deposit_amount'] ?? 0),
-                'balance' => (float) ($order['remaining_amount'] ?? 0),
-                default => (float) ($order['total_amount'] ?? $order['total'] ?? 0),
-            };
+        if ($paymentType === 'balance' && ($order['deposit_payment_status'] ?? 'pending') !== 'paid') {
+            throw new DomainException("Le solde ne peut être demandé qu'une fois l'acompte payé");
         }
+        $amount = round(PaymentAmountPolicy::dueAmount($order, $paymentType), 2);
         if ($amount <= 0) {
             throw new DomainException('Le montant à payer doit être supérieur à 0€');
         }
@@ -49,8 +51,8 @@ final class PaymentLinkRepository
     public function getLinkByToken(string $token): ?array
     {
         return $this->db->queryOne(
-            'SELECT pl.*, pl.id as link_id, o.id as order_id, o.order_number, o.total_amount, o.status as order_status,
-                    o.shipping_address, o.billing_address, o.payment_status, o.deposit_percentage, o.deposit_amount, o.remaining_amount,
+            'SELECT pl.*, pl.id as link_id, o.id as order_id, o.order_number, o.total_amount, o.shipping_amount, o.status as order_status,
+                    o.shipping_address, o.billing_address, o.payment_status, o.deposit_payment_status, o.deposit_percentage, o.deposit_amount, o.remaining_amount,
                     o.created_at as order_created_at, c.email, c.first_name, c.last_name, c.phone
              FROM payment_links pl
              JOIN orders o ON pl.order_id = o.id
@@ -67,12 +69,21 @@ final class PaymentLinkRepository
             return null;
         }
         $configs = $this->db->query(
-            'SELECT oi.*, sc.name as config_name, sc.thumbnail_url FROM order_items oi
-             LEFT JOIN saved_configurations sc ON oi.configuration_id = sc.id WHERE oi.order_id = ?',
+            "SELECT oi.*, c.config_string::jsonb ->> 'name' as config_name, c.config_string::jsonb ->> 'thumbnail_url' as thumbnail_url
+             FROM order_items oi LEFT JOIN configurations c ON oi.configuration_id = c.id WHERE oi.order_id = ?",
             [$link['order_id']],
         );
-        $samples = $this->db->query('SELECT * FROM order_sample_items WHERE order_id = ?', [$link['order_id']]);
-        return ['configurations' => $configs, 'samples' => $samples, 'order' => $link];
+        $samples = $this->db->query('SELECT * FROM order_sample_items WHERE order_id = ? ORDER BY id', [$link['order_id']]);
+        $facades = $this->db->query('SELECT * FROM order_facade_items WHERE order_id = ? ORDER BY id', [$link['order_id']]);
+        $catalogue = $this->db->query(
+            'SELECT oci.*, COALESCE(oci.image_url, civ.image_url, ci.image_url) as image_url
+             FROM order_catalogue_items oci
+             LEFT JOIN catalogue_items ci ON oci.catalogue_item_id = ci.id
+             LEFT JOIN catalogue_item_variations civ ON oci.variation_id = civ.id
+             WHERE oci.order_id = ? ORDER BY oci.id',
+            [$link['order_id']],
+        );
+        return ['configurations' => $configs, 'samples' => $samples, 'facades' => $facades, 'catalogue' => $catalogue, 'order' => $link];
     }
 
     public function validateLink(string $token): array
@@ -92,6 +103,9 @@ final class PaymentLinkRepository
         }
         if ($link['payment_status'] === 'paid') {
             return ['valid' => false, 'message' => 'Cette commande a déjà été payée', 'link' => $link];
+        }
+        if (!PaymentAmountPolicy::linkMatchesDue($link, $link)) {
+            return ['valid' => false, 'message' => 'Ce lien de paiement a été révoqué : son montant ne correspond plus à la commande. Demandez un nouveau lien.', 'link' => $link];
         }
         return ['valid' => true, 'message' => 'Lien valide', 'link' => $link];
     }

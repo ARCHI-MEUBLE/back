@@ -14,9 +14,9 @@ final class OrderConfirmationSections
         $html = '<h4 style="margin: 20px 0 10px 0; color: #706F6C; font-size: 12px; text-transform: uppercase;">Meubles sur mesure</h4>';
         foreach ($items as $item) {
             $configData = is_string($item['config_data']) ? json_decode($item['config_data'], true) : $item['config_data'];
-            $name = $configData['name'] ?? $item['name'] ?? 'Configuration';
+            $name = ($configData['name'] ?? $item['name'] ?? 'Configuration') . OrderLines::installationSuffix($configData);
             $total = $item['total_price'] ?? ($item['unit_price'] * $item['quantity']);
-            $html .= self::row(htmlspecialchars((string) $name), 'Qté: ' . $item['quantity'], number_format((float) $total, 2, ',', ' ') . ' €');
+            $html .= self::row(htmlspecialchars($name), 'Qté: ' . $item['quantity'], number_format((float) $total, 2, ',', ' ') . ' €');
         }
         return $html;
     }
@@ -78,6 +78,15 @@ final class OrderConfirmationSections
             $html .= '<div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #E8E6E3;"><div><strong>' . htmlspecialchars((string) ($sample['sample_name'] ?? 'Échantillon')) . '</strong><br><span style="color: #706F6C; font-size: 14px;">' . $sub . '</span></div><div style="text-align: right;">' . $display . '</div></div>';
         }
         return $html;
+    }
+
+    public static function shipping(float $amount): string
+    {
+        if ($amount <= 0) {
+            return '';
+        }
+        return '<h4 style="margin: 20px 0 10px 0; color: #706F6C; font-size: 12px; text-transform: uppercase;">Livraison</h4>'
+            . self::row('Livraison et manutention', 'Calculée selon les articles commandés', number_format($amount, 2, ',', ' ') . ' €');
     }
 
     private static function row(string $title, string $subtitleHtml, string $amount): string

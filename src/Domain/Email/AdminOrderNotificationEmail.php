@@ -29,6 +29,10 @@ final class AdminOrderNotificationEmail
         foreach ($itemNames as $entry) {
             $itemsList .= "• {$entry['name']} (x{$entry['quantity']})\n";
         }
+        $shippingAmount = (float) ($order['shipping_amount'] ?? 0);
+        if ($shippingAmount > 0) {
+            $itemsList .= '• Livraison et manutention : ' . number_format($shippingAmount, 2, ',', ' ') . " €\n";
+        }
         $phone = ($customer['phone'] ?? '') !== '' ? $customer['phone'] : 'Non renseigné';
         return "
         <!DOCTYPE html>

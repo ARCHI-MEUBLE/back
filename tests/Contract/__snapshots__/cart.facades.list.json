@@ -10,7 +10,17 @@
                             "object": {
                                 "depth": "number",
                                 "drillings": {
-                                    "list": "empty"
+                                    "list": {
+                                        "object": {
+                                            "diameter": "number",
+                                            "id": "string",
+                                            "price": "number",
+                                            "type": "string",
+                                            "typeName": "string",
+                                            "x": "number",
+                                            "y": "number"
+                                        }
+                                    }
                                 },
                                 "height": "number",
                                 "hinges": {
@@ -25,6 +35,7 @@
                                         "color_hex": "string",
                                         "id": "number",
                                         "name": "string",
+                                        "price_per_m2": "number",
                                         "texture_url": "string"
                                     }
                                 },

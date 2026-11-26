@@ -10,6 +10,8 @@ use App\Http\Request;
 use App\Http\Response;
 use App\Http\RouteCollection;
 use App\Lib\ImageUrl;
+use App\Lib\Validation\Field;
+use App\Lib\Validation\Schema;
 
 final class AdminSampleRoutes
 {
@@ -101,6 +103,13 @@ final class AdminSampleRoutes
     {
         if (!isset($input['id']) || $input['id'] === '') {
             return Response::json(['error' => 'id requis'], 400);
+        }
+        if (isset($input['furniture_price_per_m2']) && $input['furniture_price_per_m2'] !== '') {
+            $input['furniture_price_per_m2'] = Schema::object([
+                'furniture_price_per_m2' => Field::float()
+                    ->min(0, 'Le prix au m² doit être compris entre 0 et 100 000 €')
+                    ->max(100000, 'Le prix au m² doit être compris entre 0 et 100 000 €'),
+            ])->validate($input)['furniture_price_per_m2'];
         }
         if (!$this->colors->update((int) $input['id'], $input)) {
             throw new NotFoundException('Couleur d\'échantillon non trouvée');

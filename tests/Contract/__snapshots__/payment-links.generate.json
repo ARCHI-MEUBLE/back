@@ -4,10 +4,12 @@
         "object": {
             "data": {
                 "object": {
+                    "amount": "number",
                     "created_by": "string",
                     "expires_at": "string",
                     "id": "number",
                     "order_id": "number",
+                    "payment_type": "string",
                     "token": "string",
                     "url": "string"
                 }

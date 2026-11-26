@@ -24,6 +24,9 @@
                         "model_name": "string",
                         "name": "string",
                         "price": "string",
+                        "price_adjusted": "bool",
+                        "price_includes_delivery": "bool",
+                        "price_note": "null",
                         "prompt": "string",
                         "status": "string",
                         "user_id": "string"

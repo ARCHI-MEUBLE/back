@@ -16,7 +16,7 @@ final class CartRepository
     {
         $rows = $this->db->query(
             'SELECT ci.id, ci.configuration_id, ci.quantity, ci.added_at,
-                    c.id as config_id, c.prompt, c.price, c.glb_url, c.config_string, c.created_at as config_created_at
+                    c.id as config_id, c.prompt, c.price, c.price_includes_delivery, c.glb_url, c.config_string, c.created_at as config_created_at
              FROM cart_items ci
              JOIN configurations c ON ci.configuration_id = c.id
              WHERE ci.customer_id = ?
@@ -36,6 +36,7 @@ final class CartRepository
                     'name' => $configData['name'] ?? 'Configuration sans nom',
                     'prompt' => $row['prompt'],
                     'price' => $row['price'],
+                    'price_includes_delivery' => (bool) $row['price_includes_delivery'],
                     'glb_url' => $row['glb_url'],
                     'thumbnail_url' => $configData['thumbnail_url'] ?? null,
                     'config_data' => $configData,
@@ -61,7 +62,7 @@ final class CartRepository
 
     public function addItem(int $customerId, int $configurationId, int $quantity): void
     {
-        $config = $this->db->queryOne('SELECT status FROM configurations WHERE id = ?', [$configurationId]);
+        $config = $this->db->queryOne('SELECT status FROM configurations WHERE id = ? AND user_id = ?', [$configurationId, (string) $customerId]);
         if ($config === null) {
             throw new NotFoundException('Configuration introuvable');
         }

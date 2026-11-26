@@ -22,10 +22,23 @@ final class SecurityRegressionTest extends ContractTestCase
         self::assertNotSame('paid', $customer->get('/backend/api/orders/list.php?id=' . $orderId)->data()['order']['payment_status'] ?? null);
     }
 
+    public function testAdminOrdersNeverExposeCustomerPasswordHash(): void
+    {
+        $admin = $this->admin();
+        $orderId = Orders::createOrder($this->customer(), $admin, 'hash-' . bin2hex(random_bytes(3)));
+
+        foreach (['/backend/api/admin/orders.php', '/backend/api/admin/orders.php?id=' . $orderId] as $url) {
+            $response = $admin->get($url);
+            self::assertSame(200, $response->status, $response->body);
+            self::assertStringNotContainsString('password_hash', $response->body);
+            self::assertStringNotContainsString('$2y$', $response->body);
+        }
+    }
+
     public function testFacadePriceIsComputedByTheServer(): void
     {
         $customer = Accounts::registerVerifiedCustomer($this->client(), Accounts::uniqueEmail('facade'), 'Facade#2026');
-        $config = ['width' => 600, 'height' => 800, 'depth' => 19, 'material' => ['id' => 1, 'price_per_m2' => 0.01], 'hinges' => ['type' => 'standard', 'count' => 2], 'drillings' => []];
+        $config = ['width' => 600, 'height' => 800, 'depth' => 19, 'material' => ['id' => 1, 'price_per_m2' => 0.01], 'hinges' => ['type' => 'hole-with-applied-hinge', 'count' => 2], 'drillings' => []];
         $added = $customer->post('/backend/api/cart/facades.php', ['config' => $config, 'price' => 0.01, 'quantity' => 1]);
 
         self::assertSame(201, $added->status, $added->body);
@@ -84,10 +97,21 @@ final class SecurityRegressionTest extends ContractTestCase
     public function testConfigurationsNoLongerLeakSessions(): void
     {
         self::assertSame(401, $this->client()->get('/api/configurations')->status);
-        $created = $this->customer()->post('/backend/api/configurations/save.php', ['prompt' => 'M1(1000,400,600)EFb', 'price' => 900, 'glb_url' => '/models/a.glb']);
+        $created = $this->customer()->post('/backend/api/configurations/save.php', [
+            'prompt' => 'M1(1000,400,600)EFb',
+            'price' => -1,
+            'glb_url' => '/models/a.glb',
+            'config_data' => ['dimensions' => ['width' => 1000, 'height' => 400, 'depth' => 600]],
+        ]);
 
+        self::assertSame(201, $created->status, $created->body);
         self::assertNull($created->data()['configuration']['user_session'] ?? null);
-        self::assertSame(400, $this->customer()->post('/backend/api/configurations/save.php', ['prompt' => 'M1(1000,400,600)EFb', 'price' => -1])->status);
+        self::assertGreaterThan(0, (float) $created->data()['configuration']['price']);
+        self::assertSame(400, $this->customer()->post('/backend/api/configurations/save.php', [
+            'prompt' => 'M1(1000,400,600)EFb',
+            'price' => 900,
+            'config_data' => [],
+        ])->status);
     }
 
     private function register(ApiClient $client, string $email, string $password): \Tests\Support\ApiResponse

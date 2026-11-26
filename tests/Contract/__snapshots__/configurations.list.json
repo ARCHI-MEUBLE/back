@@ -18,6 +18,8 @@
                         "order_id": "null",
                         "order_payment_status": "null",
                         "price": "string",
+                        "price_adjusted": "bool",
+                        "price_includes_delivery": "bool",
                         "prompt": "string",
                         "status": "string",
                         "template_id": "number",

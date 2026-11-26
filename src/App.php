@@ -19,6 +19,7 @@ use App\Http\RouteCollection;
 use App\Http\Router;
 use App\Http\Runtime;
 use App\Http\StaticFileHandler;
+use App\Infrastructure\RateLimit\ClientIp;
 use App\Lib\Logger;
 use App\Lib\SystemClock;
 
@@ -35,6 +36,10 @@ final class App
         $settings = Settings::fromEnv($env, $root);
         $logger = new Logger(fopen('php://stderr', 'w'));
         Runtime::configure($logger);
+        ClientIp::trustFrontProxy($settings->frontProxySecret);
+        if ($settings->frontProxySecret !== null && strlen($settings->frontProxySecret) < ClientIp::MIN_SECRET_LENGTH) {
+            $logger->info('FRONT_PROXY_SECRET ignoré : moins de ' . ClientIp::MIN_SECRET_LENGTH . ' caractères');
+        }
         return new self($settings, $logger);
     }
 

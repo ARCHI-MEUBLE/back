@@ -24,6 +24,14 @@ final class OrderCreationRepository
         ) ?? 0);
     }
 
+    public function foreignConfigurationCount(int $customerId): int
+    {
+        return (int) ($this->db->scalar(
+            'SELECT COUNT(*) FROM cart_items ci JOIN configurations c ON ci.configuration_id = c.id WHERE ci.customer_id = ? AND c.user_id IS DISTINCT FROM ?',
+            [$customerId, (string) $customerId],
+        ) ?? 0);
+    }
+
     public function cartSampleItems(int $customerId): array
     {
         return $this->db->query(
@@ -42,7 +50,7 @@ final class OrderCreationRepository
     {
         return $this->db->query(
             'SELECT cci.id, cci.catalogue_item_id, cci.variation_id, cci.quantity,
-                    ci.name, ci.unit_price, civ.color_name as variation_name,
+                    ci.name, ci.unit_price, ci.min_order_quantity, ci.is_available, civ.color_name as variation_name,
                     COALESCE(civ.image_url, ci.image_url) as image_url
              FROM cart_catalogue_items cci
              JOIN catalogue_items ci ON cci.catalogue_item_id = ci.id
@@ -57,12 +65,12 @@ final class OrderCreationRepository
         return $this->db->query('SELECT * FROM facade_cart_items WHERE customer_id = ?', [$customerId]);
     }
 
-    public function insertOrder(int $customerId, string $orderNumber, float $total, string $shippingAddress, string $billingAddress, string $paymentMethod, ?string $notes, string $status): int
+    public function insertOrder(int $customerId, string $orderNumber, float $total, float $shippingAmount, string $shippingAddress, string $billingAddress, string $paymentMethod, ?string $notes, string $status): int
     {
         return $this->db->insertReturningId(
-            'INSERT INTO orders (customer_id, order_number, total_amount, shipping_address, billing_address, payment_method, notes, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id',
-            [$customerId, $orderNumber, $total, $shippingAddress, $billingAddress, $paymentMethod, $notes, $status],
+            'INSERT INTO orders (customer_id, order_number, total_amount, shipping_amount, shipping_address, billing_address, payment_method, notes, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id',
+            [$customerId, $orderNumber, $total, $shippingAmount, $shippingAddress, $billingAddress, $paymentMethod, $notes, $status],
         );
     }
 
