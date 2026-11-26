@@ -13,7 +13,10 @@ final class FurniturePriceCalculator
         'panels' => 'Panneaux (caisson, fond, étagères, montants)',
         'fronts' => 'Portes et tiroirs',
         'hardware' => 'Poignées, socle et options',
+        'installation' => 'Pose et montage chez vous',
     ];
+
+    private const OPTIONAL_LINES = ['installation'];
 
     public const DIMENSION_LIMITS = [
         'width' => ['label' => 'la largeur', 'min' => 300, 'max' => 2800],
@@ -62,8 +65,15 @@ final class FurniturePriceCalculator
         $socle = $styling['socle'] ?? $config['socle'] ?? null;
         $lines->base(is_string($socle) ? $socle : 'none', $width);
 
-        $delivery = (new ShippingCalculator($this->grid))->furniture($width, $height);
-        return $this->summary($lines) + ['delivery' => (int) round($delivery)];
+        $services = new ShippingCalculator($this->grid);
+        $installation = $services->installation($width, $height);
+        if (($features['installation'] ?? false) === true) {
+            $lines->add('installation', $installation);
+        }
+        return $this->summary($lines) + [
+            'delivery' => (int) round($services->furniture($width, $height)),
+            'installation' => (int) round($installation),
+        ];
     }
 
     private function summary(FurnitureCostLines $lines): array
@@ -81,10 +91,13 @@ final class FurniturePriceCalculator
             'low' => $this->round($total - $sigma),
             'high' => $this->round($total + $sigma),
             'sigma' => $this->round($sigma),
-            'lines' => array_map(
+            'lines' => array_values(array_map(
                 static fn(string $key): array => ['key' => $key, 'label' => self::LINE_LABELS[$key], 'amount' => (int) round($lines->amount($key))],
-                array_keys(self::LINE_LABELS),
-            ),
+                array_filter(
+                    array_keys(self::LINE_LABELS),
+                    static fn(string $key): bool => !in_array($key, self::OPTIONAL_LINES, true) || $lines->amount($key) > 0,
+                ),
+            )),
         ];
     }
 

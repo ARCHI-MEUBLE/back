@@ -30,7 +30,7 @@ final class OrderLines
         return array_map(static function (array $item): array {
             $config = is_string($item['config_data'] ?? null) ? json_decode($item['config_data'], true) : ($item['config_data'] ?? null);
             $name = is_array($config) && is_string($config['name'] ?? null) && $config['name'] !== '' ? $config['name'] : 'Meuble sur mesure';
-            return self::row($name, $item);
+            return self::row($name . self::installationSuffix($config), $item);
         }, $items);
     }
 
@@ -61,6 +61,13 @@ final class OrderLines
             $material = is_string($sample['material'] ?? null) && $sample['material'] !== '' ? ' (' . $sample['material'] . ')' : '';
             return self::row('Échantillon : ' . ($sample['sample_name'] ?? 'Échantillon') . $material, ['unit_price' => $sample['price'] ?? 0] + $sample);
         }, $samples);
+    }
+
+    public static function installationSuffix(mixed $config): string
+    {
+        return is_array($config) && is_array($config['features'] ?? null) && ($config['features']['installation'] ?? false) === true
+            ? ' · pose et montage compris'
+            : '';
     }
 
     private static function row(string $name, array $item): array
