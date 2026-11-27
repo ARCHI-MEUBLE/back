@@ -91,6 +91,8 @@ class Face: #l'objet face défini une face plane polygonale appartenant à une z
         self.equation = equation
         self.contour = contour
         self.alesages = alesages if alesages is not None else []
+        # défonces (rainures) à usiner sur la face : {"points": 4 coins 3D, "profondeur": mm}, ex. rail de porte coulissante
+        self.defonces = []
         self.faceoppose=faceoppose
         self.zone=zone
         self.facesupport=facesupport

@@ -20,11 +20,11 @@ final class HandleModelDimensionsTest extends ContractTestCase
             'FLAT chromé, entraxe 128' => [143, 128, 8, 34],
             'FLAT nickelé mat, entraxe 192' => [207, 192, 8, 34],
             'COMPACT noir, entraxe 160' => [172, 160, 8, 36],
-            'LOGGIC laiton noir, entraxe 200' => [223, 200, null, null],
+            'LOGGIC laiton noir, entraxe 200' => [223, 200, 20, 40],
             'SAFARI cuir marron clair, entraxe 160' => [224, 160, 24, 25],
             'HEXXA noir mat, longueur 200' => [200, null, null, null],
-            'Cuvette LIVING inox brossé' => [92, null, 27, null],
-            'Cuvette LIVING noire' => [92, null, 27, null],
+            'Cuvette LIVING inox brossé' => [120, null, 40, 1],
+            'Cuvette LIVING noire' => [120, null, 40, 1],
         ];
         foreach ($expected as $name => $dimensions) {
             self::assertArrayHasKey($name, $byName);

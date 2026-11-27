@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Handle;
 
+use App\Lib\ImageUrl;
 use App\Lib\Validation\Field;
 use App\Lib\Validation\Schema;
 use App\Lib\Validation\ValidationException;
@@ -14,12 +15,18 @@ final class HandleModelSchemas
     private const WITHOUT_LENGTH = ['knob', 'recessed'];
     public const FIELDS = [
         'name', 'shape', 'finish_hex', 'length_mm', 'center_distance_mm', 'width_mm', 'projection_mm', 'image_url',
-        'price_per_unit', 'active', 'position',
+        'price_per_unit', 'active', 'position', 'reference', 'supplier_url',
     ];
 
     public static function model(): Schema
     {
         return Schema::object([
+            'reference' => Field::string()->nullable()
+                ->maxLength(40, 'La référence ne doit pas dépasser 40 caractères')
+                ->pattern('/^[A-Za-z0-9._-]+$/', 'Référence invalide (lettres, chiffres, point, tiret)'),
+            'supplier_url' => Field::string()->nullable()
+                ->maxLength(500, 'Le lien de la fiche produit ne doit pas dépasser 500 caractères')
+                ->rule(self::isWebUrl(...), 'Lien de la fiche produit invalide (adresse http(s))'),
             'name' => Field::string()->required('Le nom est obligatoire')
                 ->minLength(1, 'Le nom est obligatoire')
                 ->maxLength(80, 'Le nom ne doit pas dépasser 80 caractères'),
@@ -28,8 +35,8 @@ final class HandleModelSchemas
             'finish_hex' => Field::string()->required('La couleur de finition est obligatoire')
                 ->pattern('/^#[0-9A-Fa-f]{6}$/', 'Couleur de finition invalide (format #RRGGBB)'),
             'length_mm' => Field::int()->nullable()
-                ->min(20, 'La longueur doit être comprise entre 20 et 800 mm')
-                ->max(800, 'La longueur doit être comprise entre 20 et 800 mm'),
+                ->min(20, 'La longueur doit être comprise entre 20 et 1200 mm')
+                ->max(1200, 'La longueur doit être comprise entre 20 et 1200 mm'),
             'center_distance_mm' => Field::int()->nullable()
                 ->min(10, "L'entraxe doit être compris entre 10 et 800 mm")
                 ->max(800, "L'entraxe doit être compris entre 10 et 800 mm"),
@@ -41,7 +48,7 @@ final class HandleModelSchemas
                 ->max(100, 'La saillie doit être comprise entre 0 et 100 mm'),
             'image_url' => Field::string()->nullable()
                 ->maxLength(500, 'Le lien de la photo ne doit pas dépasser 500 caractères')
-                ->rule(self::isImageUrl(...), 'Lien de photo invalide (adresse http(s) ou chemin /uploads/)'),
+                ->rule(self::isImageUrl(...), 'Lien de photo invalide (adresse http(s), chemin /uploads/ ou /images/handles/)'),
             'price_per_unit' => Field::float()->default(0.0)
                 ->min(0, 'Le prix doit être compris entre 0 et 1000 €')
                 ->max(1000, 'Le prix doit être compris entre 0 et 1000 €'),
@@ -74,9 +81,14 @@ final class HandleModelSchemas
         if (!is_string($value)) {
             return false;
         }
-        if (str_starts_with($value, '/uploads/')) {
+        if (str_starts_with($value, '/uploads/') || str_starts_with($value, ImageUrl::SITE_HANDLE_PHOTOS)) {
             return !str_contains($value, '..');
         }
-        return preg_match('#^https?://\S+$#i', $value) === 1 && filter_var($value, FILTER_VALIDATE_URL) !== false;
+        return self::isWebUrl($value);
+    }
+
+    private static function isWebUrl(mixed $value): bool
+    {
+        return is_string($value) && preg_match('#^https?://\S+$#i', $value) === 1 && filter_var($value, FILTER_VALIDATE_URL) !== false;
     }
 }

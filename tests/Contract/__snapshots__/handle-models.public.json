@@ -13,7 +13,12 @@
                         },
                         "finish_hex": "string",
                         "id": "number",
-                        "image_url": "null",
+                        "image_url": {
+                            "union": [
+                                "null",
+                                "string"
+                            ]
+                        },
                         "length_mm": {
                             "union": [
                                 "null",

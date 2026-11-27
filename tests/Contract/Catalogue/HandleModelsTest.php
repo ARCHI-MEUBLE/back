@@ -18,8 +18,12 @@ final class HandleModelsTest extends ContractTestCase
 
         $this->assertSnapshot('handle-models.public', $response);
         $models = $response->data()['data'];
-        self::assertSame(['Barre ronde noire', 'Barre plate laiton', 'Profil aluminium'], array_slice(array_column($models, 'name'), 0, 3));
-        self::assertSame(['bar', 'flat_bar', 'profile'], array_slice(array_column($models, 'shape'), 0, 3));
+        self::assertSame(
+            ['Fil Ø10 aluminium anodisé, entraxe 96', 'Fil Ø10 aluminium anodisé, entraxe 128', 'Fil Ø10 aluminium anodisé, entraxe 160'],
+            array_slice(array_column($models, 'name'), 0, 3),
+        );
+        self::assertSame(['bar', 'bar', 'bar'], array_slice(array_column($models, 'shape'), 0, 3));
+        self::assertContains('Barre ronde noire', array_column($models, 'name'));
         self::assertArrayNotHasKey('price_per_unit', $models[0]);
         self::assertArrayNotHasKey('active', $models[0]);
         $this->assertSnapshot('handle-models.public', $this->client()->get('/api/handle-models'));
@@ -74,14 +78,18 @@ final class HandleModelsTest extends ContractTestCase
         $this->assertInvalid('Forme de poignée invalide (barre ronde, barre plate, profilé, bouton, cuvette, encastrée ou lanière cuir)', ['shape' => 'hook']);
         $this->assertInvalid('Couleur de finition invalide (format #RRGGBB)', ['finish_hex' => 'red']);
         $this->assertInvalid('La longueur est obligatoire pour cette forme de poignée', ['length_mm' => null]);
-        $this->assertInvalid('La longueur doit être comprise entre 20 et 800 mm', ['length_mm' => 900]);
+        $this->assertInvalid('La longueur doit être comprise entre 20 et 1200 mm', ['length_mm' => 1300]);
+        $this->assertInvalid('Référence invalide (lettres, chiffres, point, tiret)', ['reference' => 'POI 518']);
+        $this->assertInvalid('Lien de la fiche produit invalide (adresse http(s))', ['supplier_url' => 'ftp://lmc']);
+        $this->assertInvalid('Cette référence est déjà celle d\'une autre poignée', ['reference' => 'POI518128CH']);
         $this->assertInvalid("L'entraxe ne peut pas dépasser la longueur de la poignée", ['center_distance_mm' => 160]);
         $this->assertInvalid("L'entraxe doit être compris entre 10 et 800 mm", ['center_distance_mm' => 5]);
         $this->assertInvalid('La largeur doit être comprise entre 2 et 100 mm', ['width_mm' => 150]);
         $this->assertInvalid('La saillie doit être comprise entre 0 et 100 mm', ['projection_mm' => -3]);
         $this->assertInvalid('Le prix doit être compris entre 0 et 1000 €', ['price_per_unit' => -1]);
         $this->assertInvalid('Le nom est obligatoire', ['name' => '  ']);
-        $this->assertInvalid('Lien de photo invalide (adresse http(s) ou chemin /uploads/)', ['image_url' => 'javascript:alert(1)']);
+        $this->assertInvalid('Lien de photo invalide (adresse http(s), chemin /uploads/ ou /images/handles/)', ['image_url' => 'javascript:alert(1)']);
+        $this->assertInvalid('Lien de photo invalide (adresse http(s), chemin /uploads/ ou /images/handles/)', ['image_url' => '/images/handles/../secret']);
         $this->assertInvalid('Ce nom de poignée existe déjà', ['name' => 'BARRE RONDE NOIRE']);
         $this->assertInvalid('Ce nom de poignée existe déjà', ['action' => 'update', 'id' => 2, 'name' => 'barre ronde noire']);
         $this->assertInvalid('Le champ id est invalide', ['action' => 'update', 'id' => 'abc']);

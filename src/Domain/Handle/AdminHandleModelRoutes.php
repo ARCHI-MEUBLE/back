@@ -16,6 +16,7 @@ final class AdminHandleModelRoutes
     public function __construct(
         private readonly HandleModelService $service,
         private readonly HandleModelRepository $models,
+        private readonly HandleModelImport $import,
     ) {}
 
     public function register(RouteCollection $routes): void
@@ -33,6 +34,9 @@ final class AdminHandleModelRoutes
         $action = $input['action'] ?? '';
         if ($action === 'create') {
             return Response::json(['success' => true, 'id' => $this->service->create($input)], 201);
+        }
+        if ($action === 'import') {
+            return Response::json(['success' => true] + $this->import->run($input['rows'] ?? null, ($input['dryRun'] ?? false) === true));
         }
         if ($action === 'update') {
             $this->service->update($input);

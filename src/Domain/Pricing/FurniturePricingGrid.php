@@ -16,6 +16,7 @@ final class FurniturePricingGrid
             'push' => ['supplement' => 30],
             'facade' => ['material_factor' => 1.3],
             'glass' => ['supplement_per_m2' => 0],
+            'sliding' => ['rail_price_per_m' => 15, 'groove_price_per_m' => 6],
         ],
         'handles' => [
             'vertical_bar' => ['price_per_unit' => 25],

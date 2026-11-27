@@ -8,7 +8,7 @@ use App\Domain\Shared\DomainException;
 
 final class FurnitureCostLines
 {
-    private const DOORS = ['door', 'door_right', 'door_double', 'mirror_door', 'mirror_door_right', 'push_door', 'push_door_right'];
+    private const DOORS = ['door', 'door_right', 'door_double', 'sliding_door', 'mirror_door', 'mirror_door_right', 'push_door', 'push_door_right'];
     private const GLASS_DOORS = ['mirror_door', 'mirror_door_right'];
     private const DRAWERS = ['drawer', 'push_drawer'];
     private const MAX_DEPTH = 12;
@@ -53,7 +53,8 @@ final class FurnitureCostLines
         }
         $doorContent = is_string($zone['doorContent'] ?? null) ? $zone['doorContent'] : $content;
         if ($doorContent !== null && in_array($doorContent, self::DOORS, true)) {
-            $this->door($doorContent, $this->handles->price($this->grid, $zone), $width, $height, $this->materials->facade($zone, 'doors'));
+            $handle = $doorContent === SlidingDoor::CONTENT ? $this->handles->flushPrice($zone) : $this->handles->price($this->grid, $zone);
+            $this->door($doorContent, $handle, $width, $height, $this->materials->facade($zone, 'doors'));
         }
         $children = is_array($zone['children'] ?? null) ? array_values(array_filter($zone['children'], 'is_array')) : [];
         if ($isLeaf || $children === []) {
@@ -74,11 +75,13 @@ final class FurnitureCostLines
 
     public function door(string $type, float $handle, float $width, float $height, float $materialPrice): void
     {
-        $leaves = $type === 'door_double' ? 2 : 1;
-        $surface = $width * $height / 1_000_000;
+        $sliding = $type === SlidingDoor::CONTENT;
+        $leaves = $sliding ? SlidingDoor::panels($width) : ($type === 'door_double' ? 2 : 1);
+        $surface = $sliding ? SlidingDoor::panelSurface($width, $height) : $width * $height / 1_000_000;
         $glass = in_array($type, self::GLASS_DOORS, true) ? $surface * $this->grid->get('fronts', 'glass', 'supplement_per_m2') : 0.0;
         $this->add('fronts', $leaves * $this->grid->get('fronts', 'door', 'fixed_price') + $this->facade($surface, $materialPrice) + $glass);
-        $this->add('hardware', $leaves * (str_starts_with($type, 'push_') ? $this->grid->get('fronts', 'push', 'supplement') : $handle));
+        $this->add('hardware', $leaves * (str_starts_with($type, 'push_') ? $this->grid->get('fronts', 'push', 'supplement') : $handle) + ($sliding ? SlidingDoor::rails($this->grid, $width) : 0.0));
+        $this->add('panels', $sliding ? SlidingDoor::grooves($this->grid, $width) : 0.0);
     }
 
     public function base(string $socle, float $width): void

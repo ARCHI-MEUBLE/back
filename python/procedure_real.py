@@ -154,6 +154,136 @@ CAISSON_LARGEUR_MAX_MM = 1000
 # dans les plaques latérales, en retrait de cette distance (mm) par rapport au bord arrière réel.
 RAINURE_FOND_MM = 20
 
+# Porte coulissante (« Pc ») : 2 vantaux, 3 au-delà de COULISSANTE_3_VANTAUX_MM de largeur d'ouverture, qui glissent
+# sur un petit rail plastique noir à deux voies encastré dans une défonce du dessus et du dessous de l'ouverture.
+# Toujours à l'intérieur du meuble. Mêmes valeurs que le configurateur (front : src/lib/configurator/slidingDoor.ts)
+# et que le prix (back : src/Domain/Pricing/SlidingDoor.php) : les changer aux trois endroits.
+COULISSANTE_3_VANTAUX_MM = 1600
+COULISSANTE_RECOUVREMENT_MM = 30   # chevauchement de deux vantaux voisins
+COULISSANTE_RETRAIT_MM = 10        # recul de la voie avant par rapport au chant avant
+COULISSANTE_ECART_VOIES_MM = 4     # jeu entre les deux voies du rail
+COULISSANTE_PROFONDEUR_MM = 62     # profondeur prise à l'avant : ce qui est derrière recule d'autant
+COULISSANTE_DEFONCE_AVANT_MM = 8   # la défonce commence à 8 mm du chant avant...
+COULISSANTE_DEFONCE_LARGEUR_MM = 46  # ... et couvre les deux voies, 2 mm de marge de chaque côté
+COULISSANTE_DEFONCE_PROFONDEUR_MM = 8
+COULISSANTE_JEU_MM = 3             # jeu du vantail en haut et en bas (le rail dépasse de 2 mm)
+COULISSANTE_RAIL_VISIBLE_MM = 2
+
+
+def etendue(zone, direction):
+    # Minimum et maximum d'une zone le long d'une direction
+    points = zone.points[np.unique(np.hstack([face.contour for face in zone.listface]))]
+    scalaires = points @ direction
+    return np.min(scalaires), np.max(scalaires)
+
+
+def tranche(zone, debut, fin, total, direction="verticale"):
+    # Morceau [debut, fin] (mm depuis le minimum de la zone le long de la direction), sans planche
+    coupes = [c for c in (debut, fin) if 0.01 < c < total - 0.01]
+    if not coupes:
+        return zone
+    morceaux = zone.couper(mode="longueurs", longueurs=np.diff(np.array([0.0] + coupes)), dir=direction)
+    return morceaux[1] if debut > 0.01 else morceaux[0]
+
+
+def vantaux_coulissants(largeur):
+    # (début depuis le bord de l'ouverture, largeur, voie avant ?) de chaque vantail : même largeur pour tous,
+    # chevauchement entre voisins, voies alternées. Disposition symétrique : on peut compter depuis l'un ou l'autre bord.
+    nombre = 2 if largeur <= COULISSANTE_3_VANTAUX_MM else 3
+    largeur_vantail = (largeur + (nombre - 1) * COULISSANTE_RECOUVREMENT_MM) / nombre
+    return [(k * (largeur_vantail - COULISSANTE_RECOUVREMENT_MM), largeur_vantail, k % 2 == 0) for k in range(nombre)]
+
+
+# Défonces à poser sur les planches qui bordent une porte coulissante : (face d'origine de la planche, coins, profondeur).
+# Elles sont rattachées à la fin (voir poser_defonces), quand toutes les planches existent : une étagère n'est découpée
+# qu'en deux temps, et la face partagée avec l'ouverture appartient d'abord au reste de la zone.
+DEFONCES_EN_ATTENTE = []
+
+
+def ajouter_defonce(face_ouverture, bloc, debut_avant):
+    # Défonce du rail dans la planche qui borde l'ouverture (dessus ou dessous). Rien si aucune planche ne la borde.
+    cible = face_ouverture.remonter_facesupport().faceoppose
+    if cible is None:
+        return
+    v_min, v_max = etendue(bloc, bloc.normalv)
+    hauteur = np.mean(bloc.points[face_ouverture.contour] @ bloc.normalh)
+    a_min = debut_avant + COULISSANTE_DEFONCE_AVANT_MM
+    a_max = a_min + COULISSANTE_DEFONCE_LARGEUR_MM
+    coins = np.array([
+        v * bloc.normalv + hauteur * bloc.normalh + a * bloc.normala
+        for v, a in ((v_min, a_min), (v_max, a_min), (v_max, a_max), (v_min, a_max))
+    ])
+    DEFONCES_EN_ATTENTE.append((cible, coins, COULISSANTE_DEFONCE_PROFONDEUR_MM))
+
+
+def poser_defonces(planches):
+    # La face de planche qui descend de la face d'origine reçoit la défonce (même règle que la détection des contacts)
+    for cible, coins, profondeur in DEFONCES_EN_ATTENTE:
+        for planche in planches:
+            for face in planche.listface:
+                if not face.chant and face.remonter_facesupport() is cible:
+                    face.defonces.append({"points": coins, "profondeur": profondeur})
+
+
+def rail_visuel(bloc, en_haut, debut_avant):
+    # Rail noir pour le GLB seulement : les 2 mm qui dépassent de la défonce, sur toute la largeur de l'ouverture
+    v_min, v_max = etendue(bloc, bloc.normalv)
+    h_min, h_max = etendue(bloc, bloc.normalh)
+    h = h_max - COULISSANTE_RAIL_VISIBLE_MM / 2 if en_haut else h_min + COULISSANTE_RAIL_VISIBLE_MM / 2
+    a = debut_avant + COULISSANTE_DEFONCE_AVANT_MM + COULISSANTE_DEFONCE_LARGEUR_MM / 2
+    transformation = np.eye(4)
+    transformation[:3, :3] = np.column_stack((bloc.normalv, bloc.normalh, -bloc.normala))
+    transformation[:3, 3] = (v_min + v_max) / 2 * bloc.normalv + h * bloc.normalh + a * bloc.normala
+    boite = trimesh.creation.box(extents=[v_max - v_min, COULISSANTE_RAIL_VISIBLE_MM, COULISSANTE_DEFONCE_LARGEUR_MM], transform=transformation)
+    boite.visual = trimesh.visual.ColorVisuals(mesh=boite, vertex_colors=[20, 20, 20, 255])
+    rail = Zone(None, None, None, None, None, type="rail_coulissant_visual", mesh=boite)
+    rail.bloc = "rail_coulissant"
+    return rail
+
+
+def porte_coulissante(zone, textures, handle_type):
+    # Vantaux, défonces et rails d'une porte coulissante dans l'ouverture `zone` ; renvoie les éléments créés et la
+    # zone qui reste derrière la porte (étagères et cloisons s'y posent, en retrait de COULISSANTE_PROFONDEUR_MM)
+    blocs, reste = zone.envelopper(label="a", epaisseur=COULISSANTE_PROFONDEUR_MM)
+    bloc = blocs[0]
+    debut_avant, _ = etendue(bloc, bloc.normala)
+    v_min, v_max = etendue(bloc, bloc.normalv)
+    largeur = v_max - v_min
+    epaisseur = textures["porte"].epaisseur
+
+    # Dessus et dessous de l'ouverture repérés par leur position (les étiquettes h/b d'une face issue d'une division
+    # ne disent pas toujours de quel côté elle est)
+    h_min, h_max = etendue(bloc, bloc.normalh)
+    elements = []
+    for face in bloc.listface:
+        if abs(np.dot(face.equation[:3], bloc.normalh)) > 0.99:
+            en_haut = np.mean(bloc.points[face.contour] @ bloc.normalh) > (h_min + h_max) / 2
+            ajouter_defonce(face, bloc, debut_avant)
+            elements.append(rail_visuel(bloc, en_haut, debut_avant))
+
+    vantaux = vantaux_coulissants(largeur)
+    for k, (debut, largeur_vantail, voie_avant) in enumerate(vantaux):
+        # Comptés depuis la gauche comme dans le configurateur (normalv pointe vers la gauche, couper part de la droite)
+        depuis_droite = largeur - debut - largeur_vantail
+        morceau = tranche(bloc, depuis_droite, depuis_droite + largeur_vantail, largeur)
+        recul = COULISSANTE_RETRAIT_MM if voie_avant else COULISSANTE_RETRAIT_MM + epaisseur + COULISSANTE_ECART_VOIES_MM
+        _, morceau = morceau.envelopper(label="a", epaisseur=recul)
+        planches, _ = morceau.envelopper(label="a", epaisseur=epaisseur, texture=textures["porte"])
+        vantail = planches[0]
+        _, vantail = vantail.envelopper(label="h", epaisseur=COULISSANTE_JEU_MM)
+        _, vantail = vantail.envelopper(label="b", epaisseur=COULISSANTE_JEU_MM)
+        vantail.bloc = "porte_coulissante"
+        vantail.texture = textures["porte"]
+        vantail.handle_type = handle_type
+        vantail.face_usine = [f for f in vantail.listface if f.label == "f"][0]
+        # Ouvert : le premier vantail (à gauche) glisse vers la droite devant son voisin, jusqu'au bord ou au vantail
+        # suivant de sa voie
+        if k == 0:
+            butee = vantaux[2][0] if len(vantaux) > 2 else largeur
+            vantail.decalage_ouverture = -(butee - largeur_vantail) * bloc.normalv
+        elements.append(vantail)
+    return elements, reste
+
 def process(sequence,zone,textures=textures) : # cette fonction sert à parser un sequence de caractère pour modeliser un meuble
     #l'objet zone est ammenée à évoluer suite aux opération faites dessus cela repésente une zone d'espace 
     # l'objet Listplanches permet d'accumuler les planches qui résultent des différentes opérations
@@ -569,43 +699,10 @@ def process(sequence,zone,textures=textures) : # cette fonction sert à parser u
                 planche.bloc="porteg" # On peut utiliser porteg pour le moment
                 planche.face_usine=[face for face in planche.listface if face.label=="f"][0]
                 Listplanches.append(planche)
-            elif char=="c":
-                planches,zone=zone.envelopper(label="a",epaisseur=62,texture=textures["porte"])
-                planche=planches[0]
-                for face in planche.listface :
-                    if face.label=="f" :
-                        hauteurs = np.dot(planche.points[face.contour],planche.normalh)
-                        h= np.max(hauteurs)-np.min(hauteurs)
-                        print(h)
-                
-                
-                planche,coulisse=planche.couper(dir="horizontale",mode="longueurs", longueurs=np.array([h-43]))
-                coulisse.bloc="coulisse"
-                coulisse.texture=textures["interieur"]
-                
-                
-                Listplanches.append(coulisse)
-
-                _,planche=planche.envelopper(label="g",epaisseur=1)
-                _,planche=planche.envelopper(label="d",epaisseur=1)
-                
-                _,planche=planche.envelopper(label="b",epaisseur=7)
-                
-                planche.bloc="porte_coulissante"
-
-                planchedroite,planchegauche=planche.couper(dir="verticale")
-                _,planchedroite=planchedroite.envelopper(label="a",epaisseur=10,texture=textures["porte"])
-                planchedroite,_=planchedroite.envelopper(label="a",epaisseur=19,texture=textures["porte"])
-
-                _,planchegauche=planchegauche.envelopper(label="f",epaisseur=10,texture=textures["porte"])
-                planchegauche,_=planchegauche.envelopper(label="f",epaisseur=19,texture=textures["porte"])
-                planchedroite=planchedroite[0]
-                planchegauche=planchegauche[0]
-                
-                #planchedroite.face_usine=[face for face in planche.listface if face.label=="f"][0]
-                Listplanches.append(planchedroite)
-                Listplanches.append(planchegauche)
-
+            elif char=="c": # PORTE COULISSANTE : vantaux sur rail noir encastré (voir porte_coulissante)
+                handle_type, i = check_handle(i)
+                elements, zone = porte_coulissante(zone, textures, handle_type)
+                Listplanches = Listplanches + elements
 
             else :
 
@@ -1123,6 +1220,9 @@ if custom_colors:
                 vertex_colors=[20, 20, 20, 255]
             )
             continue
+        elif bloc_type == "rail_coulissant":
+            # Rail de porte coulissante : toujours noir, déjà coloré à sa création
+            continue
         else:
             # Structure (planches du corps du meuble)
             color_key = "structure"
@@ -1158,6 +1258,10 @@ if not closed_mode:
             shift = -20 * planche.normala
             planche.mesh.vertices += shift
             planche.points += shift
+        elif getattr(planche, "decalage_ouverture", None) is not None:
+            # Porte coulissante : le premier vantail glisse devant son voisin
+            planche.mesh.vertices += planche.decalage_ouverture
+            planche.points += planche.decalage_ouverture
         # On pourrait aussi ajouter l'ouverture des portes ici si souhaité
 
 # Génération des poignées (Désactivé à la demande de l'utilisateur)
@@ -1250,9 +1354,13 @@ if not closed_mode:
             shift = +20 * planche.normala
             planche.mesh.vertices += shift
             planche.points += shift
+        elif getattr(planche, "decalage_ouverture", None) is not None:
+            planche.mesh.vertices -= planche.decalage_ouverture
+            planche.points -= planche.decalage_ouverture
 
 # Filtrer uniquement les vraies planches pour le DXF et la suite
 planches = [p for p in planches if (hasattr(p, 'planche') and p.planche) and getattr(p, 'bloc', None) != "coulisse"]
+poser_defonces(planches)
 
 # Helper function: analyser la structure des zones pour déterminer le nombre de segments
 # Filtrer les panneaux supprimés pour le DXF
@@ -1565,6 +1673,20 @@ for planches_index, planches in enumerate(groupes):
                     radius=radius_mm,
                     dxfattribs={"layer": layer_name},
                 )
+
+            # Défonces (rail de porte coulissante) : contour du rectangle à usiner, une couche par profondeur
+            for defonce in face.defonces:
+                coins = project_points_on_plane(defonce["points"],
+                                                planche.points[planche.face_usine.contour[0]],
+                                                np.cross(planche.sens_fibres, planche.face_usine.equation[:3]),
+                                                planche.sens_fibres)
+                coins[:, 0] = coins[:, 0] - xmin + X
+                coins[:, 1] = coins[:, 1] - ymin + Y
+                layer_name = f"defonce_{defonce['profondeur']}mm"
+                if layer_name not in diameter_layers:
+                    doc.layers.add(layer_name, color=len(diameter_layers) + 2)
+                    diameter_layers[layer_name] = True
+                msp.add_lwpolyline(points=coins[:, :2], close=True, dxfattribs={"layer": layer_name})
 
         X = X + marge + xmax - xmin
         X_max_normales = max(X_max_normales, X)
