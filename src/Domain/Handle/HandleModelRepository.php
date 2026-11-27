@@ -27,7 +27,7 @@ final class HandleModelRepository
 
     public function activePrices(): array
     {
-        return $this->db->query('SELECT id, price_per_unit FROM handle_models WHERE active = TRUE' . self::ORDER);
+        return $this->db->query('SELECT id, price_per_unit, shape FROM handle_models WHERE active = TRUE' . self::ORDER);
     }
 
     public function findById(int $id): ?array
