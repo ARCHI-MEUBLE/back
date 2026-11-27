@@ -17,6 +17,7 @@ use App\Domain\Config\PublicConfigRoutes;
 use App\Domain\EmailTemplate\EmailTemplateRepository;
 use App\Domain\EmailTemplate\EmailTemplateRoutes;
 use App\Domain\Handle\AdminHandleModelRoutes;
+use App\Domain\Handle\HandleModelImport;
 use App\Domain\Handle\HandleModelRepository;
 use App\Domain\Handle\HandleModelRoutes;
 use App\Domain\Handle\HandleModelService;
@@ -81,7 +82,7 @@ final class ContentRouteRegistry
         (new AdminSampleRoutes($sampleService, $sampleTypes, $sampleColors))->register($routes);
         (new SampleAnalyticsRoutes($db))->register($routes);
         (new HandleModelRoutes($handleModels))->register($routes);
-        (new AdminHandleModelRoutes(new HandleModelService($handleModels), $handleModels))->register($routes);
+        (new AdminHandleModelRoutes(new HandleModelService($handleModels), $handleModels, new HandleModelImport($db, $handleModels)))->register($routes);
         (new PublicConfigRoutes(Env::load($settings->rootDir . '/.env')))->register($routes);
     }
 }

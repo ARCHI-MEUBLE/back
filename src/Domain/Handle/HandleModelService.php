@@ -15,6 +15,7 @@ final class HandleModelService
     {
         $data = HandleModelSchemas::validate($input);
         $this->ensureNameIsFree($data['name'], null);
+        $this->ensureReferenceIsFree($data['reference'], null);
         $data['position'] ??= $this->models->nextPosition();
         return $this->models->create($data);
     }
@@ -26,6 +27,7 @@ final class HandleModelService
         $changes = array_intersect_key($input, array_flip(HandleModelSchemas::FIELDS));
         $data = HandleModelSchemas::validate(array_replace($current, $changes));
         $this->ensureNameIsFree($data['name'], $id);
+        $this->ensureReferenceIsFree($data['reference'], $id);
         $data['position'] ??= $current['position'];
         $this->models->update($id, $data);
     }
@@ -41,6 +43,13 @@ final class HandleModelService
     {
         if ($this->models->nameTaken($name, $id)) {
             throw new DomainException('Ce nom de poignée existe déjà');
+        }
+    }
+
+    public function ensureReferenceIsFree(?string $reference, ?int $id): void
+    {
+        if ($reference !== null && $this->models->referenceTaken($reference, $id)) {
+            throw new DomainException('Cette référence est déjà celle d\'une autre poignée');
         }
     }
 

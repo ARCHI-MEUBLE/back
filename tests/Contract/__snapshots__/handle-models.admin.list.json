@@ -15,7 +15,12 @@
                         "created_at": "string",
                         "finish_hex": "string",
                         "id": "number",
-                        "image_url": "null",
+                        "image_url": {
+                            "union": [
+                                "null",
+                                "string"
+                            ]
+                        },
                         "length_mm": {
                             "union": [
                                 "null",
@@ -31,7 +36,19 @@
                                 "number"
                             ]
                         },
+                        "reference": {
+                            "union": [
+                                "null",
+                                "string"
+                            ]
+                        },
                         "shape": "string",
+                        "supplier_url": {
+                            "union": [
+                                "null",
+                                "string"
+                            ]
+                        },
                         "updated_at": "string",
                         "width_mm": {
                             "union": [

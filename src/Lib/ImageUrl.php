@@ -6,12 +6,14 @@ namespace App\Lib;
 
 final class ImageUrl
 {
+    public const SITE_HANDLE_PHOTOS = '/images/handles/';
+
     public static function absolute(?string $path, string $host): ?string
     {
         if ($path === null || $path === '') {
             return null;
         }
-        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://') || str_starts_with($path, self::SITE_HANDLE_PHOTOS)) {
             return $path;
         }
         $path = str_starts_with($path, '/') ? $path : '/' . $path;
